@@ -12,6 +12,33 @@ using namespace volePSI;
 
 namespace
 {
+    u64 valueWord(block v, u64 idx)
+    {
+        return v.get<u32>(idx);
+    }
+
+    u64 readU64(const u8* src)
+    {
+        auto v = u64{};
+        std::memcpy(&v, src, sizeof(v));
+        return v;
+    }
+
+    void writeU64(u8* dst, u64 v)
+    {
+        std::memcpy(dst, &v, sizeof(v));
+    }
+
+    void setPrimeValues(oc::Matrix<u8>& values, const std::vector<block>& set)
+    {
+        for (u64 i = 0; i < set.size(); ++i)
+        {
+            for (u64 j = 0; j < 4; ++j)
+            {
+                writeU64(&values(i, j * sizeof(u64)), valueWord(set[i], j));
+            }
+        }
+    }
 
     std::vector<u64> runCpsi(
         PRNG& prng,
@@ -26,12 +53,18 @@ namespace
         RsCpsiReceiver recver;
         RsCpsiSender sender;
 
-        auto byteLength = sizeof(block);
-        oc::Matrix<u8> senderValues(sendSet.size(), sizeof(block));
-        std::memcpy(senderValues.data(), sendSet.data(), sendSet.size() * sizeof(block));
+        auto byteLength = type == ValueShareType::prime ?
+            4 * sizeof(u64) :
+            sizeof(block);
+        oc::Matrix<u8> senderValues(sendSet.size(), byteLength);
 
-        recver.init(sendSet.size(), recvSet.size(), byteLength, 40, prng.get(), nt);
-        sender.init(sendSet.size(), recvSet.size(), byteLength, 40, prng.get(), nt);
+        if (type == ValueShareType::prime)
+            setPrimeValues(senderValues, sendSet);
+        else
+            std::memcpy(senderValues.data(), sendSet.data(), sendSet.size() * sizeof(block));
+
+        recver.init(sendSet.size(), recvSet.size(), byteLength, 40, prng.get(), nt, type);
+        sender.init(sendSet.size(), recvSet.size(), byteLength, 40, prng.get(), nt, type);
 
         RsCpsiReceiver::Sharing rShare;
         RsCpsiSender::Sharing sShare;
@@ -64,19 +97,35 @@ namespace
                         //throw RTE_LOC;
                     }
                 }
-                else
+                else if (type == ValueShareType::add32)
                 {
 
                     for (u64 j = 0; j < 4; ++j)
                     {
-                        auto rv = (u32*)&rShare.mValues(i, 0);
-                        auto sv = (u32*)&sShare.mValues(i, 0);
+                        auto rv = (u32*)&rShare.mValues(k, 0);
+                        auto sv = (u32*)&sShare.mValues(k, 0);
 
                         if (recvSet[i].get<u32>(j) != (sv[j] + rv[j]))
                         {
                             throw RTE_LOC;
                         }
                     }
+                }
+                else if (type == ValueShareType::prime)
+                {
+                    for (u64 j = 0; j < 4; ++j)
+                    {
+                        auto rv = readU64(&rShare.mValues(k, j * sizeof(u64)));
+                        auto sv = readU64(&sShare.mValues(k, j * sizeof(u64)));
+                        auto act = (rv + sv) % RsCpsiPrime;
+
+                        if (act != valueWord(recvSet[i], j))
+                            throw RTE_LOC;
+                    }
+                }
+                else
+                {
+                    throw RTE_LOC;
                 }
             }
         }
@@ -197,4 +246,22 @@ void Cpsi_Rs_full_add32_test(const CLP& cmd)
     //std::set<u64> act(inter.begin(), inter.end());
     //if (act != exp)
     //    throw RTE_LOC;
+}
+
+void Cpsi_Rs_full_prime_test(const CLP& cmd)
+{
+    u64 n = cmd.getOr("n", 243);
+    std::vector<block> recvSet(n), sendSet(n);
+    PRNG prng(ZeroBlock);
+    prng.get(recvSet.data(), recvSet.size());
+    sendSet = recvSet;
+
+    std::set<u64> exp;
+    for (u64 i = 0; i < n; ++i)
+        exp.insert(i);
+
+    auto inter = runCpsi(prng, recvSet, sendSet, 1, ValueShareType::prime);
+    std::set<u64> act(inter.begin(), inter.end());
+    if (act != exp)
+        throw RTE_LOC;
 }

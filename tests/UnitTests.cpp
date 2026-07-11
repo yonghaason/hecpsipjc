@@ -78,6 +78,7 @@ namespace volePSI_Tests
         t.add("Cpsi_Rs_full_test           ", Cpsi_Rs_full_test);
         t.add("Cpsi_Rs_full_asym_test      ", Cpsi_Rs_full_asym_test);
         t.add("Cpsi_Rs_full_add32_test     ", Cpsi_Rs_full_add32_test);
+        t.add("Cpsi_Rs_full_prime_test     ", Cpsi_Rs_full_prime_test);
 #endif
 
         t.add("filebase_readSet_Test       ", filebase_readSet_Test);

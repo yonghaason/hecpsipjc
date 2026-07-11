@@ -1,9 +1,67 @@
 #include "RsCpsi.h"
 
+#include <limits>
 #include <sstream>
 
 namespace volePSI
 {
+    namespace
+    {
+        u64 readU64(const u8* src)
+        {
+            auto v = u64{};
+            std::memcpy(&v, src, sizeof(v));
+            return v;
+        }
+
+        void writeU64(u8* dst, u64 v)
+        {
+            std::memcpy(dst, &v, sizeof(v));
+        }
+
+        u64 samplePrime(PRNG& prng)
+        {
+            const auto limit = std::numeric_limits<u64>::max() -
+                (std::numeric_limits<u64>::max() % RsCpsiPrime);
+            auto v = u64{};
+
+            do
+            {
+                prng.get<u8>(span<u8>((u8*)&v, sizeof(v)));
+            } while (v >= limit);
+
+            return v % RsCpsiPrime;
+        }
+
+        void samplePrimeShares(MatrixView<u8> values, PRNG& prng)
+        {
+            if (values.cols() % sizeof(u64))
+                throw RTE_LOC;
+
+            for (u64 i = 0; i < values.rows(); ++i)
+            {
+                for (u64 j = 0; j < values.cols(); j += sizeof(u64))
+                {
+                    writeU64(&values(i, j), samplePrime(prng));
+                }
+            }
+        }
+
+        void validatePrimeValues(MatrixView<u8> values)
+        {
+            if (values.cols() % sizeof(u64))
+                throw RTE_LOC;
+
+            for (u64 i = 0; i < values.rows(); ++i)
+            {
+                for (u64 j = 0; j < values.cols(); j += sizeof(u64))
+                {
+                    if (readU64(&values(i, j)) >= RsCpsiPrime)
+                        throw RTE_LOC;
+                }
+            }
+        }
+    }
 
     Proto RsCpsiSender::send(span<block> Y, oc::MatrixView<u8> values, Sharing& ret, Socket& chl)
     {
@@ -30,6 +88,8 @@ namespace volePSI
             co_await chl.close();
             throw RTE_LOC;
         }
+        if (mType == ValueShareType::prime)
+            validatePrimeValues(values);
 
         co_await (chl.recv(cuckooSeed));
         setTimePoint("RsCpsiSender::send recv");
@@ -64,7 +124,10 @@ namespace volePSI
         rIter = r.begin();
         ret.mValues.resize(numBins, values.cols(), oc::AllocType::Uninitialized);
         mPrng.get<u8>(r);
-        mPrng.get<u8>(ret.mValues);
+        if (mType == ValueShareType::prime)
+            samplePrimeShares(ret.mValues, mPrng);
+        else
+            mPrng.get<u8>(ret.mValues);
 
 
 
@@ -101,6 +164,23 @@ namespace volePSI
                         auto rr = (u32*)&ret.mValues(i, 0);
                         for (u64 k = 0; k < ss; ++k)
                             tv[k] -= rr[k];
+                    }
+                    else if (mType == ValueShareType::prime)
+                    {
+                        assert(values.cols() % sizeof(u64) == 0);
+                        for (u64 k = 0; k < values.cols(); k += sizeof(u64))
+                        {
+                            auto tv = readU64(&*TvIter + k);
+                            auto rr = readU64(&ret.mValues(i, k));
+
+                            if (tv >= RsCpsiPrime || rr >= RsCpsiPrime)
+                            {
+                                co_await chl.close();
+                                throw RTE_LOC;
+                            }
+
+                            writeU64(&*TvIter + k, (tv + RsCpsiPrime - rr) % RsCpsiPrime);
+                        }
                     }
                     else
                     {
@@ -160,6 +240,8 @@ namespace volePSI
             auto cir = BetaCircuit{};
 
         if (mRecverSize != X.size())
+            throw RTE_LOC;
+        if (mType == ValueShareType::prime && mValueByteLength % sizeof(u64))
             throw RTE_LOC;
 
         setTimePoint("RsCpsiReceiver::receive begin");

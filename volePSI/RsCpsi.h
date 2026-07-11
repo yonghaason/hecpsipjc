@@ -27,8 +27,12 @@ namespace volePSI
     enum ValueShareType
     {
         Xor,
-        add32
+        add32,
+        prime
     };
+
+    // The smallest prime strictly larger than 2^32.
+    constexpr u64 RsCpsiPrime = 4294967311ULL;
     namespace details
     {
 
