@@ -78,7 +78,12 @@ namespace volePSI_Tests
         t.add("Cpsi_Rs_full_test           ", Cpsi_Rs_full_test);
         t.add("Cpsi_Rs_full_asym_test      ", Cpsi_Rs_full_asym_test);
         t.add("Cpsi_Rs_full_add32_test     ", Cpsi_Rs_full_add32_test);
+        //0714
         t.add("Cpsi_Rs_full_prime_test     ", Cpsi_Rs_full_prime_test);
+        //0719
+        t.add("Cpsi_Rs_full_prime_param_test", Cpsi_Rs_full_prime_param_test);
+        //0719
+        t.add("Cpsi_Rs_comm_time_compare_test", Cpsi_Rs_comm_time_compare_test);
 #endif
 
         t.add("filebase_readSet_Test       ", filebase_readSet_Test);

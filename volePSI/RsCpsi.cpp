@@ -1,65 +1,76 @@
 #include "RsCpsi.h"
 
+//0714
 #include <limits>
 #include <sstream>
 
 namespace volePSI
 {
+    //0714
     namespace
     {
-        u64 readU64(const u8* src)
+        //0719
+        u64 readPrimeElement(const u8* src, u64 byteLength)
         {
             auto v = u64{};
-            std::memcpy(&v, src, sizeof(v));
+            std::memcpy(&v, src, byteLength);
             return v;
         }
 
-        void writeU64(u8* dst, u64 v)
+        //0719
+        void writePrimeElement(u8* dst, u64 byteLength, u64 v)
         {
-            std::memcpy(dst, &v, sizeof(v));
+            std::memcpy(dst, &v, byteLength);
         }
 
-        u64 samplePrime(PRNG& prng)
+        //0719
+        u64 primeBitMask(u64 bitLength)
         {
-            const auto limit = std::numeric_limits<u64>::max() -
-                (std::numeric_limits<u64>::max() % RsCpsiPrime);
+            return bitLength == sizeof(u64) * 8 ?
+                std::numeric_limits<u64>::max() :
+                ((u64(1) << bitLength) - 1);
+        }
+
+        //0719
+        u64 samplePrime(PRNG& prng, u64 prime, u64 bitLength, u64 byteLength)
+        {
+            auto mask = primeBitMask(bitLength);
             auto v = u64{};
 
             do
             {
-                prng.get<u8>(span<u8>((u8*)&v, sizeof(v)));
-            } while (v >= limit);
+                v = 0;
+                prng.get<u8>(span<u8>((u8*)&v, byteLength));
+                v &= mask;
+            } while (v >= prime);
 
-            return v % RsCpsiPrime;
+            return v;
         }
 
-        void samplePrimeShares(MatrixView<u8> values, PRNG& prng)
+        //0719
+        void samplePrimeShares(MatrixView<u8> values, PRNG& prng, u64 prime, u64 bitLength, u64 byteLength)
         {
-            if (values.cols() % sizeof(u64))
-                throw RTE_LOC;
-
             for (u64 i = 0; i < values.rows(); ++i)
             {
-                for (u64 j = 0; j < values.cols(); j += sizeof(u64))
+                for (u64 j = 0; j < values.cols(); j += byteLength)
                 {
-                    writeU64(&values(i, j), samplePrime(prng));
+                    writePrimeElement(&values(i, j), byteLength, samplePrime(prng, prime, bitLength, byteLength));
                 }
             }
         }
 
-        void validatePrimeValues(MatrixView<u8> values)
+        //0719
+        u64 modSubPrime(u64 lhs, u64 rhs, u64 prime)
         {
-            if (values.cols() % sizeof(u64))
-                throw RTE_LOC;
+            return lhs >= rhs ?
+                lhs - rhs :
+                prime - (rhs - lhs);
+        }
 
-            for (u64 i = 0; i < values.rows(); ++i)
-            {
-                for (u64 j = 0; j < values.cols(); j += sizeof(u64))
-                {
-                    if (readU64(&values(i, j)) >= RsCpsiPrime)
-                        throw RTE_LOC;
-                }
-            }
+        //0719
+        u64 primeShareByteLength(u64 valueByteLength, u64 dataByteLength, u64 primeByteLength)
+        {
+            return (valueByteLength / dataByteLength) * primeByteLength;
         }
     }
 
@@ -81,6 +92,8 @@ namespace volePSI
             auto opprf = std::make_unique<RsOpprfSender>();
             auto cmp = std::make_unique<Gmw>();
             auto cir = BetaCircuit{};
+            //0719
+            auto shareByteLength = u64{};
 
         setTimePoint("RsCpsiSender::send begin");
         if (mSenderSize != Y.size() || mValueByteLength != values.cols())
@@ -88,8 +101,16 @@ namespace volePSI
             co_await chl.close();
             throw RTE_LOC;
         }
+        //0714
+        //0719
         if (mType == ValueShareType::prime)
-            validatePrimeValues(values);
+        {
+            shareByteLength = primeShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeByteLength);
+        }
+        else
+        {
+            shareByteLength = values.cols();
+        }
 
         co_await (chl.recv(cuckooSeed));
         setTimePoint("RsCpsiSender::send recv");
@@ -114,7 +135,7 @@ namespace volePSI
         Ty.resize(Y.size() * 3);
 
         // The value associated with the k'th OPPRF input
-        Tv.resize(Y.size() * 3, keyByteLength + values.cols(), oc::AllocType::Uninitialized);
+        Tv.resize(Y.size() * 3, keyByteLength + shareByteLength, oc::AllocType::Uninitialized);
 
         // The special value assigned to the i'th bin.
         r.resize(numBins, keyByteLength, oc::AllocType::Uninitialized);
@@ -122,10 +143,12 @@ namespace volePSI
         TyIter = Ty.begin();
         TvIter = Tv.begin();
         rIter = r.begin();
-        ret.mValues.resize(numBins, values.cols(), oc::AllocType::Uninitialized);
+        ret.mValues.resize(numBins, shareByteLength, oc::AllocType::Uninitialized);
         mPrng.get<u8>(r);
+        //0714
+        //0719
         if (mType == ValueShareType::prime)
-            samplePrimeShares(ret.mValues, mPrng);
+            samplePrimeShares(ret.mValues, mPrng, mPrime, mPrimeBitLength, mPrimeByteLength);
         else
             mPrng.get<u8>(ret.mValues);
 
@@ -165,21 +188,20 @@ namespace volePSI
                         for (u64 k = 0; k < ss; ++k)
                             tv[k] -= rr[k];
                     }
+                    //0714
+                    //0719
                     else if (mType == ValueShareType::prime)
                     {
-                        assert(values.cols() % sizeof(u64) == 0);
-                        for (u64 k = 0; k < values.cols(); k += sizeof(u64))
+                        auto srcOffset = u64{};
+                        auto dstOffset = u64{};
+                        while (srcOffset < values.cols())
                         {
-                            auto tv = readU64(&*TvIter + k);
-                            auto rr = readU64(&ret.mValues(i, k));
+                            auto tv = readPrimeElement(&values(b, srcOffset), mPrimeDataByteLength);
+                            auto rr = readPrimeElement(&ret.mValues(i, dstOffset), mPrimeByteLength);
 
-                            if (tv >= RsCpsiPrime || rr >= RsCpsiPrime)
-                            {
-                                co_await chl.close();
-                                throw RTE_LOC;
-                            }
-
-                            writeU64(&*TvIter + k, (tv + RsCpsiPrime - rr) % RsCpsiPrime);
+                            writePrimeElement(&*TvIter + dstOffset, mPrimeByteLength, modSubPrime(tv, rr, mPrime));
+                            srcOffset += mPrimeDataByteLength;
+                            dstOffset += mPrimeByteLength;
                         }
                     }
                     else
@@ -187,7 +209,7 @@ namespace volePSI
                         co_await chl.close();
                         throw RTE_LOC;
                     }
-                    TvIter += values.cols();
+                    TvIter += shareByteLength;
                 }
 
                 ++TyIter;
@@ -238,11 +260,17 @@ namespace volePSI
             auto opprf = std::make_unique<RsOpprfReceiver>();
             auto cmp = std::make_unique<Gmw>();
             auto cir = BetaCircuit{};
+            //0719
+            auto shareByteLength = u64{};
 
         if (mRecverSize != X.size())
             throw RTE_LOC;
-        if (mType == ValueShareType::prime && mValueByteLength % sizeof(u64))
-            throw RTE_LOC;
+        //0714
+        //0719
+        if (mType == ValueShareType::prime)
+            shareByteLength = primeShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeByteLength);
+        else
+            shareByteLength = mValueByteLength;
 
         setTimePoint("RsCpsiReceiver::receive begin");
 
@@ -285,7 +313,7 @@ namespace volePSI
         keyBitLength = mSsp + oc::log2ceil(Tx.size());
         keyByteLength = oc::divCeil(keyBitLength, 8);
 
-        r.resize(Tx.size(), keyByteLength + mValueByteLength, oc::AllocType::Uninitialized);
+        r.resize(Tx.size(), keyByteLength + shareByteLength, oc::AllocType::Uninitialized);
 
         if (mTimer)
             opprf->setTimer(*mTimer);
@@ -308,13 +336,13 @@ namespace volePSI
             ret.mFlagBits.resize(numBins);
             std::copy(ss.begin(), ss.begin() + ret.mFlagBits.sizeBytes(), ret.mFlagBits.data());
 
-            if (mValueByteLength)
+            if (shareByteLength)
             {
-                ret.mValues.resize(numBins, mValueByteLength);
+                ret.mValues.resize(numBins, shareByteLength);
 
                 for (u64 i = 0; i < numBins; ++i)
                 {
-                    std::memcpy(&ret.mValues(i, 0), &r(i, keyByteLength), mValueByteLength);
+                    std::memcpy(&ret.mValues(i, 0), &r(i, keyByteLength), shareByteLength);
                 }
             }
         }
