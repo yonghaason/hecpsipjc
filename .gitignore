@@ -5,3 +5,5 @@ thirdparty/
 tests/cmakeTests/
 CMakeSettings.json
 ~/
+docs/
+.DS_Store
