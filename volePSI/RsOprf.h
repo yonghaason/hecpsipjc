@@ -15,6 +15,27 @@
 namespace volePSI
 {
 
+    //0719
+    struct RsCpsiCommBreakdown
+    {
+        u64 mOprf = 0;
+        u64 mOpprf = 0;
+        u64 mPeqt = 0;
+        u64 mOther = 0;
+
+        u64 total() const { return mOprf + mOpprf + mPeqt + mOther; }
+    };
+
+    //0719
+    inline RsCpsiCommBreakdown* gRsCpsiCommBreakdown = nullptr;
+
+    //0719
+    inline void addRsCpsiComm(u64& dst, u64 before, u64 after)
+    {
+        if (after >= before)
+            dst += after - before;
+    }
+
     class RsOprfSender : public oc::TimerAdapter
     {
     public:

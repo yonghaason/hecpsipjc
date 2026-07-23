@@ -1,6 +1,7 @@
 #include "RsCpsi_Tests.h"
 #include "volePSI/RsPsi.h"
 #include "volePSI/RsCpsi.h"
+#include "volePSI/PSI_Innerproduct.h"
 #include "cryptoTools/Network/Channel.h"
 #include "cryptoTools/Network/Session.h"
 #include "cryptoTools/Network/IOService.h"
@@ -539,4 +540,133 @@ void Cpsi_Rs_comm_time_compare_test(const CLP& cmd)
         << primeStats.mTotalBytes << ","
         << (primeStats.mTotalBytes * 8) << ","
         << primeStats.mMeanSeconds << std::endl;
+}
+
+
+//0719
+void Cpsi_PsiInnerproduct_b2a_test(const CLP& cmd)
+{
+    auto n = cmd.getOr("n", u64(64));
+    auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
+    auto nt = cmd.getOr("nt", u64(1));
+    auto sockets = LocalAsyncSocket::makePair();
+    auto config = PsiInnerproductConfig{};
+    config.mPrime = prime;
+    config.mNumThreads = nt;
+
+    std::vector<block> recvSet(n), sendSet(n);
+    std::vector<u64> associatedData(n);
+    auto prng = PRNG(block(101, 102));
+    prng.get(recvSet.data(), recvSet.size());
+    prng.get(sendSet.data(), sendSet.size());
+
+    for (u64 i = 0; i < n / 2; ++i)
+        sendSet[i] = recvSet[i];
+
+    for (u64 i = 0; i < n; ++i)
+        associatedData[i] = (i + 17) % prime;
+
+    auto sender = PsiInnerproductSender{};
+    auto receiver = PsiInnerproductReceiver{};
+    sender.init(sendSet.size(), recvSet.size(), config, block(111, 112));
+    receiver.init(sendSet.size(), recvSet.size(), config, block(113, 114));
+
+    PsiInnerproductSender::CpsiSharing sCpsiShare;
+    PsiInnerproductReceiver::CpsiSharing rCpsiShare;
+    oc::Matrix<u8> sArithmeticShare;
+    oc::Matrix<u8> rArithmeticShare;
+
+    auto p0 = receiver.receive(recvSet, rCpsiShare, rArithmeticShare, sockets[0]);
+    auto p1 = sender.send(sendSet, associatedData, sCpsiShare, sArithmeticShare, sockets[1]);
+    eval(p0, p1);
+
+    auto shareByteLength = config.shareByteLength();
+    for (u64 i = 0; i < n; ++i)
+    {
+        auto k = rCpsiShare.mMapping[i];
+        auto rv = readPrimeElement(&rArithmeticShare(k, 0), shareByteLength);
+        auto sv = readPrimeElement(&sArithmeticShare(k, 0), shareByteLength);
+        auto act = modAddPrime(rv, sv, prime);
+        auto exp = i < n / 2 ? associatedData[i] : u64(0);
+
+        if (act != exp)
+        {
+            std::cout << "idx=" << i << " act=" << act << " exp=" << exp << std::endl;
+            throw RTE_LOC;
+        }
+    }
+}
+
+//0719
+void Cpsi_Rs_toy_comm_breakdown_test(const CLP& cmd)
+{
+    auto n = cmd.getOr("n", u64(1) << 10);
+    auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
+    auto nt = cmd.getOr("nt", u64(1));
+
+    auto params = oc::CuckooIndex<>::selectParams(n, 40, 0, 3);
+    auto numBins = params.numBins();
+    auto keyBitLength = u64(40) + oc::log2ceil(numBins);
+    auto keyByteLength = oc::divCeil(keyBitLength, 8);
+    auto xorPayloadBytes = RsCpsiDataByteLength(prime);
+    auto primePayloadBytes = RsCpsiPrimeByteLength(prime);
+
+    auto runBreakdown = [&](ValueShareType type, u64 valueBytes, block seed) {
+        std::vector<block> recvSet(n), sendSet(n);
+        auto prng = PRNG(seed);
+        prng.get(recvSet.data(), recvSet.size());
+        sendSet = recvSet;
+
+        auto breakdown = RsCpsiCommBreakdown{};
+        gRsCpsiCommBreakdown = &breakdown;
+        auto cpsi = runCpsiMeasured(prng, recvSet, sendSet, nt, type, prime, valueBytes);
+        gRsCpsiCommBreakdown = nullptr;
+
+        if (cpsi.mIntersection.size() != n)
+        {
+            printMissing(type == ValueShareType::prime ? "prime-cpsi" : "xor-cpsi", cpsi.mIntersection, n);
+            throw RTE_LOC;
+        }
+
+        auto total = cpsi.mRecvBytes + cpsi.mSendBytes;
+        if (breakdown.total() != total)
+            throw RTE_LOC;
+
+        return breakdown;
+    };
+
+    auto xorBreakdown = runBreakdown(ValueShareType::Xor, xorPayloadBytes, block(41, 42));
+    auto primeBreakdown = runBreakdown(ValueShareType::prime, 0, block(43, 44));
+
+    auto theoryOprfBits = 128.0 * 1.3 * n;
+    auto theoryOpprfXorBits = 3.0 * 1.3 * n * (keyBitLength + 8 * xorPayloadBytes);
+    auto theoryOpprfPrimeBits = 3.0 * 1.3 * n * (keyBitLength + 8 * primePayloadBytes);
+    auto theoryPeqtBits = 4.0 * 1.3 * n * keyBitLength;
+    auto theoryOtherBits = 128.0;
+
+    std::cout << std::fixed << std::setprecision(1);
+    std::cout << "CPSI_TOY_PART_COMPARE n=" << n
+        << " numBins=" << numBins
+        << " keyBits=" << keyBitLength
+        << " keyBytes=" << keyByteLength
+        << " xorPayloadBytes=" << xorPayloadBytes
+        << " primePayloadBytes=" << primePayloadBytes
+        << " nt=" << nt << std::endl;
+    std::cout << "part,theoryXorBits,theoryPrimeBits,xorBytes,xorBits,primeBytes,primeBits" << std::endl;
+    std::cout << "OPRF," << theoryOprfBits << "," << theoryOprfBits << ","
+        << xorBreakdown.mOprf << "," << (8 * xorBreakdown.mOprf) << ","
+        << primeBreakdown.mOprf << "," << (8 * primeBreakdown.mOprf) << std::endl;
+    std::cout << "OPPRF," << theoryOpprfXorBits << "," << theoryOpprfPrimeBits << ","
+        << xorBreakdown.mOpprf << "," << (8 * xorBreakdown.mOpprf) << ","
+        << primeBreakdown.mOpprf << "," << (8 * primeBreakdown.mOpprf) << std::endl;
+    std::cout << "PEQT," << theoryPeqtBits << "," << theoryPeqtBits << ","
+        << xorBreakdown.mPeqt << "," << (8 * xorBreakdown.mPeqt) << ","
+        << primeBreakdown.mPeqt << "," << (8 * primeBreakdown.mPeqt) << std::endl;
+    std::cout << "Other," << theoryOtherBits << "," << theoryOtherBits << ","
+        << xorBreakdown.mOther << "," << (8 * xorBreakdown.mOther) << ","
+        << primeBreakdown.mOther << "," << (8 * primeBreakdown.mOther) << std::endl;
+    std::cout << "Total," << (theoryOprfBits + theoryOpprfXorBits + theoryPeqtBits + theoryOtherBits) << ","
+        << (theoryOprfBits + theoryOpprfPrimeBits + theoryPeqtBits + theoryOtherBits) << ","
+        << xorBreakdown.total() << "," << (8 * xorBreakdown.total()) << ","
+        << primeBreakdown.total() << "," << (8 * primeBreakdown.total()) << std::endl;
 }

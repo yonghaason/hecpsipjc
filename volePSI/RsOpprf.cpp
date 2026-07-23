@@ -73,7 +73,15 @@ namespace volePSI
 			throw RTE_LOC;
 
 		hashingSeed = prng.get();
-		co_await(chl.send(std::move(hashingSeed)));
+		{
+			auto before = chl.bytesSent();
+			co_await(chl.send(std::move(hashingSeed)));
+			if (gRsCpsiCommBreakdown)
+			{
+				co_await chl.flush();
+				addRsCpsiComm(gRsCpsiCommBreakdown->mOpprf, before, chl.bytesSent());
+			}
+		}
 
 		type = m % sizeof(block) ? PaxosParam::Binary : PaxosParam::GF128;
 		mPaxos.init(n, 1 << 14, 3, 40, type, hashingSeed);
@@ -81,7 +89,15 @@ namespace volePSI
 		if (mTimer)
 			mOprfSender.setTimer(*mTimer);
 
-		co_await(mOprfSender.send(recverSize, prng, chl, numThreads));
+		{
+			auto before = chl.bytesSent();
+			co_await(mOprfSender.send(recverSize, prng, chl, numThreads));
+			if (gRsCpsiCommBreakdown)
+			{
+				co_await chl.flush();
+				addRsCpsiComm(gRsCpsiCommBreakdown->mOprf, before, chl.bytesSent());
+			}
+		}
 
 		diffPtr.reset(new u8[nm]);
 		diffU8 = span<u8>(diffPtr.get(), nm);
@@ -128,7 +144,15 @@ namespace volePSI
 
 		setTimePoint("RsOpprfSender::send paxos solve");
 
-		co_await(chl.send(coproto::copy(mP)));
+		{
+			auto before = chl.bytesSent();
+			co_await(chl.send(coproto::copy(mP)));
+			if (gRsCpsiCommBreakdown)
+			{
+				co_await chl.flush();
+				addRsCpsiComm(gRsCpsiCommBreakdown->mOpprf, before, chl.bytesSent());
+			}
+		}
 
 		setTimePoint("RsOpprfSender::send end");
 
@@ -218,7 +242,15 @@ namespace volePSI
 			oprfOutput = temp;
 		}
 
-		co_await mOprfReceiver.receive(values, oprfOutput, prng, chl, numThreads);
+		{
+			auto before = chl.bytesSent();
+			co_await mOprfReceiver.receive(values, oprfOutput, prng, chl, numThreads);
+			if (gRsCpsiCommBreakdown)
+			{
+				co_await chl.flush();
+				addRsCpsiComm(gRsCpsiCommBreakdown->mOprf, before, chl.bytesSent());
+			}
+		}
 
 
 		p.resize(paxos.size(), m, oc::AllocType::Uninitialized);

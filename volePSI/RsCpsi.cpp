@@ -237,7 +237,15 @@ namespace volePSI
         cmp->init(r.rows(), cir, mNumThreads, 1, mPrng.get());
 
         cmp->setInput(0, r);
-        co_await (cmp->run(chl));
+        {
+            auto before = chl.bytesSent();
+            co_await (cmp->run(chl));
+            if (gRsCpsiCommBreakdown)
+            {
+                co_await chl.flush();
+                addRsCpsiComm(gRsCpsiCommBreakdown->mPeqt, before, chl.bytesSent());
+            }
+        }
 
         {
 
@@ -275,7 +283,15 @@ namespace volePSI
         setTimePoint("RsCpsiReceiver::receive begin");
 
         cuckooSeed = mPrng.get();
-        co_await (chl.send(std::move(cuckooSeed)));
+        {
+            auto before = chl.bytesSent();
+            co_await (chl.send(std::move(cuckooSeed)));
+            if (gRsCpsiCommBreakdown)
+            {
+                co_await chl.flush();
+                addRsCpsiComm(gRsCpsiCommBreakdown->mOther, before, chl.bytesSent());
+            }
+        }
         cuckoo.init(mRecverSize, mSsp, 0, 3);
 
         cuckoo.insert(X, cuckooSeed);
@@ -328,7 +344,15 @@ namespace volePSI
 
         cmp->implSetInput(0, r, r.cols());
 
-        co_await (cmp->run(chl));
+        {
+            auto before = chl.bytesSent();
+            co_await (cmp->run(chl));
+            if (gRsCpsiCommBreakdown)
+            {
+                co_await chl.flush();
+                addRsCpsiComm(gRsCpsiCommBreakdown->mPeqt, before, chl.bytesSent());
+            }
+        }
 
         {
             auto ss = cmp->getOutputView(0);
