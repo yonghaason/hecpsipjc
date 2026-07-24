@@ -6,8 +6,11 @@
 #include "cryptoTools/Network/Session.h"
 #include "cryptoTools/Network/IOService.h"
 #include "Common.h"
+#include "libOTe/Vole/Silent/SilentVoleSender.h"
+#include "libOTe/Vole/Silent/SilentVoleReceiver.h"
 #include <chrono>
 #include <iomanip>
+#include <thread>
 
 using coproto::LocalAsyncSocket;
 using namespace oc;
@@ -600,18 +603,58 @@ void Cpsi_PsiInnerproduct_b2a_test(const CLP& cmd)
 //0719
 void Cpsi_Rs_toy_comm_breakdown_test(const CLP& cmd)
 {
-    auto n = cmd.getOr("n", u64(1) << 10);
+    auto n = cmd.getOr("n", u64(1) << 20);
     auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
-    auto nt = cmd.getOr("nt", u64(1));
+    auto nt = cmd.getOr("nt", std::max<u64>(u64(1), std::thread::hardware_concurrency()));
+    auto dataByteLength = RsCpsiDataByteLength(prime);
+    auto primePayloadBytes = RsCpsiPrimeByteLength(prime);
 
     auto params = oc::CuckooIndex<>::selectParams(n, 40, 0, 3);
     auto numBins = params.numBins();
     auto keyBitLength = u64(40) + oc::log2ceil(numBins);
-    auto keyByteLength = oc::divCeil(keyBitLength, 8);
-    auto xorPayloadBytes = RsCpsiDataByteLength(prime);
-    auto primePayloadBytes = RsCpsiPrimeByteLength(prime);
+    auto logN = oc::log2ceil(n);
 
-    auto runBreakdown = [&](ValueShareType type, u64 valueBytes, block seed) {
+    struct PartMeasure
+    {
+        u64 mBytes = 0;
+        double mSeconds = 0;
+    };
+
+    struct ModeMeasure
+    {
+        RsCpsiCommBreakdown mComm;
+        CpsiRunOutput mRun;
+    };
+
+    auto sent = [](std::array<LocalAsyncSocket, 2>& sockets) {
+        return sockets[0].bytesSent() + sockets[1].bytesSent();
+    };
+
+    auto timeRun = [&](auto&& fn) {
+        auto begin = std::chrono::steady_clock::now();
+        auto bytes = fn();
+        auto end = std::chrono::steady_clock::now();
+        return PartMeasure{ bytes, std::chrono::duration<double>(end - begin).count() };
+    };
+
+    auto measureVole = [&]() {
+        return timeRun([&]() {
+            auto sockets = LocalAsyncSocket::makePair();
+            auto sender = oc::SilentVoleSender<block, block, oc::CoeffCtxGF128>{};
+            auto receiver = oc::SilentVoleReceiver<block, block, oc::CoeffCtxGF128>{};
+            auto prng0 = PRNG(block(11, 12));
+            auto prng1 = PRNG(block(13, 14));
+            auto delta = prng0.get<block>();
+
+            receiver.mNumThreads = nt;
+            auto p0 = sender.silentSendInplace(delta, numBins, prng0, sockets[0]);
+            auto p1 = receiver.silentReceiveInplace(numBins, prng1, sockets[1]);
+            eval(p0, p1);
+            return sent(sockets);
+        });
+    };
+
+    auto runMode = [&](ValueShareType type, u64 valueBytes, block seed) {
         std::vector<block> recvSet(n), sendSet(n);
         auto prng = PRNG(seed);
         prng.get(recvSet.data(), recvSet.size());
@@ -619,54 +662,69 @@ void Cpsi_Rs_toy_comm_breakdown_test(const CLP& cmd)
 
         auto breakdown = RsCpsiCommBreakdown{};
         gRsCpsiCommBreakdown = &breakdown;
-        auto cpsi = runCpsiMeasured(prng, recvSet, sendSet, nt, type, prime, valueBytes);
+        auto out = runCpsiMeasured(prng, recvSet, sendSet, nt, type, prime, valueBytes);
         gRsCpsiCommBreakdown = nullptr;
 
-        if (cpsi.mIntersection.size() != n)
+        if (out.mIntersection.size() != n)
         {
-            printMissing(type == ValueShareType::prime ? "prime-cpsi" : "xor-cpsi", cpsi.mIntersection, n);
+            printMissing(type == ValueShareType::prime ? "prime-cpsi" : "xor-cpsi", out.mIntersection, n);
             throw RTE_LOC;
         }
 
-        auto total = cpsi.mRecvBytes + cpsi.mSendBytes;
-        if (breakdown.total() != total)
+        if (breakdown.total() != out.mRecvBytes + out.mSendBytes)
             throw RTE_LOC;
 
-        return breakdown;
+        return ModeMeasure{ breakdown, std::move(out) };
     };
 
-    auto xorBreakdown = runBreakdown(ValueShareType::Xor, xorPayloadBytes, block(41, 42));
-    auto primeBreakdown = runBreakdown(ValueShareType::prime, 0, block(43, 44));
+    auto roundBitsToBytes = [](u64 bits) {
+        return oc::divCeil(bits, u64(8)) * u64(8);
+    };
 
-    auto theoryOprfBits = 128.0 * 1.3 * n;
-    auto theoryOpprfXorBits = 3.0 * 1.3 * n * (keyBitLength + 8 * xorPayloadBytes);
-    auto theoryOpprfPrimeBits = 3.0 * 1.3 * n * (keyBitLength + 8 * primePayloadBytes);
-    auto theoryPeqtBits = 4.0 * 1.3 * n * keyBitLength;
-    auto theoryOtherBits = 128.0;
+    auto theoryOprfBits = double(roundBitsToBytes(128)) * 1.3 * 1.3 * double(n);
+    auto theoryOpprfXorBits = 3.0 * 1.3 * double(n) * double(roundBitsToBytes(40 + logN + 8 * dataByteLength));
+    auto theoryOpprfPrimeBits = 3.0 * 1.3 * double(n) * double(roundBitsToBytes(40 + logN + 8 * primePayloadBytes));
+    auto theoryPeqtBits = 4.0 * 1.3 * double(n) * double(roundBitsToBytes(40 + logN));
+    auto theoryOtherBits = double(roundBitsToBytes(128));
 
-    std::cout << std::fixed << std::setprecision(1);
+    auto vole = measureVole();
+    auto xorMode = runMode(ValueShareType::Xor, dataByteLength, block(41, 42));
+    auto primeMode = runMode(ValueShareType::prime, 0, block(43, 44));
+
+    auto splitOprf = [&](u64 oprfBytes) {
+        return oprfBytes > vole.mBytes ? oprfBytes - vole.mBytes : u64(0);
+    };
+
+    auto xorOprfNoVole = splitOprf(xorMode.mComm.mOprf);
+    auto primeOprfNoVole = splitOprf(primeMode.mComm.mOprf);
+    auto xorTotalBits = 8 * (vole.mBytes + xorOprfNoVole + xorMode.mComm.mOpprf + xorMode.mComm.mPeqt + xorMode.mComm.mOther);
+    auto primeTotalBits = 8 * (vole.mBytes + primeOprfNoVole + primeMode.mComm.mOpprf + primeMode.mComm.mPeqt + primeMode.mComm.mOther);
+    auto theoryXorTotal = theoryOprfBits + theoryOpprfXorBits + theoryPeqtBits + theoryOtherBits;
+    auto theoryPrimeTotal = theoryOprfBits + theoryOpprfPrimeBits + theoryPeqtBits + theoryOtherBits;
+
+    std::cout << std::fixed << std::setprecision(6);
     std::cout << "CPSI_TOY_PART_COMPARE n=" << n
         << " numBins=" << numBins
         << " keyBits=" << keyBitLength
-        << " keyBytes=" << keyByteLength
-        << " xorPayloadBytes=" << xorPayloadBytes
+        << " xorPayloadBytes=" << dataByteLength
         << " primePayloadBytes=" << primePayloadBytes
         << " nt=" << nt << std::endl;
-    std::cout << "part,theoryXorBits,theoryPrimeBits,xorBytes,xorBits,primeBytes,primeBits" << std::endl;
+    std::cout << "part,theoryXorBits,theoryPrimeBits,xorActualBits,primeActualBits" << std::endl;
+    std::cout << "VOLE,-,-," << (8 * vole.mBytes) << "," << (8 * vole.mBytes) << std::endl;
     std::cout << "OPRF," << theoryOprfBits << "," << theoryOprfBits << ","
-        << xorBreakdown.mOprf << "," << (8 * xorBreakdown.mOprf) << ","
-        << primeBreakdown.mOprf << "," << (8 * primeBreakdown.mOprf) << std::endl;
+        << (8 * xorOprfNoVole) << "," << (8 * primeOprfNoVole) << std::endl;
     std::cout << "OPPRF," << theoryOpprfXorBits << "," << theoryOpprfPrimeBits << ","
-        << xorBreakdown.mOpprf << "," << (8 * xorBreakdown.mOpprf) << ","
-        << primeBreakdown.mOpprf << "," << (8 * primeBreakdown.mOpprf) << std::endl;
+        << (8 * xorMode.mComm.mOpprf) << "," << (8 * primeMode.mComm.mOpprf) << std::endl;
     std::cout << "PEQT," << theoryPeqtBits << "," << theoryPeqtBits << ","
-        << xorBreakdown.mPeqt << "," << (8 * xorBreakdown.mPeqt) << ","
-        << primeBreakdown.mPeqt << "," << (8 * primeBreakdown.mPeqt) << std::endl;
-    std::cout << "Other," << theoryOtherBits << "," << theoryOtherBits << ","
-        << xorBreakdown.mOther << "," << (8 * xorBreakdown.mOther) << ","
-        << primeBreakdown.mOther << "," << (8 * primeBreakdown.mOther) << std::endl;
-    std::cout << "Total," << (theoryOprfBits + theoryOpprfXorBits + theoryPeqtBits + theoryOtherBits) << ","
-        << (theoryOprfBits + theoryOpprfPrimeBits + theoryPeqtBits + theoryOtherBits) << ","
-        << xorBreakdown.total() << "," << (8 * xorBreakdown.total()) << ","
-        << primeBreakdown.total() << "," << (8 * primeBreakdown.total()) << std::endl;
+        << (8 * xorMode.mComm.mPeqt) << "," << (8 * primeMode.mComm.mPeqt) << std::endl;
+    std::cout << "Others," << theoryOtherBits << "," << theoryOtherBits << ","
+        << (8 * xorMode.mComm.mOther) << "," << (8 * primeMode.mComm.mOther) << std::endl;
+    std::cout << "Total," << theoryXorTotal << "," << theoryPrimeTotal << ","
+        << xorTotalBits << "," << primeTotalBits << std::endl;
+    std::cout << "mode,totalActualBits,totalTimeSeconds" << std::endl;
+    std::cout << "xor," << (8 * (xorMode.mRun.mRecvBytes + xorMode.mRun.mSendBytes)) << ","
+        << xorMode.mRun.mSeconds << std::endl;
+    std::cout << "prime," << (8 * (primeMode.mRun.mRecvBytes + primeMode.mRun.mSendBytes)) << ","
+        << primeMode.mRun.mSeconds << std::endl;
+    std::cout << "vole," << (8 * vole.mBytes) << "," << vole.mSeconds << std::endl;
 }
