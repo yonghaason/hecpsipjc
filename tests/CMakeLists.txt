@@ -22,6 +22,7 @@ endif()
 if(VOLE_PSI_ENABLE_CPSI)
     list(APPEND SRCS
         "RsCpsi_Tests.cpp"
+        "RsPsiInnerproduct_Perf.cpp"
     )
 endif()
 if(VOLE_PSI_ENABLE_OPPRF)

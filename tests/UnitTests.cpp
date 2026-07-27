@@ -9,6 +9,7 @@
 #include "RsOpprf_Tests.h"
 #include "RsPsi_Tests.h"
 #include "RsCpsi_Tests.h"
+#include "RsPsiInnerproduct_Perf.h"
 #include "GMW_Tests.h"
 #include "volePSI/GMW/Circuit.h"
 #include "FileBase_Tests.h"
@@ -86,8 +87,7 @@ namespace volePSI_Tests
         t.add("Cpsi_Rs_comm_time_compare_test", Cpsi_Rs_comm_time_compare_test);
         //0719
         t.add("Cpsi_Rs_toy_comm_breakdown_test", Cpsi_Rs_toy_comm_breakdown_test);
-        //0719
-        t.add("Cpsi_PsiInnerproduct_b2a_test", Cpsi_PsiInnerproduct_b2a_test);
+        t.add("RsPsiInnerproduct_perf_test", RsPsiInnerproduct_perf_test);
 #endif
 
         t.add("filebase_readSet_Test       ", filebase_readSet_Test);

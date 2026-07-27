@@ -1,7 +1,6 @@
 #include "RsCpsi_Tests.h"
 #include "volePSI/RsPsi.h"
 #include "volePSI/RsCpsi.h"
-#include "volePSI/PSI_Innerproduct.h"
 #include "cryptoTools/Network/Channel.h"
 #include "cryptoTools/Network/Session.h"
 #include "cryptoTools/Network/IOService.h"
@@ -545,60 +544,6 @@ void Cpsi_Rs_comm_time_compare_test(const CLP& cmd)
         << primeStats.mMeanSeconds << std::endl;
 }
 
-
-//0719
-void Cpsi_PsiInnerproduct_b2a_test(const CLP& cmd)
-{
-    auto n = cmd.getOr("n", u64(64));
-    auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
-    auto nt = cmd.getOr("nt", u64(1));
-    auto sockets = LocalAsyncSocket::makePair();
-    auto config = PsiInnerproductConfig{};
-    config.mPrime = prime;
-    config.mNumThreads = nt;
-
-    std::vector<block> recvSet(n), sendSet(n);
-    std::vector<u64> associatedData(n);
-    auto prng = PRNG(block(101, 102));
-    prng.get(recvSet.data(), recvSet.size());
-    prng.get(sendSet.data(), sendSet.size());
-
-    for (u64 i = 0; i < n / 2; ++i)
-        sendSet[i] = recvSet[i];
-
-    for (u64 i = 0; i < n; ++i)
-        associatedData[i] = (i + 17) % prime;
-
-    auto sender = PsiInnerproductSender{};
-    auto receiver = PsiInnerproductReceiver{};
-    sender.init(sendSet.size(), recvSet.size(), config, block(111, 112));
-    receiver.init(sendSet.size(), recvSet.size(), config, block(113, 114));
-
-    PsiInnerproductSender::CpsiSharing sCpsiShare;
-    PsiInnerproductReceiver::CpsiSharing rCpsiShare;
-    oc::Matrix<u8> sArithmeticShare;
-    oc::Matrix<u8> rArithmeticShare;
-
-    auto p0 = receiver.receive(recvSet, rCpsiShare, rArithmeticShare, sockets[0]);
-    auto p1 = sender.send(sendSet, associatedData, sCpsiShare, sArithmeticShare, sockets[1]);
-    eval(p0, p1);
-
-    auto shareByteLength = config.shareByteLength();
-    for (u64 i = 0; i < n; ++i)
-    {
-        auto k = rCpsiShare.mMapping[i];
-        auto rv = readPrimeElement(&rArithmeticShare(k, 0), shareByteLength);
-        auto sv = readPrimeElement(&sArithmeticShare(k, 0), shareByteLength);
-        auto act = modAddPrime(rv, sv, prime);
-        auto exp = i < n / 2 ? associatedData[i] : u64(0);
-
-        if (act != exp)
-        {
-            std::cout << "idx=" << i << " act=" << act << " exp=" << exp << std::endl;
-            throw RTE_LOC;
-        }
-    }
-}
 
 //0719
 void Cpsi_Rs_toy_comm_breakdown_test(const CLP& cmd)

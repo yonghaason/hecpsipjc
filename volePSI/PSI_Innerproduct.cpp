@@ -2,8 +2,8 @@
 
 #ifdef VOLE_PSI_ENABLE_CPSI
 
-#include "libOTe/TwoChooseOne/Iknp/IknpOtExtSender.h"
-#include "libOTe/TwoChooseOne/Iknp/IknpOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/Silent/SilentOtExtSender.h"
+#include "libOTe/TwoChooseOne/Silent/SilentOtExtReceiver.h"
 #include "cryptoTools/Common/Aligned.h"
 
 namespace volePSI
@@ -52,13 +52,13 @@ namespace volePSI
         PRNG& prng,
         Socket& chl)
     {
-#ifdef ENABLE_IKNP
+#ifdef ENABLE_SILENTOT
         auto rowCount = values.rows();
         auto valueByteLength = values.cols();
         auto elemByteLength = config.shareByteLength();
         auto elemCount = valueByteLength / elemByteLength;
         auto otCount = rowCount * elemCount;
-        auto otSender = oc::IknpOtExtSender{};
+        auto otSender = oc::SilentOtExtSender{};
         auto messages = oc::AlignedUnVector<std::array<block, 2>>{};
 
         if (valueByteLength % elemByteLength)
@@ -118,12 +118,12 @@ namespace volePSI
         PRNG& prng,
         Socket& chl)
     {
-#ifdef ENABLE_IKNP
+#ifdef ENABLE_SILENTOT
         auto elemByteLength = config.shareByteLength();
         auto elemCount = valueByteLength / elemByteLength;
         auto otCount = rowCount * elemCount;
         auto choices = oc::BitVector{};
-        auto otReceiver = oc::IknpOtExtReceiver{};
+        auto otReceiver = oc::SilentOtExtReceiver{};
         auto messages = oc::AlignedUnVector<block>{};
 
         if (valueByteLength % elemByteLength)
