@@ -33,14 +33,20 @@ namespace volePSI
             return v ? prime - v : 0;
         }
 
-        block encodePsiIpBlock(u64 v)
+        u64 samplePsiIpPrimeElement(PRNG& prng, u64 prime)
         {
-            return block(0, v);
+            auto threshold = (u64(0) - prime) % prime;
+            while (true)
+            {
+                auto candidate = prng.get<u64>();
+                if (candidate >= threshold)
+                    return candidate % prime;
+            }
         }
 
-        u64 decodePsiIpBlock(block v, u64 prime)
+        u64 psiIpRotKeyLow32ToField(block key, u64 prime)
         {
-            return v.get<u64>(0) % prime;
+            return static_cast<u64>(key.get<u32>(0)) % prime;
         }
     }
 
@@ -59,18 +65,33 @@ namespace volePSI
         auto elemCount = valueByteLength / elemByteLength;
         auto otCount = rowCount * elemCount;
         auto otSender = oc::SilentOtExtSender{};
-        auto messages = oc::AlignedUnVector<std::array<block, 2>>{};
+        auto rotKeys = oc::AlignedUnVector<std::array<block, 2>>{};
+        auto corrections = std::vector<u8>{};
 
-        if (valueByteLength % elemByteLength)
+        if (config.mPrime < 2 ||
+            elemByteLength > sizeof(u64) ||
+            valueByteLength % elemByteLength ||
+            bitShare.size() < rowCount)
         {
             co_await chl.close();
             throw RTE_LOC;
         }
 
         arithmeticShare.resize(rowCount, valueByteLength);
-        messages.resize(otCount);
+        rotKeys.resize(otCount);
+        corrections.resize(otCount * 2 * elemByteLength);
+
+        for (u64 i = 0, k = 0; i < rowCount; ++i)
+        {
+            for (u64 j = 0; j < valueByteLength; j += elemByteLength, ++k)
+            {
+                auto r = samplePsiIpPrimeElement(prng, config.mPrime);
+                writePsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength, r);
+            }
+        }
 
         co_await otSender.genBaseOts(prng, chl);
+        co_await otSender.send(rotKeys, prng, chl);
 
         for (u64 i = 0, k = 0; i < rowCount; ++i)
         {
@@ -78,26 +99,26 @@ namespace volePSI
             for (u64 j = 0; j < valueByteLength; j += elemByteLength, ++k)
             {
                 auto x = readPsiIpPrimeElement(&values(i, j), elemByteLength) % config.mPrime;
-                auto r = prng.get<u64>() % config.mPrime;
+                auto r = readPsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength);
                 auto zeroShare = modNegPsiIp(r, config.mPrime);
                 auto oneShare = modSubPsiIp(x, r, config.mPrime);
+                auto m0 = b ? oneShare : zeroShare;
+                auto m1 = b ? zeroShare : oneShare;
+                auto mask0 = psiIpRotKeyLow32ToField(rotKeys[k][0], config.mPrime);
+                auto mask1 = psiIpRotKeyLow32ToField(rotKeys[k][1], config.mPrime);
 
-                writePsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength, r);
-
-                if (b)
-                {
-                    messages[k][0] = encodePsiIpBlock(oneShare);
-                    messages[k][1] = encodePsiIpBlock(zeroShare);
-                }
-                else
-                {
-                    messages[k][0] = encodePsiIpBlock(zeroShare);
-                    messages[k][1] = encodePsiIpBlock(oneShare);
-                }
+                writePsiIpPrimeElement(
+                    corrections.data() + (2 * k) * elemByteLength,
+                    elemByteLength,
+                    modSubPsiIp(m0, mask0, config.mPrime));
+                writePsiIpPrimeElement(
+                    corrections.data() + (2 * k + 1) * elemByteLength,
+                    elemByteLength,
+                    modSubPsiIp(m1, mask1, config.mPrime));
             }
         }
 
-        co_await otSender.sendChosen(messages, prng, chl);
+        co_await chl.send(std::move(corrections));
 #else
         (void)bitShare;
         (void)values;
@@ -124,9 +145,13 @@ namespace volePSI
         auto otCount = rowCount * elemCount;
         auto choices = oc::BitVector{};
         auto otReceiver = oc::SilentOtExtReceiver{};
-        auto messages = oc::AlignedUnVector<block>{};
+        auto selectedKeys = oc::AlignedUnVector<block>{};
+        auto corrections = std::vector<u8>{};
 
-        if (valueByteLength % elemByteLength)
+        if (config.mPrime < 2 ||
+            elemByteLength > sizeof(u64) ||
+            valueByteLength % elemByteLength ||
+            bitShare.size() < rowCount)
         {
             co_await chl.close();
             throw RTE_LOC;
@@ -134,7 +159,8 @@ namespace volePSI
 
         arithmeticShare.resize(rowCount, valueByteLength);
         choices.resize(otCount);
-        messages.resize(otCount);
+        selectedKeys.resize(otCount);
+        corrections.resize(otCount * 2 * elemByteLength);
 
         for (u64 i = 0, k = 0; i < rowCount; ++i)
         {
@@ -144,14 +170,24 @@ namespace volePSI
         }
 
         co_await otReceiver.genBaseOts(prng, chl);
-        co_await otReceiver.receiveChosen(choices, messages, prng, chl);
+        co_await otReceiver.receive(choices, selectedKeys, prng, chl);
+        co_await chl.recv(corrections);
 
         for (u64 i = 0, k = 0; i < rowCount; ++i)
         {
             for (u64 j = 0; j < valueByteLength; j += elemByteLength, ++k)
             {
-                auto v = decodePsiIpBlock(messages[k], config.mPrime);
-                writePsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength, v);
+                auto choice = static_cast<u64>(choices[k]);
+                auto correction = readPsiIpPrimeElement(
+                    corrections.data() + (2 * k + choice) * elemByteLength,
+                    elemByteLength);
+                auto mask = psiIpRotKeyLow32ToField(selectedKeys[k], config.mPrime);
+                auto value = modAddPsiIp(correction, mask, config.mPrime);
+
+                writePsiIpPrimeElement(
+                    &arithmeticShare(i, j),
+                    elemByteLength,
+                    value);
             }
         }
 #else
