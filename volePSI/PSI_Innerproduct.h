@@ -13,6 +13,7 @@ namespace volePSI
         u64 mPrime = RsCpsiDefaultPrime;
         u64 mStatSecParam = 40;
         u64 mNumThreads = 1;
+        u64 mSealPolyModulusDegree = 8192;
 
         u64 dataByteLength() const { return RsCpsiDataByteLength(mPrime); }
         u64 shareByteLength() const { return RsCpsiPrimeByteLength(mPrime); }
@@ -51,6 +52,14 @@ namespace volePSI
         oc::MatrixView<u8> rhs,
         oc::Matrix<u8>& out,
         const PsiInnerproductConfig& config);
+
+#ifdef VOLE_PSI_ENABLE_SEAL
+    Proto psiIpHeSender(oc::MatrixView<u8> arithmeticShare, u64& result,
+        const PsiInnerproductConfig& config, PRNG& prng, Socket& chl);
+    Proto psiIpHeReceiver(span<const u64> receiverPayload,
+        const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
+        const PsiInnerproductConfig& config, Socket& chl);
+#endif
 
     class PsiInnerproductSender : public oc::TimerAdapter
     {
@@ -100,6 +109,15 @@ namespace volePSI
             psiIpAddPrimeShares(ownedValueShare, receivedValueShare, arithmeticShare, mConfig);
         }
 
+#ifdef VOLE_PSI_ENABLE_SEAL
+        Proto send(span<block> identifiers, span<const u64> associatedData, CpsiSharing& share,
+            oc::Matrix<u8>& arithmeticShare, u64& result, Socket& chl)
+        {
+            co_await send(identifiers, associatedData, share, arithmeticShare, chl);
+            co_await psiIpHeSender(arithmeticShare, result, mConfig, mPrng, chl);
+        }
+#endif
+
     private:
         PsiInnerproductConfig mConfig;
         PRNG mPrng;
@@ -144,6 +162,20 @@ namespace volePSI
             co_await psiIpB2aValueOwner(share.mFlagBits, share.mValues, ownedValueShare, mConfig, mPrng, chl);
             psiIpAddPrimeShares(receivedValueShare, ownedValueShare, arithmeticShare, mConfig);
         }
+
+#ifdef VOLE_PSI_ENABLE_SEAL
+        Proto receive(span<block> identifiers, span<const u64> associatedData, CpsiSharing& share,
+            oc::Matrix<u8>& arithmeticShare, Socket& chl)
+        {
+            if (identifiers.size() != associatedData.size())
+            {
+                co_await chl.close();
+                throw RTE_LOC;
+            }
+            co_await receive(identifiers, share, arithmeticShare, chl);
+            co_await psiIpHeReceiver(associatedData, share, arithmeticShare, mConfig, chl);
+        }
+#endif
 
     private:
         PsiInnerproductConfig mConfig;

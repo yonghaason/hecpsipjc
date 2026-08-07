@@ -13,6 +13,20 @@ include(cmake/buildOptions.cmake)
 # find all the dependancies.
 include(cmake/findDependancies.cmake)
 
+if(VOLE_PSI_ENABLE_SEAL)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SEAL/CMakeLists.txt")
+        message(FATAL_ERROR "SEAL submodule missing; run git submodule update --init thirdparty/SEAL")
+    endif()
+    set(SEAL_BUILD_DEPS OFF CACHE BOOL "" FORCE)
+    set(SEAL_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(SEAL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(SEAL_BUILD_BENCH OFF CACHE BOOL "" FORCE)
+    set(SEAL_USE_MSGSL OFF CACHE BOOL "" FORCE)
+    set(SEAL_USE_ZLIB OFF CACHE BOOL "" FORCE)
+    set(SEAL_USE_ZSTD OFF CACHE BOOL "" FORCE)
+    add_subdirectory(thirdparty/SEAL EXCLUDE_FROM_ALL)
+endif()
+
 # build volePSI
 add_subdirectory(volePSI)
 

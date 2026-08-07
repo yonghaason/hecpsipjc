@@ -29,6 +29,15 @@ namespace volePSI
     //0719
     inline RsCpsiCommBreakdown* gRsCpsiCommBreakdown = nullptr;
 
+    struct RsCpsiTimeBreakdown
+    {
+        double mSenderOprf = 0, mReceiverOprf = 0;
+        double mSenderOpprf = 0, mReceiverOpprf = 0;
+        double mSenderPeqt = 0, mReceiverPeqt = 0;
+    };
+
+    inline RsCpsiTimeBreakdown* gRsCpsiTimeBreakdown = nullptr;
+
     //0719
     inline void addRsCpsiComm(u64& dst, u64 before, u64 after)
     {

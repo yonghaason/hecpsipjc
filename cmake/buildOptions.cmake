@@ -68,6 +68,7 @@ endif()
 option(VOLE_PSI_ENABLE_SSE    "build the library with SSE intrisics" ON)
 option(VOLE_PSI_ENABLE_GMW    "compile the library with GMW" ON)
 option(VOLE_PSI_ENABLE_CPSI   "compile the library with circuit PSI" ON)
+option(VOLE_PSI_ENABLE_SEAL   "enable the Microsoft SEAL BGV inner-product postprocessing" OFF)
 option(VOLE_PSI_ENABLE_OPPRF  "compile the library with OPPRF" ON)
 option(VOLE_PSI_ENABLE_BOOST   "build coproto with boost support" OFF)
 option(VOLE_PSI_ENABLE_OPENSSL "build coproto with boost openssl support" OFF)
@@ -89,6 +90,9 @@ endif()
 if(VOLE_PSI_ENABLE_CPSI)
     set(VOLE_PSI_ENABLE_OPPRF ${VOLE_PSI_ENABLE_CPSI})
 endif()
+if(VOLE_PSI_ENABLE_SEAL AND NOT VOLE_PSI_ENABLE_CPSI)
+    message(FATAL_ERROR "VOLE_PSI_ENABLE_SEAL requires VOLE_PSI_ENABLE_CPSI=ON")
+endif()
 
 
 
@@ -109,6 +113,7 @@ message(STATUS "Option: VOLE_PSI_STD_VER           = ${VOLE_PSI_STD_VER}")
                                                   
 message(STATUS "Option: VOLE_PSI_ENABLE_GMW        = ${VOLE_PSI_ENABLE_GMW}")
 message(STATUS "Option: VOLE_PSI_ENABLE_CPSI       = ${VOLE_PSI_ENABLE_CPSI}")
+message(STATUS "Option: VOLE_PSI_ENABLE_SEAL       = ${VOLE_PSI_ENABLE_SEAL}")
 message(STATUS "Option: VOLE_PSI_ENABLE_OPPRF      = ${VOLE_PSI_ENABLE_OPPRF}\n")
                                                   
 message(STATUS "Option: VOLE_PSI_ENABLE_BOOST      = ${VOLE_PSI_ENABLE_BOOST}")
@@ -117,5 +122,4 @@ message(STATUS "Option: VOLE_PSI_ENABLE_BITPOLYMUL = ${VOLE_PSI_ENABLE_BITPOLYMU
 message(STATUS "Option: VOLE_PSI_ENABLE_SODIUM     = ${VOLE_PSI_ENABLE_SODIUM}")
 message(STATUS "Option: VOLE_PSI_SODIUM_MONTGOMERY = ${VOLE_PSI_SODIUM_MONTGOMERY}")
 message(STATUS "Option: VOLE_PSI_ENABLE_RELIC      = ${VOLE_PSI_ENABLE_RELIC}")
-
 

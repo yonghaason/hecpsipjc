@@ -88,6 +88,9 @@ namespace volePSI_Tests
         //0719
         t.add("Cpsi_Rs_toy_comm_breakdown_test", Cpsi_Rs_toy_comm_breakdown_test);
         t.add("RsPsiInnerproduct_perf_test", RsPsiInnerproduct_perf_test);
+#ifdef VOLE_PSI_ENABLE_SEAL
+        t.add("RsPsiInnerproduct_seal_test", RsPsiInnerproduct_seal_test);
+#endif
 #endif
 
         t.add("filebase_readSet_Test       ", filebase_readSet_Test);

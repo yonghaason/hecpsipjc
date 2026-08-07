@@ -7,6 +7,9 @@
 // compile the library with circuit psi
 #cmakedefine VOLE_PSI_ENABLE_CPSI @VOLE_PSI_ENABLE_CPSI@ 
 
+// enable Microsoft SEAL BGV postprocessing
+#cmakedefine VOLE_PSI_ENABLE_SEAL @VOLE_PSI_ENABLE_SEAL@
+
 
 // compile the library with OPPRF
 #cmakedefine VOLE_PSI_ENABLE_OPPRF @VOLE_PSI_ENABLE_OPPRF@ 

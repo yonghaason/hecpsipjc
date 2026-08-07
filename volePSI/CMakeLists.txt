@@ -32,6 +32,9 @@ endif()
 
 add_library(volePSI STATIC ${SRCS})
 target_link_libraries(volePSI oc::libOTe sparsehash libdivide)
+if(VOLE_PSI_ENABLE_SEAL)
+    target_link_libraries(volePSI SEAL::seal)
+endif()
 
 if(APPLE)
     target_compile_options(volePSI PRIVATE
@@ -88,4 +91,3 @@ target_include_directories(volePSI PUBLIC
 target_include_directories(volePSI PUBLIC 
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
                     $<INSTALL_INTERFACE:include>) 
-

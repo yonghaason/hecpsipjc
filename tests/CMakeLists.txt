@@ -25,6 +25,9 @@ if(VOLE_PSI_ENABLE_CPSI)
         "RsPsiInnerproduct_Perf.cpp"
     )
 endif()
+if(VOLE_PSI_ENABLE_SEAL)
+    list(APPEND SRCS "RsPsiInnerproduct_SEAL_Tests.cpp")
+endif()
 if(VOLE_PSI_ENABLE_OPPRF)
     list(APPEND SRCS
         "RsOpprf_Tests.cpp"

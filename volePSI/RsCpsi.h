@@ -34,8 +34,9 @@ namespace volePSI
 
     //0714
     //0719
-    // The default prime is the largest prime smaller than 2^32.
-    constexpr u64 RsCpsiDefaultPrime = 4294967291ULL;
+    // The largest prime below 2^32 satisfying p = 1 mod 16384. This enables
+    // SEAL batching with the default polynomial modulus degree N = 8192.
+    constexpr u64 RsCpsiDefaultPrime = 4294475777ULL;
 
     //0719
     inline u64 RsCpsiPrimeBitLength(u64 primeModulus)

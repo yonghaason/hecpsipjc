@@ -239,7 +239,11 @@ namespace volePSI
         cmp->setInput(0, r);
         {
             auto before = chl.bytesSent();
+            auto phaseBegin = std::chrono::steady_clock::now();
             co_await (cmp->run(chl));
+            if (gRsCpsiTimeBreakdown)
+                gRsCpsiTimeBreakdown->mSenderPeqt = std::chrono::duration<double>(
+                    std::chrono::steady_clock::now() - phaseBegin).count();
             if (gRsCpsiCommBreakdown)
             {
                 co_await chl.flush();
@@ -346,7 +350,11 @@ namespace volePSI
 
         {
             auto before = chl.bytesSent();
+            auto phaseBegin = std::chrono::steady_clock::now();
             co_await (cmp->run(chl));
+            if (gRsCpsiTimeBreakdown)
+                gRsCpsiTimeBreakdown->mReceiverPeqt = std::chrono::duration<double>(
+                    std::chrono::steady_clock::now() - phaseBegin).count();
             if (gRsCpsiCommBreakdown)
             {
                 co_await chl.flush();

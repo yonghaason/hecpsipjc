@@ -53,6 +53,7 @@ namespace volePSI
 
 	Proto RsOpprfSender::send(u64 recverSize, span<const block> X, MatrixView<u8> val, PRNG& prng, u64 numThreads, Socket& chl)
 	{
+		auto phaseBegin = std::chrono::steady_clock::now();
 		auto n = u64{};
 		auto m = u64{};
 		auto nm = u64{};
@@ -91,7 +92,11 @@ namespace volePSI
 
 		{
 			auto before = chl.bytesSent();
+			auto oprfBegin = std::chrono::steady_clock::now();
 			co_await(mOprfSender.send(recverSize, prng, chl, numThreads));
+			if (gRsCpsiTimeBreakdown)
+				gRsCpsiTimeBreakdown->mSenderOprf = std::chrono::duration<double>(
+					std::chrono::steady_clock::now() - oprfBegin).count();
 			if (gRsCpsiCommBreakdown)
 			{
 				co_await chl.flush();
@@ -155,6 +160,9 @@ namespace volePSI
 		}
 
 		setTimePoint("RsOpprfSender::send end");
+		if (gRsCpsiTimeBreakdown)
+			gRsCpsiTimeBreakdown->mSenderOpprf = std::chrono::duration<double>(
+				std::chrono::steady_clock::now() - phaseBegin).count();
 
 	}
 
@@ -199,6 +207,7 @@ namespace volePSI
 		u64 numThreads,
 		Socket& chl)
 	{
+		auto phaseBegin = std::chrono::steady_clock::now();
 		auto n = u64{0}, m = u64{0};
 		auto paxos = Baxos{};
 		auto type = PaxosParam::Binary;
@@ -244,7 +253,11 @@ namespace volePSI
 
 		{
 			auto before = chl.bytesSent();
+			auto oprfBegin = std::chrono::steady_clock::now();
 			co_await mOprfReceiver.receive(values, oprfOutput, prng, chl, numThreads);
+			if (gRsCpsiTimeBreakdown)
+				gRsCpsiTimeBreakdown->mReceiverOprf = std::chrono::duration<double>(
+					std::chrono::steady_clock::now() - oprfBegin).count();
 			if (gRsCpsiCommBreakdown)
 			{
 				co_await chl.flush();
@@ -294,6 +307,9 @@ namespace volePSI
 		temp = {};
 
 		setTimePoint("RsOpprfReceiver::receive end");
+		if (gRsCpsiTimeBreakdown)
+			gRsCpsiTimeBreakdown->mReceiverOpprf = std::chrono::duration<double>(
+				std::chrono::steady_clock::now() - phaseBegin).count();
 
 		co_return;
 	}
