@@ -355,7 +355,7 @@ namespace volePSI
             co_await chl.close();
             throw RTE_LOC;
         }
-
+        /*1.aligned = D^Y' (idx로 R의 payload 정렬 맞추기)*/
         std::vector<u64> aligned(arithmeticShare.rows(), 0);
         for (u64 inputIdx = 0; inputIdx < receiverPayload.size(); ++inputIdx)
         {
@@ -374,56 +374,56 @@ namespace volePSI
             throw std::invalid_argument(context.parameter_error_message());
         auto encoding = encodingFor(context);
         auto encoder = encoding.batching ? std::make_unique<seal::BatchEncoder>(context) : nullptr;
+        /*2.keygen*/
         seal::KeyGenerator keygen(context);
-        seal::PublicKey publicKey;
-        keygen.create_public_key(publicKey);
         auto secretKey = keygen.secret_key();
-        seal::Encryptor encryptor(context, publicKey);
+        seal::Encryptor encryptor(context, secretKey);
 
         auto parameterBytes = saveSeal(parms);
-        auto publicKeyBytes = saveSeal(publicKey);
+        /*3.pk to S*/
         co_await chl.send(std::move(parameterBytes));
-        co_await chl.send(std::move(publicKeyBytes));
         u64 chunkCount = (aligned.size() + encoding.slots - 1) / encoding.slots;
         co_await chl.send(chunkCount);
+        /*4.Enc(sk, D^Y') to S*/
         for (u64 chunk = 0; chunk < chunkCount; ++chunk)
         {
             auto offset = chunk * encoding.slots;
             auto used = std::min<u64>(encoding.slots, aligned.size() - offset);
             auto plain = encodeChunk(aligned, offset, used, encoding, encoder.get());
-            seal::Ciphertext encrypted;
-            encryptor.encrypt(plain, encrypted);
+            auto encrypted = encryptor.encrypt_symmetric(plain);
             auto ciphertextBytes = saveSeal(encrypted);
             co_await chl.send(std::move(ciphertextBytes));
         }
 
         seal::Decryptor decryptor(context, secretKey);
-        u64 g = 0;
-        for (u64 chunk = 0; chunk < chunkCount; ++chunk)
+        u64 maskedInnerProduct = 0;
+        if (chunkCount)
         {
+            /*11.encrypted=Enc(sum(D^Y'*a_s-r)) 수신*/
             std::vector<u8> bytes;
             co_await chl.recvResize(bytes);
             auto stream = loadStream(bytes);
             seal::Ciphertext encrypted;
             encrypted.load(context, stream);
             seal::Plaintext plain;
+            /*12.plain=Dec(encrypted)*/
             decryptor.decrypt(encrypted, plain);
-            auto offset = chunk * encoding.slots;
-            auto used = std::min<u64>(encoding.slots, aligned.size() - offset);
             std::vector<u64> decoded;
             if (encoding.batching)
                 encoder->decode(plain, decoded);
             else
                 decoded.push_back(plain[0] % config.mPrime);
-            for (u64 j = 0; j < used; ++j)
-            {
-                auto row = offset + j;
-                auto receiverShare = readElement(&arithmeticShare(row, 0), config.shareByteLength()) % config.mPrime;
-                g = addMod(g, addMod(mulMod(aligned[row], receiverShare, config.mPrime),
-                    decoded[j] % config.mPrime, config.mPrime), config.mPrime);
-            }
+            for (u64 value : decoded)
+                maskedInnerProduct = addMod(maskedInnerProduct, value % config.mPrime, config.mPrime);
         }
-        co_await chl.send(g);
+        for (u64 row = 0; row < aligned.size(); ++row)
+        {
+            auto receiverShare = readElement(&arithmeticShare(row, 0), config.shareByteLength()) % config.mPrime;
+            maskedInnerProduct = addMod(maskedInnerProduct,
+                mulMod(aligned[row], receiverShare, config.mPrime), config.mPrime);
+        }
+        /*14.maskedInnerProduct to S*/
+        co_await chl.send(maskedInnerProduct);
     }
 
     Proto psiIpHeSender(oc::MatrixView<u8> arithmeticShare, u64& result,
@@ -434,9 +434,9 @@ namespace volePSI
             co_await chl.close();
             throw RTE_LOC;
         }
-        std::vector<u8> parameterBytes, keyBytes;
+        /*5.pk 수신*/
+        std::vector<u8> parameterBytes;
         co_await chl.recvResize(parameterBytes);
-        co_await chl.recvResize(keyBytes);
         auto parameterStream = loadStream(parameterBytes);
         seal::EncryptionParameters parms;
         parms.load(parameterStream);
@@ -444,10 +444,6 @@ namespace volePSI
             parms.poly_modulus_degree() != config.mSealPolyModulusDegree)
             throw std::invalid_argument("receiver supplied unexpected BGV parameters");
         auto context = seal::SEALContext(parms);
-        auto keyStream = loadStream(keyBytes);
-        seal::PublicKey publicKey;
-        publicKey.load(context, keyStream);
-        seal::Encryptor encryptor(context, publicKey);
         seal::Evaluator evaluator(context);
         auto encoding = encodingFor(context);
         auto encoder = encoding.batching ? std::make_unique<seal::BatchEncoder>(context) : nullptr;
@@ -457,6 +453,7 @@ namespace volePSI
         if (chunkCount != expectedChunks)
             throw std::invalid_argument("unexpected ciphertext count");
 
+        /*6.senderShares=a_s, masks=Z_p random, maskSum = sum(r)*/
         std::vector<u64> senderShares(arithmeticShare.rows()), masks(arithmeticShare.rows());
         u64 maskSum = 0;
         for (u64 i = 0; i < arithmeticShare.rows(); ++i)
@@ -465,9 +462,10 @@ namespace volePSI
             masks[i] = sampleField(prng, config.mPrime);
             maskSum = addMod(maskSum, masks[i], config.mPrime);
         }
-        std::vector<std::vector<u8>> maskedCiphertexts(chunkCount);
+        seal::Ciphertext accumulated;
         for (u64 chunk = 0; chunk < chunkCount; ++chunk)
         {
+            /*7.encryptedData=Seeded Enc(sk, D^Y') 수신*/
             std::vector<u8> bytes;
             co_await chl.recvResize(bytes);
             auto stream = loadStream(bytes);
@@ -477,17 +475,30 @@ namespace volePSI
             auto used = std::min<u64>(encoding.slots, arithmeticShare.rows() - offset);
             auto sharePlain = encodeChunk(senderShares, offset, used, encoding, encoder.get());
             auto maskPlain = encodeChunk(masks, offset, used, encoding, encoder.get());
+            /*8.Enc(D^Y')*sharePlain = Enc(D^Y'*a_s)*/
             evaluator.multiply_plain_inplace(encryptedData, sharePlain);
-            seal::Ciphertext encryptedMask;
-            encryptor.encrypt(maskPlain, encryptedMask);
-            evaluator.sub_inplace(encryptedData, encryptedMask);
-            maskedCiphertexts[chunk] = saveSeal(encryptedData);
+            /*9.encryptedData = Enc(D^Y'*a_s-r)*/
+            evaluator.sub_plain_inplace(encryptedData, maskPlain);
+            if (chunk)
+                evaluator.add_inplace(accumulated, encryptedData);
+            else
+                accumulated = std::move(encryptedData);
         }
-        for (auto& ciphertext : maskedCiphertexts)
-            co_await chl.send(std::move(ciphertext));
-        u64 g = 0;
-        co_await chl.recv(g);
-        result = addMod(g % config.mPrime, maskSum, config.mPrime);
+        /*10.accumulated ciphertext to R*/
+        if (chunkCount)
+            co_await chl.send(saveSeal(accumulated));
+        u64 maskedInnerProduct = 0;
+
+        /*15.maskedInnerProduct 수신*/
+        co_await chl.recv(maskedInnerProduct);
+
+        /*16.
+        result
+        =maskedInnerProduct + maskSum
+        =sum(D^Y'*a-r)+sum(r)
+        =sum(b*d^X'*d^Y')
+        */
+        result = addMod(maskedInnerProduct % config.mPrime, maskSum, config.mPrime);
     }
 }
 
