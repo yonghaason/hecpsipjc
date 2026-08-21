@@ -41,12 +41,6 @@ The other two dependencies need no such step. CMake clones libOTe
 (`d558671`) and sparsehash-c11 (`edd6f11`) at their pinned commits during the
 first build, so `git` has to be on `PATH` either way.
 
-Working from a git checkout of the repository instead, the equivalent is
-
-```
-git submodule update --init --recursive
-```
-
 ## Build
 
 Needs a C++20 compiler, CMake >= 3.18, and network access on the first build
