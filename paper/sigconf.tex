@@ -365,8 +365,17 @@ PSI(Private Set Intersection)는 두 참여자가 각자 보유한 데이터 집
 
 % 이들은 대부분 VOLE(Vector Oblivious Linear Evaluation) 기반으로 설계되어 있는데, VOLE는 높은 효율성을 제공하는 대신 구현이 복잡하여 
 한편, 최근에는 OKVS(Oblivious Key-Value Store)~\cite{GPR+21}라는 기반 기술을 이용한 새로운 PSI 프로토콜들이 제안되고 있다~\cite{RR22,BPSY23}. 이들은 특히 단순 PSI 뿐 아니라, PJC와 같은 확장에도 유용하게 사용되고 있으며, 특히 \cite{LTS+26}는 대부분의 연산을 해시 함수와 비트 연산으로 수행하여 기존 PSI보다도 더 빠른 실행 속도와 낮은 통신량을 달성하였으며, 제안한 PSI를 기반으로 Circuit-PSI, PSI-Cardinality, PSI-Sum, PJC까지 제시하였다. 
-\yongha{$O(\ell^2), O(\ell)$ 얘기가 없네요.}
-\yongha{\cite{KLS26}도 주요 previous work인데 그 얘기도 없네요?}
+또한 \cite{KLS26}은 circuit-PSI를 black-box로 사용하여 PSI-Sum,
+PSI-Cardinality, PSI-Threshold, PSI-InnerProduct 등의 확장을 구성하였으며,
+이 중 PSI-InnerProduct가 PJC에 해당한다.
+
+이 두 연구는 PJC의 비용이 payload의 bit-length $\ell$에 어떻게 의존하는지에서
+갈린다. \cite{KLS26}의 PSI-InnerProduct는 두 arithmetic share의 곱을 얻기 위해
+한쪽 값을 bit decomposition한 뒤 각 bit마다 $\ell$-bit 메시지에 대한 OT를
+수행하므로, 원소당 $O(\ell^2)$의 비용이 발생한다. 반면 \cite{LTS+26}은 동일한
+계산을 원소당 $O(\ell)$에 수행할 수 있다고 보고하였다. $\ell$은 inner product의
+대상이 되는 payload의 bit-length이므로, 이 차이는 payload가 커질수록 그대로
+누적된다.
 
 \subsection{Our Contribution}\label{sec:contribution}
 우리는 PJC literature에 대해 two-fold로 contribute한다.
