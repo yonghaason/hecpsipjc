@@ -282,9 +282,10 @@ plaintext--ciphertext multiplication under BGV, address what breaks at the
 seam between the two primitives, and prove the protocol secure against
 semi-honest adversaries. Against the previous best secure construction, which
 is $O(\ell^2)$, on inner products over 32-bit payloads with $2^{20}$ items
-per party our protocol uses 32\% less communication and runs 60\% faster on
-a LAN; when the inner product is required as an exact integer rather than
-modulo a fixed prime, the gap widens to $4.4\times$ less communication.
+per party our protocol uses $1.5\times$ less communication and runs
+$2.5\times$ faster on a LAN; when the inner product is required as an exact
+integer rather than modulo a fixed prime, the communication gap widens to
+$4.4\times$.
 \end{abstract}
 
 %%
@@ -394,8 +395,8 @@ bits 이상이어야 하며, 이것이 단일 RLWE plaintext modulus를 넘을 �
 모두 다뤄야 비로소 성능 수치가 의미를 갖는다는 것이 이 부분의 요지이다. 제안
 프로토콜은 semi-honest 모델에서 안전함을 증명한다.
 
-실험에서 $n=2^{20}$의 32-bit 설정일 때 \cite{KLS26} 대비 통신량은 32.4\%, LAN
-실행 시간은 59.5\% 감소한다. 32-bit payload에 대한 정수 inner product를 계산하는
+실험에서 $n=2^{20}$의 32-bit 설정일 때 \cite{KLS26} 대비 통신량은 $1.48$배, LAN
+실행 시간은 $2.47$배 줄어든다. 32-bit payload에 대한 정수 inner product를 계산하는
 설정에서는
 제안 프로토콜의 통신량이 $1.56$배 증가하는 동안 \cite{KLS26}는 $4.65$배
 증가하여 격차가 더 벌어진다.
@@ -2268,15 +2269,15 @@ Table~\ref{tab:pjc-comparison}에서 확인할 수 있듯이,
 제안 프로토콜은 모든 입력 크기와 네트워크 환경에서
 \cite{KLS26}보다 낮은 실행 시간과 통신량을 보인다.
 Set size가 $2^{16}$인 경우, 제안 프로토콜의 communication cost는
-14.150\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 32.3\% 감소한다.
+14.150\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 $1.48$배 적다.
 LAN 환경에서의 runtime 역시 1.740\,s에서 0.740\,s로
-약 57.5\% 감소한다.
+약 $2.35$배 빠르다.
 
 Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
 제안 프로토콜의 communication cost는 218.010\,MB로,
-\cite{KLS26}의 322.622\,MB보다 약 32.4\% 낮다.
+\cite{KLS26}의 322.622\,MB보다 약 $1.48$배 적다.
 또한 LAN 환경에서 runtime은 28.105\,s에서 11.389\,s로
-약 59.5\% 감소한다.
+약 $2.47$배 빠르다.
 100\,Mbps 및 10\,Mbps의 WAN 환경에서도 제안 프로토콜은
 각각 26.843\,s와 182.454\,s의 runtime을 보이며,
 \cite{KLS26}보다 낮은 실행 시간을 유지한다.
@@ -2398,11 +2399,11 @@ MultShare의 이차 증가로 322.622\,MB에서 1499.286\,MB로 약 $4.65$배가
 실험 결과, 제안 프로토콜은 평가한 모든 입력 크기와 네트워크
 환경에서 \cite{KLS26}보다 낮은 실행 시간과 통신량을 보였다.
 Set size가 \(2^{16}\)인 경우 통신량은
-20.900\,MB에서 14.150\,MB로 약 32.3\% 감소하였으며, LAN
-환경의 실행 시간은 1.740\,s에서 0.740\,s로 약 57.5\%
-감소하였다. Set size가 \(2^{20}\)인 경우에도 통신량은
-322.622\,MB에서 218.010\,MB로 약 32.4\%, LAN 실행 시간은
-28.105\,s에서 11.389\,s로 약 59.5\% 감소하였다. 또한
+20.900\,MB에서 14.150\,MB로 약 $1.48$배 줄었으며, LAN
+환경의 실행 시간은 1.740\,s에서 0.740\,s로 약 $2.35$배
+빨라졌다. Set size가 \(2^{20}\)인 경우에도 통신량은
+322.622\,MB에서 218.010\,MB로 약 $1.48$배, LAN 실행 시간은
+28.105\,s에서 11.389\,s로 약 $2.47$배 줄었다. 또한
 100\,Mbps와 10\,Mbps의 제한된 bandwidth 환경에서도 이러한
 성능 우위가 유지되었다. 단계별 분석에서는 Circuit-PSI가 전체
 비용의 가장 큰 비중을 차지하였으며, arithmetic share 생성을 위한
