@@ -370,7 +370,7 @@ PSI(Private Set Intersection)는 두 참여자가 각자 보유한 데이터 집
 \subsection{Our Contribution}\label{sec:contribution}
 우리는 PJC literature에 대해 two-fold로 contribute한다.
 
-첫 번째로, we present a cryptanalysis of PJC protocol proposed in \cite{LTS+26}. 송신자의 데이터를 비밀리에 전달하는 과정에서 하나의 마스킹 값을 전체에 적용하여 수신자가 원본 데이터와 마스킹 값 간의 차분을 알 수 있다는 문제가 존재한다는 것을 발견하였다. 이 경우 실제 데이터 값은 알 수 없더라도 데이터 간의 차분을 통해 수신자가 원본 데이터를 알아내지 않고도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있게 된다. 
+첫 번째로, \cite{LTS+26}의 PJC 구현에서 발생하는 leakage를 제시한다. 해당 구현은 Circuit-PSI의 출력인 $\mathcal{R}$의 payload share 전체를 하나의 global mask로 마스킹하여 $\mathcal{S}$에게 전달하므로, $\mathcal{S}$는 마스킹된 두 값을 XOR하여 mask를 소거하고 share 사이의 XOR 관계를 얻을 수 있다. 이 경우 $\mathcal{S}$는 payload의 실제 값을 알지 못하더라도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있으며, 이는 PJC의 의도된 출력으로부터는 얻을 수 없는 정보이다.
 
 두 번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
 현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
@@ -611,7 +611,7 @@ Batching 환경에서 수행되는 동형연산은 입력의 형태에 따라 �
 
 
 \section{Recap of Circuit Private Set Intersection}\label{sec:cpsi-recap}
-\Cref{sec:cryptanalysis}의 cryptanalysis와 \Cref{sec:our-protocol}의 제안
+\Cref{sec:cryptanalysis}의 leakage 분석과 \Cref{sec:our-protocol}의 제안
 construction은 모두 \cite{PSTY19,RS21}의 circuit-based PSI를 기준으로
 기술된다. 본 절에서는 해당 기존 construction을 정리한다.
 
@@ -928,18 +928,18 @@ $a_i^S\oplus a_i^R=b_iD_i^{Y'}$ for each bin $i$.
 % \subsection{PJC}
 %     PJC는 Sender $\mathcal{S}$와 Receiver $\mathcal{R}$이 각각 보유한 식별자 집합과 이에 대응되는 payload를 입력으로 받아 두 식별자 집합의 교집합에 대응되는 payload들의 내적값을 수신자 $\mathcal{R}$에게 출력한다.
 
-\section{Cryptanalysis of \cite{LTS+26}}\label{sec:cryptanalysis}
+\section{Leakage in the PJC Instantiation of~\cite{LTS+26}}\label{sec:cryptanalysis}
 \cite{LTS+26}은 OKVS를 기반으로 하여 새로운 경량 2자간 PSI 프로토콜을 제안하고, 나아가 제안한 PSI를 PSI-Cardinality, PSI-sum, PJC 등 다양한 계산 프로토콜로 확장하였다. 특히 \cite{LTS+26}은 PJC를 포함한 후속 계산을 $O(\ell)$의 비용으로 수행할 수 있도록 구성함으로써, Circuit-PSI와 그 응용에서도 높은 계산 및 통신
 효율성을 달성하였다.
 
-우리는 해당 논문의 PJC 구현을 분석하는 과정에서 보안상 문제가 발생할 수 있음을 확인하였다. 이에 해당 문제를 구체적으로 파악하고 대안을 제시하기 위해 기존 프로토콜의 PJC computation 과정을 추가적으로 분석하였다. 그러나 기존 논문에서는 Circuit-PSI 수행 이후 PJC를 구성하는 구체적인 계산 과정을 명시적으로 제시하지 않고, generic $\mathcal{F}_{\mathrm{2PC}}$를 통해 계산을 수행한다고만 설명하고 있다.
+본 절의 분석 대상은 \cite{LTS+26}에 기술된 프로토콜 명세가 아니라, 해당 논문이 보고한 PJC 성능 수치를 산출한 공개 구현이다. \cite{LTS+26}은 Circuit-PSI 이후의 PJC 계산을 구체적으로 제시하지 않고 generic $\mathcal{F}_{\mathrm{2PC}}$를 통해 수행한다고만 기술하므로, 명세 수준에서는 본 절에서 지적하는 문제가 발생하지 않는다.
 
-그러나 이들은 실제로 specific한 구현을 바탕으로 PJC의 performance를 제공하였고, 그것을 기반으로 기존보다 훨씬 efficient함을 주장하였다. 우리는 그들의 실제 $\mathcal{F}_{\mathrm{2PC}}$ 구현이 어떠한 방식으로 수행되는지를 살펴보았으나, 그 결과 그것이 안전하지 않은 방식으로 수행되고 있음을 확인하였다. 해당 보안 문제와 그 원인에 대해서는 \Cref{sec:LTScryptanalysis}에서 구체적으로 설명한다.
+그러나 \cite{LTS+26}이 보고한 PJC 성능은 generic $\mathcal{F}_{\mathrm{2PC}}$가 아니라 특정한 구현을 바탕으로 측정된 것이며, 우리는 해당 구현이 Circuit-PSI의 출력인 payload share를 하나의 global mask로 마스킹하여 $\mathcal{S}$에게 전달한다는 것을 확인하였다. 그 결과 \cite{LTS+26}이 보고한 성능은 $\mathcal{F}_{\mathrm{2PC}}$가 제공하는 보안 수준이 아니라, payload share 사이의 관계를 $\mathcal{S}$에게 노출하는 더 약한 보안 수준에서 얻어진 것이다. 따라서 해당 수치는 동일한 보안 목표를 만족하는 PJC 프로토콜과 동일한 기준으로 비교될 수 없다.
 
-그 전에, 문제의 발생 원인과 기존 구현의 계산 구조를 명확히 이해할 수 있도록 \Cref{sec:LTSprotocol}에서는 공개된 구현을 기반으로 기존 논문의 PJC 프로토콜이 실제 어떠한 방식으로 계산을 수행하는지 먼저 설명한다.
+\Cref{sec:LTSprotocol}에서는 공개된 구현으로부터 복원한 PJC 계산 과정을 기술하고, \Cref{sec:LTScryptanalysis}에서는 해당 구현에서 발생하는 leakage와 그 원인을 구체적으로 설명한다.
 
 
-\subsection{\cite{LTS+26} Protocol의 상세}\label{sec:LTSprotocol}
+\subsection{Reconstructing the PJC Computation of~\cite{LTS+26}}\label{sec:LTSprotocol}
 본 절에서는 \cite{LTS+26}의 PSI-Innerproduct 프로토콜을 분석한다.
 \cite{LTS+26}에서는 Base OT 기반 연산을 통해 \Cref{sec:cpsi-recap}에서 정의된 Circuit-PSI의 Step~1을 수행하여
 membership bit $b_i$의 share와, non-intersection 위치의 random value가
@@ -1092,7 +1092,7 @@ $D^Y=\{D_1^Y,\ldots,D_n^Y\}$.
 \end{figure}
 
 
-\subsection{\cite{LTS+26} Protocol의 문제점}\label{sec:LTScryptanalysis}
+\subsection{Mask Reuse and the Resulting Leakage}\label{sec:LTScryptanalysis}
 기존 프로토콜 Figure~\ref{fig:ndss-pjc}에서는 Circuit-PSI 수행 이후
 $\mathcal{R}$이 보유한 share $w_i$를 하나의 global mask $g$를 이용하여
 마스킹한
@@ -1119,7 +1119,7 @@ XOR하여 global mask를 제거할 수 있다.
 정리하면 동일한 global mask를 여러 share에 반복해서 사용하는 방식은 각 share의
 값 자체를 직접 노출하지 않더라도, share 사이의 XOR 관계를 그대로 노출한다. 이러한 관계는 PJC의 의도된 출력으로부터는 얻을 수 없는 추가 정보이므로, 기존 프로토콜은 Circuit-PSI를 통해 분리되어 있던 payload share 사이의 관계에 관한 정보를 $\mathcal{S}$에게 추가적으로 제공하는 것과 같다. 따라서 이는 프로토콜이 허용한 출력 이외의 정보를 노출하는 명백한 data leakage에 해당한다.
 
-참고로, 이러한 추가 정보의 노출을 허용한다면 마스킹 과정에서 요구되는 보안 제약을 완화할 수 있으므로 보다 단순하고 효율적인 construction을 구성하는 것이 가능하다. 그러나 이러한 leakage를 허용하는 construction에서 얻어진 효율성을 동일한 보안 목표를 만족하는 PJC 프로토콜과 동일한 기준으로 해석하기는 어렵다.
+이러한 leakage를 허용하면 마스킹 과정에서 요구되는 보안 제약이 완화되므로, 보다 단순하고 효율적인 construction을 구성할 수 있다. 즉 \cite{LTS+26}이 보고한 효율성의 일부는 프로토콜 설계가 아니라 완화된 보안 목표에서 기인한다. 따라서 해당 수치를 $\mathcal{F}_{\mathrm{2PC}}$ 수준의 보안을 만족하는 PJC 프로토콜과 직접 비교하는 것은 타당하지 않으며, \Cref{sec:comm-analysis}에서는 동일한 보안 목표를 전제로 한 비교를 제시한다.
 
 
 \section{Our Protocol}\label{sec:our-protocol}
