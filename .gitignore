@@ -21,3 +21,6 @@ paper/sigconf.log
 paper/sigconf.out
 paper/sigconf.pdf
 paper/sigconf.synctex.gz
+
+# paper source (kept out of the artifact repo)
+paper/
