@@ -108,6 +108,11 @@
 \newcommand{\prot}[1]{\Pi_\textsf{#1}}
 \newcommand{\red}[1]{{\color{red}{#1}}}
 \newcommand{\yongha}[1]{{\color{blue}{[yongha:#1}]}}
+\makeatletter
+\@ifundefined{theorem}{\newtheorem{theorem}{Theorem}[section]}{}
+\@ifundefined{remark}{\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}}{}
+\makeatother
+
 \newcommand{\stepheading}[1]{%
   \par\noindent{\normalfont\bfseries #1}\enspace\ignorespaces
 }
@@ -2090,6 +2095,220 @@ $
 B2A-OT로 생성한 arithmetic share와
 plaintext--ciphertext multiplication을 결합하는 construction을
 최종 PJC 프로토콜로 채택하였다.
+
+
+\section{Security Analysis}\label{sec:security}
+본 절에서는 제안 프로토콜의 보안성을 분석한다.
+\Cref{sec:security-model}에서 보안 모델을 정의하고,
+\Cref{sec:security-afcpsi}에서 AF-CPSI가 $\func{AF-CPSI}$를 realize함을
+보인 뒤, \Cref{sec:security-pjc}에서 제안 PJC 프로토콜이
+$\func{PJC}$를 realize함을 보인다.
+
+\subsection{Security Model}\label{sec:security-model}
+본 논문에서는 semi-honest adversary를 고려한다. 즉 corrupt된 참여자는
+프로토콜을 규정대로 수행하되, 자신의 view로부터 추가 정보를 추론하려
+시도한다. Corruption은 static으로 가정한다.
+
+두 참여자 프로토콜 $\Pi$와 functionality $\mathcal{F}$에 대해,
+참여자 $P\in\{\Snd,\Rcv\}$의 view를
+$\mathsf{View}^{\Pi}_{P}(x_\Snd,x_\Rcv)$로 표기한다. 이는 $P$의 입력,
+random tape, 그리고 프로토콜 수행 중 수신한 모든 메시지로 구성된다.
+$\Pi$가 semi-honest adversary에 대해 $\mathcal{F}$를 securely realize한다는
+것은, 각 $P$에 대해 PPT simulator $\mathsf{Sim}_P$가 존재하여
+\[
+\left\{
+    \mathsf{Sim}_P\!\left(1^\lambda, x_P, f_P(x_\Snd,x_\Rcv)\right)
+\right\}
+\;\stackrel{c}{\equiv}\;
+\left\{
+    \mathsf{View}^{\Pi}_{P}(x_\Snd,x_\Rcv)
+\right\}
+\]
+가 성립함을 의미한다. 여기서 $f_P$는 $\mathcal{F}$가 $P$에게 전달하는
+출력을 나타내며, $\stackrel{c}{\equiv}$는 computational
+indistinguishability를 의미한다.
+
+증명은 hybrid model에서 수행한다. AF-CPSI의 분석에서는
+$\func{OPRF}$, $\func{PEQT}$, $\func{OT}$를 ideal functionality로
+취급하고, PJC 프로토콜의 분석에서는 $\func{AF-CPSI}$를 ideal
+functionality로 취급한다. 이때 각 hybrid는 표준적인 composition에 의해
+실제 프로토콜로 대체될 수 있다.
+
+\subsection{Security of AF-CPSI}\label{sec:security-afcpsi}
+
+AF-CPSI는 \Cref{sec:cpsi-recap}의 Circuit-PSI에서 payload에 대한 연산만
+$\Z_p$로 옮긴 것이므로, 보안 증명 역시 기존 Circuit-PSI의 증명
+\cite{PSTY19,RS21}을 그대로 따른다. 본 절에서는 전체 증명을 반복하는
+대신, $\F_2$에서 $\Z_p$로의 변경이 증명에 영향을 주는 지점만을 정리한다.
+
+\begin{theorem}\label{thm:afcpsi}
+OKVS가 oblivious하고 $F$가 secure PRF이며, OKVS의 data component가
+아래 \Cref{eq:redundant-encoding}의 redundant encoding으로 구성된다고
+하자. 이때 $\prot{AF-CPSI}$\emph{(\Cref{fig:cpsi-zp-construction})}는
+$(\func{OPRF},\func{PEQT},\func{OT})$-hybrid model에서 semi-honest
+adversary에 대해 $\func{AF-CPSI}$를 securely realize한다.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+기존 Circuit-PSI 증명에서 payload masking이 사용되는 부분은 두 곳이며,
+두 경우 모두 one-time pad argument에 의존한다. AF-CPSI는 이 argument가
+성립하는 group만을 바꾼다.
+
+첫째, OKVS의 data component에서 기존 증명은 $w_i\xleftarrow{\$}\{0,1\}^\ell$에
+대해 $D_i^{Y'}\oplus w_i$가 $\{0,1\}^\ell$ 위에서 uniform함을 사용한다.
+AF-CPSI는 $w_i\xleftarrow{\$}\Z_p$에 대해 $u_i=D_i^{Y'}-w_i \bmod p$가
+$\Z_p$ 위에서 uniform함을 사용한다. 둘째, B2A-OT에서 기존 증명은
+$r\xleftarrow{\$}\{0,1\}^\ell$에 대한 $(r,\,v\oplus r)$의 uniformity를
+사용하며, AF-CPSI는 $r\xleftarrow{\$}\Z_p$에 대한 $(r,\,v-r \bmod p)$의
+uniformity를 사용한다. 두 경우 모두 $(\{0,1\}^\ell,\oplus)$를
+$(\Z_p,+)$로 치환한 것에 지나지 않으므로, simulator와 hybrid의 구성은
+기존 증명과 동일하다. OPRF masking과 OKVS의 encoding 및 decoding은
+\Cref{sec:cpsi-zp}에서 기술하였듯 비트열 위의 연산으로 유지되므로 변경되지
+않는다.
+
+한편 두 group의 치환이 형식적이지 않은 지점이 하나 존재한다.
+$u_i\in\Z_p$를 OKVS value에 담기 위해서는 이를 고정 길이 비트열
+$\overline{u}_i$로 encoding해야 하는데, $p$가 $2$의 거듭제곱이 아니면
+$\Z_p$ 원소의 $\lceil\log_2 p\rceil$-bit 표현은
+$\{0,1\}^{\lceil\log_2 p\rceil}$ 위에서 uniform하지 않다.
+교집합에 해당하는 bin에서 $\Snd$는 유효한 encoding을 복원하는 반면,
+교집합에 해당하지 않는 bin에서는 pseudorandom한 비트열을 얻으므로,
+$\Snd$는 복원한 값이 $[0,p)$를 벗어나는지를 확인하는 것만으로
+확률 $(2^{\lceil\log_2 p\rceil}-p)/2^{\lceil\log_2 p\rceil}$로
+해당 bin이 교집합에 속하지 않음을 알 수 있다. 이는 $b_i$에 대한
+정보이므로 simulator가 재현할 수 없다.
+
+따라서 AF-CPSI에서는 statistical security parameter $\lambda_s$에 대해
+$L=\lceil\log_2 p\rceil+\lambda_s$로 두고, data component를
+\begin{equation}\label{eq:redundant-encoding}
+\overline{u}_i
+\xleftarrow{\$}
+\left\{
+    v\in[0,2^{L})
+    \;:\;
+    v\equiv u_i \!\!\pmod p
+\right\}
+\end{equation}
+와 같이 redundant하게 encoding한다. $\Snd$는 복원한 $\overline{u}_i$에
+대해 $w_i'=\overline{u}_i \bmod p$를 계산하며, 이때 임의의
+$\overline{u}_i$가 유효하므로 위의 range check는 불가능하다.
+또한 $u_i$가 $\Z_p$ 위에서 uniform할 때 $\overline{u}_i$는
+$\{0,1\}^{L}$ 위의 uniform distribution과 statistical distance
+$p/2^{L}\le 2^{-\lambda_s}$ 이내이므로, simulator는 해당 component를
+uniform한 비트열로 대체할 수 있다. 나머지 hybrid는 기존 증명과 동일하다.
+\end{proof}
+
+\begin{remark}\label{rmk:encoding-cost}
+\Cref{eq:redundant-encoding}은 OKVS data component의 길이를
+$\lceil\log_2 p\rceil$에서 $\lceil\log_2 p\rceil+\lambda_s$로 늘리므로,
+\Cref{sec:comm-analysis}의 $C_{\mathsf{OKVS}}$에
+$3\cdot 1.3n\lambda_s$ bits가 추가된다.
+\end{remark}
+
+\subsection{Security of the Proposed PJC Protocol}\label{sec:security-pjc}
+
+제안 PJC 프로토콜에서 $\Snd$는 BGV의 secret key $sk$를 보유하고,
+$\Rcv$가 homomorphic evaluation을 수행한 암호문을 $\Snd$에게 전달한다.
+따라서 $\Snd$는 수신한 암호문을 복호화할 수 있을 뿐 아니라, 복호화
+과정에서 noise를 정확히 복원할 수 있다. 이로 인해 평문에 대한 masking만으로는
+$\Rcv$의 입력을 보호할 수 없으며, 아래에서 보이듯 evaluation 결과에 대한
+sanitization이 필요하다.
+
+\begin{theorem}\label{thm:pjc}
+BGV가 IND-CPA secure하고, evaluation 결과에 대해 statistical
+parameter $\lambda_s$의 noise flooding이 적용된다고 하자. 이때
+$\prot{PJC}$\emph{(\Cref{fig:our-pjc})}는 $\func{AF-CPSI}$-hybrid
+model에서 semi-honest adversary에 대해 $\func{PJC}$를 securely
+realize한다.
+\end{theorem}
+
+\begin{proof}
+$\Snd$가 corrupt된 경우와 $\Rcv$가 corrupt된 경우를 나누어 보인다.
+
+\stepheading{Case 1: corrupted $\Rcv$.}
+$\Rcv$의 view는 $\func{AF-CPSI}$로부터 받은 $\mathbf{a}^R$, 자신의 random
+tape, $\Snd$로부터 받은 $pk$와 $\{C_j^X\}_{j\in[n_c]}$, 그리고 $z$로
+구성된다. $\Rcv$의 출력은 $\mathsf{sum}$이다.
+
+$\mathsf{Sim}_\Rcv$는 입력 $(Y,\mathbf{D}^Y)$, $\mathbf{a}^R$,
+그리고 출력 $\mathsf{sum}$을 받아 다음을 수행한다.
+$(pk',sk')\leftarrow\mathsf{BGV.KeyGen}(1^\lambda)$를 생성하여 $pk'$를
+view에 포함시키고, 각 $j\in[n_c]$에 대해
+$\tilde{C}_j\leftarrow\mathsf{BGV.Enc}(pk',\mathbf{0})$를 포함시킨다.
+이후 $\Rcv$의 random tape에 기록된 $\mathbf{r}$를 이용하여
+$\tilde z=\mathsf{sum}-\sum_{i=1}^{n'}r_i \bmod p$를 계산하고 이를
+view에 포함시킨다.
+
+$\mathsf{H}_0$을 실제 view라 하자. $\mathsf{H}_1$은 각 $C_j^X$를
+$\mathsf{BGV.Enc}(pk,\mathbf{0})$으로 대체한 것이다. $\Rcv$는 $sk$를
+보유하지 않으므로, $\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_1$은 BGV의
+IND-CPA security로부터 hybrid argument에 의해 따라온다.
+$\mathsf{H}_2$는 $z$를 $\tilde z$로 대체한 것이다.
+프로토콜에 의해
+\[
+z
+=\sum_{i}a_i^S D_i^{X'}+M'
+=\sum_{i}\left(a_i^S+a_i^R\right)D_i^{X'}-\sum_{i}r_i
+=\mathsf{sum}-\sum_{i}r_i
+\]
+이 성립하므로 $z=\tilde z$이며, 두 분포는 동일하다. $pk'$는 $pk$와
+동일하게 $\mathsf{BGV.KeyGen}$으로 생성되므로 분포가 같다. 따라서
+$\mathsf{Sim}_\Rcv$의 출력은 실제 view와 computationally
+indistinguishable하다.
+
+\stepheading{Case 2: corrupted $\Snd$.}
+$\Snd$의 view는 $\func{AF-CPSI}$로부터 받은 $(\mathbf{a}^S,\mathsf{idx})$,
+자신의 random tape(따라서 $(pk,sk)$와 $\{C_j^X\}$의 encryption
+randomness), 그리고 $\Rcv$로부터 받은 $C^F$로 구성된다. $\Snd$는
+$\func{PJC}$로부터 출력을 받지 않는다.
+
+먼저 $C^F$의 평문을 분석한다. 각 slot $t\in[N]$에 대해 해당 slot에
+대응하는 bin의 집합을
+$S_t=\{\,i\in[n']: i=(j-1)N+t,\ j\in[n_c]\,\}$라 하면, $C^F$의 slot $t$에
+담긴 평문은 $\sum_{i\in S_t}\left(a_i^R D_i^{X'}-r_i\right) \bmod p$이다.
+$\{r_i\}_{i\in[n']}$는 $\Z_p$에서 독립적이고 uniform하게 선택되므로,
+$S_t\neq\emptyset$인 모든 slot의 평문은 $\Z_p$ 위에서 독립적이고
+uniform하며, $S_t=\emptyset$인 slot의 평문은 $0$이다. 여기서 $n'$과 $N$은
+public parameter이므로 $\{S_t\}$는 simulator가 계산할 수 있다.
+
+다음으로 noise를 분석한다. $C_j^X$의 noise를 $e_j$라 하면,
+$\mathsf{PlainMult}$와 $\mathsf{PlainAdd}$의 정의에 의해 $C^F$의 noise는
+$\sum_{j\in[n_c]} \mathbf{A}_j^R\cdot e_j$에 modulus switching의 rounding
+error를 더한 값이 된다. $\Snd$는 $sk$를 보유하므로 복호화 과정에서 이
+noise를 정확히 복원할 수 있고, $\{e_j\}$는 $\Snd$ 자신이 생성한
+encryption randomness로부터 계산할 수 있다. 따라서 sanitization이 없다면
+$\Snd$는 $\sum_j \mathbf{A}_j^R\cdot e_j$를 얻으며, 특히 $n_c=1$이고
+$e_1$이 $R_q$에서 invertible한 경우 $\mathbf{A}_1^R=\mathbf{a}^R$를 그대로
+복원할 수 있다. 이 경우 $a_i^S+a_i^R=b_iD_i^{Y'}$로부터 $\Rcv$의 payload와
+교집합이 모두 노출된다. 그러므로 $\Rcv$는 $C^F$를 전송하기 전
+$C^F\leftarrow C^F+\mathsf{BGV.Enc}(pk,\mathbf{0};E)$와 같이 기존 noise
+bound보다 $2^{\lambda_s}$배 큰 noise $E$를 더하는 noise flooding을
+적용해야 하며, 이때 $C^F$의 noise 분포는 $\mathbf{a}^R$ 및 $\mathbf{r}$와
+statistical distance $2^{-\lambda_s}$ 이내에서 독립이 된다.
+
+이제 $\mathsf{Sim}_\Snd$를 다음과 같이 구성한다. 입력
+$(X,\mathbf{D}^X)$와 $(\mathbf{a}^S,\mathsf{idx})$를 받아, 각 slot
+$t\in[N]$에 대해 $S_t\neq\emptyset$이면
+$\tilde m_t\xleftarrow{\$}\Z_p$를, 그렇지 않으면 $\tilde m_t=0$을 두고
+$\tilde{C}\leftarrow\mathsf{BGV.Enc}(pk,\tilde{\mathbf{m}})$를 계산한 뒤
+동일한 noise flooding을 적용하여 view에 포함시킨다.
+
+$\mathsf{H}_0$을 실제 view라 하고, $\mathsf{H}_1$을 $C^F$의 평문만
+$\tilde{\mathbf{m}}$으로 대체한 것이라 하자. 위의 평문 분석에 의해 두
+분포는 동일하다. $\mathsf{H}_2$는 $C^F$를 $\tilde C$로 대체한 것이며,
+noise flooding에 의해 두 noise 분포의 statistical distance는
+$2^{-\lambda_s}$ 이하이다. 따라서
+$\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_2$이고, $\mathsf{Sim}_\Snd$의
+출력은 실제 view와 구분 불가능하다.
+\end{proof}
+
+\begin{remark}\label{rmk:flooding-cost}
+\Cref{thm:pjc}의 noise flooding은 ciphertext modulus $q$를 약
+$\lambda_s$ bits만큼 크게 설정할 것을 요구한다.
+\Cref{sec:experimental-setup}의 파라미터는 $N=4096$에서 $\log q=102$
+bits로 SEAL이 제공하는 $128$-bit security bound인 $109$ bits에 근접해
+있으므로, flooding을 적용하려면 $N=8192$로 옮겨야 한다.
+\end{remark}
 
 \section{Experimental Results}
 \label{sec:experimental-results}
