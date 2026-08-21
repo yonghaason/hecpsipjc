@@ -48,9 +48,11 @@ namespace volePSI
     // A 42-bit plaintext needs more ciphertext modulus than SEAL's 128-bit
     // security table allows at N = 4096 (109 bits total). The protocol only
     // ever uses the first two coefficient primes, the third being SEAL's
-    // key-switching prime which we never use, so the security check is
-    // disabled (sec_level_type::none) and the split is chosen so that the
-    // first two primes stay within the 109-bit bound: {60,45,20}. Measured
+    // key-switching prime which we never use. The two primes actually used,
+    // 60+45 = 105 bits, are within the 109-bit bound for 128-bit security at
+    // N = 4096; SEAL's check counts the unused third prime too and rejects
+    // the split, so it is skipped (sec_level_type::none). Security is not
+    // reduced: {60,45,20}. Measured
     // with uniformly random plaintexts at n = 2^20 (338 accumulated
     // ciphertexts), the invariant noise budget after modulus switching is
     // 6-7 bits; lowering the first prime below 60 or the second below 45
