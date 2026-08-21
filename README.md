@@ -1,6 +1,6 @@
-# Better Private Join and Compute
+# Linear-Cost Private Join and Compute from Arithmetic Circuit-PSI
 
-Artifact for the ASIA CCS 2027 submission *Better Private Join and Compute*.
+Artifact for the ASIA CCS 2027 submission *Linear-Cost Private Join and Compute from Arithmetic Circuit-PSI*.
 
 It contains our PJC protocol, the prior circuit-PSI-based PJC we compare
 against, and the harnesses that produce every number in the paper. The code is
@@ -18,10 +18,34 @@ protocols share its OPRF, OKVS, GMW and circuit-PSI layers.
 | `tests/Pso_Tests.cpp` | Measurement harness for the baseline. |
 | `misc/wan_shape.sh` | Loopback bandwidth shaping for the WAN rows. |
 
+## Getting the code
+
+The anonymized repository serves a file archive, not a git remote, so
+`git clone` cannot be pointed at it. Download and unpack the archive, then
+fetch the one dependency that is carried as a git submodule:
+
+```
+git clone --depth 1 --branch v4.1.2 https://github.com/microsoft/SEAL.git thirdparty/SEAL
+```
+
+A submodule is a recorded commit pointer rather than files, so the archive
+carries nothing under `thirdparty/SEAL`. The tag above is the pinned commit;
+confirm it with
+
+```
+git -C thirdparty/SEAL rev-parse HEAD
+# 119dc32e135cb89c1062076a69310d4413ebc824
+```
+
+The other two dependencies need no such step. CMake clones libOTe
+(`d558671`) and sparsehash-c11 (`edd6f11`) at their pinned commits during the
+first build, so `git` has to be on `PATH` either way.
+
 ## Build
 
 Needs a C++20 compiler, CMake >= 3.18, and network access on the first build
-(dependencies are fetched automatically). Everything lands under `out/`.
+(the remaining dependencies are fetched automatically). Everything lands
+under `out/`.
 
 ```
 python3 build.py -DVOLE_PSI_ENABLE_BOOST=ON -DVOLE_PSI_ENABLE_SEAL=ON
@@ -38,12 +62,15 @@ incremental. The binary is `out/build/linux/frontend/frontend`.
 out/build/linux/frontend/frontend -u
 ```
 
-58 tests, all should pass. The ones that matter here:
+Six tests, all should pass. They are the correctness checks behind the paper's
+claims plus the three measurement harnesses; `frontend -u -list` prints them
+with the indices used below.
 
-- `Cpsi_Rs_full_prime_test` — AF-CPSI produces additive shares over `Z_p`.
-- `RsPsiInnerproduct_seal_test` — our PJC returns the correct inner product.
-- `RsPsiInnerproduct_seal_rns_test` — the RNS path returns the correct *integer*
-  inner product for full 32-bit payloads, including 0 and 2^32-1.
+- `0 Cpsi_Rs_full_prime_test` — AF-CPSI produces additive shares over `Z_p`.
+- `1 RsPsiInnerproduct_seal_test` — our PJC returns the correct inner product.
+- `2 RsPsiInnerproduct_seal_rns_test` — the RNS path returns the correct
+  *integer* inner product for full 32-bit payloads, including 0 and 2^32-1.
+- `3`, `4`, `5` — the measurement harnesses for our protocol and the baseline.
 
 ## Reproduce the paper
 
@@ -54,25 +81,25 @@ runs the parties over loopback TCP, which is what the reported numbers use.
 **Table 2 and its breakdown (modular inner product, Sec. 7.2).** Ours:
 
 ```
-out/build/linux/frontend/frontend -u 49 -n 65536   -tcp
-out/build/linux/frontend/frontend -u 49 -n 1048576 -tcp
+out/build/linux/frontend/frontend -u 3 -n 65536   -tcp
+out/build/linux/frontend/frontend -u 3 -n 1048576 -tcp
 ```
 
 Baseline:
 
 ```
-out/build/linux/frontend/frontend -u 52 -nn 16
-out/build/linux/frontend/frontend -u 52 -nn 20
+out/build/linux/frontend/frontend -u 4 -nn 16
+out/build/linux/frontend/frontend -u 4 -nn 20
 ```
 
 **Table 4 (integer inner product, Sec. 7.3).** Add `-rns` for ours; the
 baseline uses the width-matched harness:
 
 ```
-out/build/linux/frontend/frontend -u 49 -n 65536   -rns -tcp
-out/build/linux/frontend/frontend -u 49 -n 1048576 -rns -tcp
-out/build/linux/frontend/frontend -u 53 -nn 16
-out/build/linux/frontend/frontend -u 53 -nn 20
+out/build/linux/frontend/frontend -u 3 -n 65536   -rns -tcp
+out/build/linux/frontend/frontend -u 3 -n 1048576 -rns -tcp
+out/build/linux/frontend/frontend -u 5 -nn 16
+out/build/linux/frontend/frontend -u 5 -nn 20
 ```
 
 **WAN rows.** Shape loopback first (needs root), then re-run any command above:
@@ -95,7 +122,10 @@ Communication is deterministic: the byte counts reproduce exactly. Runtimes
 depend on the machine; ours were taken on a 32-core AMD Ryzen Threadripper
 9970X with 64 GB of RAM, single-threaded.
 
-The baseline's setup phase moves slightly more data here than in its own
-repository (221 KB against 191 KB at `n = 2^16`) because this tree uses our
-OT generator for both protocols. The online phase, which is what the paper
-compares, is unaffected.
+The baseline moves slightly more data here than in its own repository. At
+`n = 2^16` it reports 21.37 MB against the 20.90 MB in Table 2, an offset of
+about 0.47 MB: 30 KB of that is setup and the rest is online. This tree drives
+both protocols from the same OT and VOLE layer rather than the one the
+baseline ships with, and the paper's baseline figures were measured in the
+baseline's own repository. The offset is two orders of magnitude smaller than
+the gap the paper reports between the two protocols.

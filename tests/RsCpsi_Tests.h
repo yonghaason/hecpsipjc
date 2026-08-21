@@ -9,16 +9,4 @@
 #include "cryptoTools/Common/CLP.h"
 #include "volePSI/config.h"
 
-void Cpsi_Rs_empty_test(const oc::CLP&);
-void Cpsi_Rs_partial_test(const oc::CLP&);
-void Cpsi_Rs_full_test(const oc::CLP&);
-void Cpsi_Rs_full_asym_test(const oc::CLP&);
-void Cpsi_Rs_full_add32_test(const oc::CLP&);
-//0714
 void Cpsi_Rs_full_prime_test(const oc::CLP&);
-//0719
-void Cpsi_Rs_full_prime_param_test(const oc::CLP&);
-//0719
-void Cpsi_Rs_comm_time_compare_test(const oc::CLP&);
-//0719
-void Cpsi_Rs_toy_comm_breakdown_test(const oc::CLP&);

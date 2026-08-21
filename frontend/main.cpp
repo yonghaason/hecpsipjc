@@ -4,7 +4,6 @@
 #include "messagePassingExample.h"
 #include "networkSocketExample.h"
 #include "volePSI/fileBased.h"
-#include "tests/Paxos_Tests.h"
 
 int main(int argc, char** argv)
 {
@@ -25,10 +24,6 @@ int main(int argc, char** argv)
     else if (cmd.isSet("net"))
     {
         networkSocketExample(cmd);
-    }
-    else if (cmd.isSet("exp"))
-    {
-        Paxos_experiment(cmd);
     }
     else if (cmd.isSet("perf"))
     {
