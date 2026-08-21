@@ -279,11 +279,10 @@ circuit-PSI from $\mathbb{F}_2$ to $\mathbb{Z}_p$ (AF-CPSI) so that its
 output shares feed a BGV inner product directly, prove the construction
 secure against semi-honest adversaries, and identify and close a leakage in
 the $\mathbb{Z}_p$-to-bitstring encoding that the lift introduces. Against
-the best prior circuit-PSI-based PJC at $n=2^{20}$ and a 32-bit arithmetic
-space, our protocol uses 32\% less communication and runs 60\% faster on a
-LAN. When the inner product is required as an exact integer rather than
-modulo a fixed prime, which forces a wider arithmetic space, our
-communication grows by $1.56\times$ while the quadratic baseline grows by
+the best prior circuit-PSI-based PJC at $n=2^{20}$ in the 32-bit setting, our
+protocol uses 32\% less communication and runs 60\% faster on a
+LAN. When the inner product over 32-bit payloads is required as an exact
+integer rather than modulo a fixed prime, our communication grows by $1.56\times$ while the quadratic baseline grows by
 $4.65\times$.
 \end{abstract}
 
@@ -367,9 +366,6 @@ PSI-Cardinality, PSI-Threshold, PSI-InnerProduct 등의 확장을 구성하였�
 share의 곱을 얻기 위해 한쪽 값을 bit decomposition한 뒤 각 bit마다 $\ell$-bit
 메시지에 대한 OT를 수행하므로, 원소당 $O(\ell^2)$의 비용이 든다. 반면
 \cite{LTS+26}은 같은 계산을 원소당 $O(\ell)$에 수행할 수 있다고 보고하였다.
-엄밀히는 두 비용 모두 payload가 아니라 연산이 수행되는 arithmetic space의
-bit-length $L$에 대한 것이지만, 정수 inner product에서는 $L=\Theta(\ell)$이므로
-(\Cref{sec:integer-ip}) $\ell$에 대해서도 같은 차수이다.
 $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 
 \subsection{Our Contribution}\label{sec:contribution}
@@ -397,8 +393,9 @@ bits 이상이어야 하며, 이것이 단일 RLWE plaintext modulus를 넘을 �
 모두 다뤄야 비로소 성능 수치가 의미를 갖는다는 것이 이 부분의 요지이다. 제안
 프로토콜은 semi-honest 모델에서 안전함을 증명한다.
 
-실험에서 $n=2^{20}$, $L=32$일 때 \cite{KLS26} 대비 통신량은 32.4\%, LAN
-실행 시간은 59.5\% 감소한다. 정수 inner product를 위한 $L=84$ 설정에서는
+실험에서 $n=2^{20}$의 32-bit 설정일 때 \cite{KLS26} 대비 통신량은 32.4\%, LAN
+실행 시간은 59.5\% 감소한다. 32-bit payload에 대한 정수 inner product를 계산하는
+설정에서는
 제안 프로토콜의 통신량이 $1.56$배 증가하는 동안 \cite{KLS26}는 $4.65$배
 증가하여 격차가 더 벌어진다.
 
@@ -1898,7 +1895,7 @@ $\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_2$이고, $\mathsf{Sim}_\Snd$의
 $O(\ell^2)$와 $O(\ell)$의 차이가 실제 파라미터에서 어느 정도의 통신량 차이로
 나타나는지를 확인한다.
 
-Set size를 $n$이라 할 때 (본 절의 실험 설정은 $\ell=16$, $L=32$이다),
+Set size를 $n$이라 할 때 (32-bit 설정에서는 $L=32$이다),
 제안 프로토콜의 전체 communication cost는
 \[
 \begin{aligned}
@@ -2173,13 +2170,13 @@ Computational security & 128 bits \\
 Statistical security & 40 bits \\
 HE scheme & BGV \\
 Polynomial modulus degree $N$ & \(4096\) \\
-Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
-Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
-Number of batching slots $d$ & 4096 \\
+Plaintext modulus $p$ & \(\approx 2^{32}\) \\
+Ciphertext modulus $q$ & \(\approx 2^{84}\) \\
+Number of batching slots & 4096 \\
 \midrule
 \multicolumn{2}{l}{\textit{Integer inner product setting (\Cref{sec:integer-ip})}} \\
-Plaintext moduli (RNS) & two 42-bit primes, $L=84$ \\
-Coefficient modulus bit-sizes & \(\{60,45,20\}\) bits (105 used, 128-bit) \\
+Plaintext moduli (RNS) & \(p_1,p_2\approx 2^{42}\) \\
+Ciphertext modulus $q$ & \(\approx 2^{105}\) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2192,7 +2189,7 @@ Coefficient modulus bit-sizes & \(\{60,45,20\}\) bits (105 used, 128-bit) \\
 PJC 프로토콜의 실행 시간과 통신량을 비교한다.
 비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
 \cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
-$\ell=16$-bit payload, $L=32$-bit arithmetic space로 평가하였다.
+32-bit payload와 32-bit arithmetic space, 즉 $\ell=L=32$인 설정에서 평가하였다.
 반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 수치를 그대로 제시한다.
 또한 이들은 $\ell = 23$을 사용하였으므로, communication의 경우 오히려 \cite{CHI+23}에게 유리한 비교이다.
 
@@ -2200,7 +2197,7 @@ $\ell=16$-bit payload, $L=32$-bit arithmetic space로 평가하였다.
 
 \begin{table}[h]
 \centering
-\caption{Performance comparison of PJC protocols under different network settings ($\ell=16$, $L=32$, modular inner product).}
+\caption{Performance comparison of PJC protocols under different network settings (32-bit setting).}
 \label{tab:pjc-comparison}
 
 \setlength{\tabcolsep}{3.5pt}
@@ -2288,10 +2285,10 @@ communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
 
 한편 \cite{CHI+23}은 23-bit setting을 사용하여 실험하였으므로,
 Table~\ref{tab:pjc-comparison}의 communication cost는
-\cite{KLS26} 및 제안 프로토콜의 $L=32$ setting과 동일한 조건에서
+\cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
 측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
 communication cost를 보여주는 참고값으로 사용한다.
-한편 정수 inner product에 필요한 $L=84$-bit arithmetic space를 사용하는
+한편 32-bit payload에 대한 정수 inner product를 계산하는
 정수 inner product 설정의 실측 비교는 \Cref{sec:integer-ip}에 제시하였다.
 
 
@@ -2342,8 +2339,8 @@ inner-product computation은 전체 프로토콜에 제한적인
 
 \subsection{Integer Inner Product Setting}
 \label{sec:integer-ip-exp}
-\Cref{sec:integer-ip}의 설정, 즉 $\ell=32$-bit payload에 대해 $L=84$-bit
-arithmetic space에서 정수 inner product를 계산하는 경우를 LAN에서 측정하였다.
+\Cref{sec:integer-ip}의 설정, 즉 32-bit payload에 대한 정수 inner product를
+계산하는 경우를 LAN과 두 WAN 환경에서 측정하였다.
 
 \cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
 고정되어 있어 ring을 바꾸지 않고는 측정할 수 없으므로, OKVS value, OT message,
@@ -2355,22 +2352,24 @@ $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서�
 
 \begin{table}[h]
 \centering
-\caption{Integer inner product setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
+\caption{Integer inner product over 32-bit payloads ($L=84$) under different network settings.}
 \label{tab:pjc-long}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.05}
 \small
-\begin{tabular}{c l c c}
+\begin{tabular}{c l c c c c}
 \toprule
-\textbf{Set Size} & \textbf{Protocol} & \textbf{Comm. (MB)} & \textbf{LAN (s)} \\
+\multirow{2}{*}{\textbf{Set Size}} & \multirow{2}{*}{\textbf{Protocol}} & \multirow{2}{*}{\textbf{Comm. (MB)}} & \multicolumn{3}{c}{\textbf{Runtime (s)}} \\
+\cmidrule(lr){4-6}
+& & & \textbf{LAN} & \textbf{100 Mbps} & \textbf{10 Mbps} \\
 \midrule
 \multirow{2}{*}{$2^{16}$}
-& \cite{KLS26} & 93.534 & 2.678 \\
-& \textbf{Ours} & 21.832 & 0.823 \\
+& \cite{KLS26} & 93.534 & 2.678 & 9.934 & 77.341 \\
+& \textbf{Ours} & 21.832 & 0.823 & 2.243 & 17.637 \\
 \midrule
 \multirow{2}{*}{$2^{20}$}
-& \cite{KLS26} & 1499.286 & 43.045 \\
-& \textbf{Ours} & 340.631 & 13.386 \\
+& \cite{KLS26} & 1499.286 & 43.045 & 162.300 & KLS10M20 \\
+& \textbf{Ours} & 340.631 & 13.386 & 38.323 & 282.585 \\
 \bottomrule
 \end{tabular}
 \vspace{2pt}
@@ -2381,7 +2380,7 @@ $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서�
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 $L=32$ 설정과
+Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정과
 다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
 각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
 218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
@@ -2410,7 +2409,7 @@ Set size가 \(2^{16}\)인 경우 통신량은
 B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 추가 오버헤드만을 발생시키는 것으로 나타났다.
 
-정수 inner product를 위해 $L=84$-bit arithmetic space가 필요한
+32-bit payload에 대한 정수 inner product를 계산하는
 설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 늘어나는 것은 payload
 경로뿐이어서 $n=2^{20}$에서 통신량은 218.010\,MB에서
 340.631\,MB로 약 $1.56$배 증가한 반면, \cite{KLS26}는 MultShare의 이차 증가로
