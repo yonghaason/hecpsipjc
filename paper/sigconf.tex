@@ -2455,7 +2455,7 @@ $\ell = 32$-bit로 평가하였다.
 & \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
 & \cite{KLS26}&20.9&1.74&3.28&18.15\\
 \cmidrule(lr){2-6}%
-& \textbf{Ours}&12.8&0.72&1.48&10.50\\
+& \textbf{Ours}&14.2&0.74&1.56&11.38\\
 
 \midrule
 
@@ -2463,7 +2463,7 @@ $\ell = 32$-bit로 평가하였다.
 & \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
 & \cite{KLS26}&322.6&28.11&53.53&287.51\\
 \cmidrule(lr){2-6}
-& \textbf{Ours}&196.5&11.12&25.15&175.58\\
+& \textbf{Ours}&218.0&11.39&26.84&182.45\\
 
 \bottomrule
 \end{tabular}
@@ -2480,17 +2480,17 @@ Table~\ref{tab:pjc-comparison}에서 확인할 수 있듯이,
 제안 프로토콜은 모든 입력 크기와 네트워크 환경에서
 \cite{KLS26}보다 낮은 실행 시간과 통신량을 보인다.
 Set size가 $2^{16}$인 경우, 제안 프로토콜의 communication cost는
-12.816\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 38.7\% 감소한다.
-LAN 환경에서의 runtime 역시 1.740\,s에서 0.717\,s로
-약 58.8\% 감소한다.
+14.150\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 32.3\% 감소한다.
+LAN 환경에서의 runtime 역시 1.740\,s에서 0.740\,s로
+약 57.5\% 감소한다.
 
 Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
-제안 프로토콜의 communication cost는 196.552\,MB로,
-\cite{KLS26}의 322.622\,MB보다 약 39.1\% 낮다.
-또한 LAN 환경에서 runtime은 28.105\,s에서 11.123\,s로
-약 60.4\% 감소한다.
+제안 프로토콜의 communication cost는 218.010\,MB로,
+\cite{KLS26}의 322.622\,MB보다 약 32.4\% 낮다.
+또한 LAN 환경에서 runtime은 28.105\,s에서 11.389\,s로
+약 59.5\% 감소한다.
 100\,Mbps 및 10\,Mbps의 WAN 환경에서도 제안 프로토콜은
-각각 25.151\,s와 175.580\,s의 runtime을 보이며,
+각각 26.843\,s와 182.454\,s의 runtime을 보이며,
 \cite{KLS26}보다 낮은 실행 시간을 유지한다.
 이는 제한된 bandwidth 환경에서도 제안 프로토콜의 낮은
 communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
@@ -2528,11 +2528,11 @@ PJC computation의 세 단계로 구분하였으며,
 \textbf{Comm. (MB)}
 \\
 \midrule
-Circuit-PSI&10.474&151.498\\
-B2A-OT&0.358&22.769\\
-HE Computation&0.257&22.285\\
+Circuit-PSI&10.743&172.956\\
+B2A-OT&0.357&22.769\\
+HE Computation&0.255&22.285\\
 \midrule
-\textbf{Total}&11.123&196.552\\
+\textbf{Total}&11.389&218.010\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2544,8 +2544,8 @@ Table~\ref{tab:pjc-breakdown}에서 확인할 수 있듯이,
 
 반면 arithmetic share를 생성하기 위해 추가되는 B2A-OT와
 동형암호 기반 PJC computation의 비용은 상대적으로 작다.
-B2A-OT는 0.358\,s의 runtime과 22.769\,MB의 communication cost를
-요구하며, HE computation은 0.257\,s와 22.285\,MB를 각각 요구한다.
+B2A-OT는 0.357\,s의 runtime과 22.769\,MB의 communication cost를
+요구하며, HE computation은 0.255\,s와 22.285\,MB를 각각 요구한다.
 따라서 arithmetic share conversion과 이후의 동형암호 기반
 inner-product computation은 전체 프로토콜에 제한적인
 추가 오버헤드만을 발생시킨다.
@@ -2561,11 +2561,11 @@ inner-product computation은 전체 프로토콜에 제한적인
 실험 결과, 제안 프로토콜은 평가한 모든 입력 크기와 네트워크
 환경에서 \cite{KLS26}보다 낮은 실행 시간과 통신량을 보였다.
 Set size가 \(2^{16}\)인 경우 통신량은
-20.900\,MB에서 12.816\,MB로 약 38.7\% 감소하였으며, LAN
-환경의 실행 시간은 1.740\,s에서 0.717\,s로 약 58.8\%
+20.900\,MB에서 14.150\,MB로 약 32.3\% 감소하였으며, LAN
+환경의 실행 시간은 1.740\,s에서 0.740\,s로 약 57.5\%
 감소하였다. Set size가 \(2^{20}\)인 경우에도 통신량은
-322.622\,MB에서 196.552\,MB로 약 39.1\%, LAN 실행 시간은
-28.105\,s에서 11.123\,s로 약 60.4\% 감소하였다. 또한
+322.622\,MB에서 218.010\,MB로 약 32.4\%, LAN 실행 시간은
+28.105\,s에서 11.389\,s로 약 59.5\% 감소하였다. 또한
 100\,Mbps와 10\,Mbps의 제한된 bandwidth 환경에서도 이러한
 성능 우위가 유지되었다. 단계별 분석에서는 Circuit-PSI가 전체
 비용의 가장 큰 비중을 차지하였으며, arithmetic share 생성을 위한
