@@ -2175,9 +2175,9 @@ Ciphertext coefficient modulus의 bit-size는
 발생하는 error를 고려하여 coefficient modulus를 설정하였다.
 Batching을 이용하여 하나의 ciphertext에 최대
 \(d = N = 4096\)개의 값을 packing하였다.
-정수 inner product 설정(\Cref{sec:integer-ip})은 42-bit 잔여류 두 개와
-coefficient modulus \(\{60,45,20\}\)을 사용하며, 실제로 쓰이는 앞 두 소수의
-합 105 bits로 128-bit 안전성이 유지되는 이유는 \Cref{sec:integer-ip}에 적었다.
+정수 inner product 설정(\Cref{sec:integer-ip})에서는 plaintext modulus로
+42-bit 소수 \(4{,}398{,}046{,}486{,}529\)와 \(4{,}398{,}046{,}240{,}769\)를,
+coefficient modulus bit-size로 \(\{60,45,20\}\)을 사용하였다.
 실험에 사용한 파라미터는
 Table~\ref{tab:experimental-parameters}에 정리하였다.
 
