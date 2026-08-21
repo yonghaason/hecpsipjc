@@ -1728,24 +1728,15 @@ $.
 $O(\ell^2)$와 $O(\ell)$의 차이가 실제 파라미터에서 어느 정도의 통신량 차이로
 나타나는지를 확인한다.
 
-기존 연구들에서는 payload의 크기와 arithmetic computation space의
-크기를 동일한 파라미터로 취급하는 경우가 많았다.
-그러나 inner product는 각 교집합 원소에 대해 두 payload의 곱을
-계산한 뒤 이를 누적하는 연산이므로, 단순히 입력 데이터의 표현
-범위만을 기준으로 연산 파라미터를 설정하는 것은 충분하지 않다.
-예를 들어, 두 개의 32-bit payload를 곱할 경우 하나의 곱셈 결과를
-표현하기 위해 최대 약 64-bit의 공간이 필요할 수 있으므로,
-정확한 곱셈 결과를 유지하기 위해서는 최소한 이에 상응하는 크기의
-arithmetic space가 요구된다.
-이에 따라 본 연구에서는 32-bit payload를 입력으로 사용하는
-경우에도 inner-product 연산을 64-bit arithmetic space에서
-수행하는 것으로 설정하고, 이를 기준으로 이론적 communication
-cost를 산정한다.
-이는 단순히 더 큰 payload를 가정한 것이 아니라, inner-product
-연산 과정에서 요구되는 실제 산술 표현 범위를 반영하기 위한
-설정이다.
+이하에서는 payload의 bit-length를 $\ell$, 연산이 수행되는 arithmetic
+space $\Z_P$의 bit-length를 $L=\lceil\log_2 P\rceil$로 구분하여 표기한다.
+앞 절까지의 실험은 $\ell=16$, $L=32$이며, 출력은 $\Z_P$ 위의 값, 즉
+\emph{modular} inner product $\sum_{x_i=y_j} D_i^X D_j^Y \bmod P$이다.
+이는 그 자체로 잘 정의된 functionality이고, 비교 대상인 \cite{KLS26} 역시
+동일한 $L$의 ring 위에서 같은 값을 계산한다. 정수 inner product가 필요한
+경우에 $L$을 어떻게 잡아야 하는지는 \Cref{sec:long-items}에서 다룬다.
 
-데이터의 bit-length를 $\ell$, set size를 $n$이라 할 때,
+Arithmetic space의 bit-length를 $L$, set size를 $n$이라 할 때,
 제안 프로토콜의 전체 communication cost는
 \[
 \begin{aligned}
@@ -1772,7 +1763,7 @@ C_{\mathsf{OKVS}}
 =
 3\cdot 1.3n
 \left(
-40+\log_2 n+\ell+\lambda_s
+40+\log_2 n+L+\lambda_s
 \right)
 $
 의 communication cost가 발생한다.
@@ -1790,14 +1781,14 @@ C_{\mathsf{PEQT}}
 $
 으로 계산한다.
 
-B2A-OT의 경우, $\ell$-bit message에 대한 하나의 OT가
-$2\ell+1$ bits의 communication cost를 요구하므로,
+B2A-OT의 경우, $L$-bit message에 대한 하나의 OT가
+$2L+1$ bits의 communication cost를 요구하므로,
 전체 $1.3n$개의 원소에 대한 한 번의 B2A-OT communication
 cost는
 $
 C_{\mathsf{B2A\mbox{-}OT}}
 =
-(2\ell+1)\cdot 1.3n
+(2L+1)\cdot 1.3n
 $
 으로 나타낼 수 있다.
 제안 프로토콜에서는 이러한 B2A-OT가 두 번 수행되므로
@@ -1812,9 +1803,9 @@ C_{\mathsf{HE}}
 \left\lceil
 \frac{1.3n}{N}
 \right\rceil
-N(2\ell+16)
+N(2L+16)
 +
-2N\ell,
+2NL,
 $
 으로 계산하며, 여기서 $N$은 homomorphic encryption에서
 사용되는 polynomial modulus degree를 나타낸다.
@@ -1825,18 +1816,18 @@ C_{\mathsf{Ours}}
 ={}&
 128\cdot1.3n
 +
-3\cdot1.3n(40+\log_2 n+\ell+\lambda_s) \\
+3\cdot1.3n(40+\log_2 n+L+\lambda_s) \\
 &+
 4\cdot1.3n(40+\log_2 n)
 +
-2(2\ell+1)\cdot1.3n \\
+2(2L+1)\cdot1.3n \\
 &+
 \left\lceil
 \frac{1.3n}{N}
 \right\rceil
-N(2\ell+16)
+N(2L+16)
 +
-2N\ell
+2NL
 \end{aligned}
 \]
 으로 정리할 수 있다.
@@ -1861,12 +1852,12 @@ $C_{\mathsf{PEQT}}$, $C_{\mathsf{B2A\mbox{-}OT}}$는
 위와 동일하게 계산한다.
 
 \cite{KLS26}에서는 PJC computation 과정에서 MultShare를
-수행하며, $\ell$-bit 값을 bit decomposition한 뒤 각 bit에 대해
+수행하며, $L$-bit 값을 bit decomposition한 뒤 각 bit에 대해
 OT를 수행하므로, 이에 대한 communication cost는
 $
 C_{\mathsf{MultShare}}
 =
-\ell(2\ell+1)\cdot1.3n
+L(2L+1)\cdot1.3n
 $
 으로 표현된다.
 또한 최종 결과를 복원하기 위해 하나의 arithmetic share를
@@ -1874,7 +1865,7 @@ $
 $
 C_{\mathsf{Open}}
 =
-\ell
+L
 $
 의 communication cost가 추가된다.
 따라서 \cite{KLS26}의 전체 communication cost는
@@ -1884,81 +1875,92 @@ C_{\mathsf{KLS26}}
 ={}&
 128\cdot1.3n
 +
-3\cdot1.3n(40+\log_2 n+\ell) \\
+3\cdot1.3n(40+\log_2 n+L) \\
 &+
 4\cdot1.3n(40+\log_2 n)
 +
-2(2\ell+1)\cdot1.3n \\
+2(2L+1)\cdot1.3n \\
 &+
-\ell(2\ell+1)\cdot1.3n
+L(2L+1)\cdot1.3n
 +
-\ell
+L
 \end{aligned}
 \]
 으로 정리할 수 있다.
 
-Table~\ref{tab:pjc-comm-64}에서는 arithmetic computation
-space의 bit-length를 $\ell=64$로 설정하고, set size가
-$2^{16}$ 및 $2^{20}$인 경우에 대해 위 식을 이용하여
-이론적 communication cost를 산정하였다.
-제안 프로토콜의 경우 64-bit arithmetic space에 대응하여
-$N=8192$를 사용하였다.
-한편, \cite{CHI+23}은 64-bit setting에 대한 결과를 제공하지
-않으므로 해당 비교에서는 제외하였다.
+\subsection{Handling Long Items}\label{sec:long-items}
+앞 절까지의 설정은 $\Z_P$ 위의 modular inner product를 계산한다. 정수
+inner product를 얻으려면 곱의 누적이 $P$를 넘지 않아야 하므로,
+$\ell$-bit payload에 대해
+\[
+L \;\ge\; 2\ell+\lceil\log_2|X\cap Y|\rceil
+\]
+가 필요하다. $\ell=32$, $|X\cap Y|\le 2^{20}$이면 $L\ge 84$이다. 이 크기는
+단일 RLWE plaintext modulus로는 담을 수 없다. SEAL은 plaintext modulus를
+60 bits로 제한하며, 이는 BGV 계열 구현에 공통된 제약이다.
 
+이에 AF-CPSI의 payload 경로를 RNS로 확장한다. 서로소인 소수
+$p_1,\dots,p_k$에 대해 $P=\prod_j p_j$로 두고, \Cref{sec:cpsi-zp}의 data
+component를 잔여류별로 $k$개 병렬 구성하며, B2A-OT와 동형암호 평가도
+잔여류별로 수행한 뒤 CRT로 결합한다. 식별자 경로(OPRF, OKVS key, PEQT)는
+payload와 무관하므로 한 번만 수행된다. $\ell=32$에서는 42-bit 소수 두 개로
+$L=84$를 정확히 맞추며, 두 소수 모두 $p\equiv1\pmod{2N}$이므로 $N=4096$에서
+batching이 유지된다.
+
+42-bit plaintext에는 SEAL의 128-bit security table이 $N=4096$에 허용하는
+109-bit 총합보다 큰 coefficient modulus가 필요하다. 본 프로토콜은
+key switching을 수행하지 않으므로 coefficient modulus의 마지막 소수(SEAL의
+key-switching prime)는 사용되지 않으며, 실제로 쓰이는 앞 두 소수의 합만
+109 bits 이내로 유지하면 된다. 이에 security level 검사를 해제하고
+coefficient modulus를 $\{60,45,20\}$으로 둔다. Uniformly random한 share를
+곱한 뒤 $n=2^{20}$ 규모의 338개 암호문을 누적하고 modulus switching을
+적용한 시점의 invariant noise budget은 $6$--$7$ bits로 측정되었다. 첫 소수는
+전송 암호문이 놓이는 modulus이므로 60 아래로 내리면 budget이 $0$--$2$ bits로
+떨어지고, 둘째 소수는 45까지 내릴 수 있다.
+
+\cite{KLS26}에 대해서도 동일한 요구조건이 적용된다. 정수 inner product를
+위해서는 같은 $L=84$ ring이 필요하고, MultShare가 $L$에 대해 이차이므로 비용은
+$L=32$ 대비 약 $(84/32)^2$배가 된다. \cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
+고정되어 있어 ring을 바꾸지 않고는 측정할 수 없으므로, OKVS value, OT message,
+MultShare의 폭을 모두 84 bits로 맞춘 cost harness로 측정하였다. 이 harness는
+비용을 결정하는 모든 폭을 원 프로토콜과 동일하게 유지하며, 연산 자체는
+XOR로 대체되어 있어 inner product 값을 내지는 않는다.
+\cite{CHI+23}은 공개 구현이 없어 재측정할 수 없고, 보고된 수치는
+$\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서는 제외한다.
 
 \begin{table}[h]
 \centering
-\caption{Estimated communication cost under the 64-bit setting.}
-\label{tab:pjc-comm-64}
-
-\setlength{\tabcolsep}{8pt}
+\caption{Long-item setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
+\label{tab:pjc-long}
+\setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.05}
 \small
-
-\begin{tabular}{c l c}
+\begin{tabular}{c l c c}
 \toprule
-\textbf{Set Size}
-&
-\textbf{Protocol}
-&
-\textbf{Comm. (MB)}
-\\
+\textbf{Set Size} & \textbf{Protocol} & \textbf{Comm. (MB)} & \textbf{LAN (s)} \\
 \midrule
-
 \multirow{2}{*}{$2^{16}$}
-& \cite{KLS26} & 98.253 \\
-& \textbf{Ours} & 13.361 \\
-
+& \cite{KLS26} & KLSCOMM16 & KLSTIME16 \\
+& \textbf{Ours} & 21.832 & 0.823 \\
 \midrule
-
 \multirow{2}{*}{$2^{20}$}
-& \cite{KLS26} & 1576.822 \\
-& \textbf{Ours} & 215.256\\
-
+& \cite{KLS26} & KLSCOMM20 & KLSTIME20 \\
+& \textbf{Ours} & 340.631 & 13.386 \\
 \bottomrule
 \end{tabular}
-
 \vspace{2pt}
 \begin{minipage}{0.88\linewidth}
 \footnotesize
-\cite{CHI+23} is excluded from the 64-bit comparison because
-its reported experiments use 23-bit payloads and do not provide
-a 64-bit setting.
+\cite{KLS26} is measured with a width-matched cost harness (see text).
+\cite{CHI+23} has no public implementation and reports only $\ell=23$.
 \end{minipage}
-
 \end{table}
 
-Table~\ref{tab:pjc-comm-64}에서 확인할 수 있듯이,
-64-bit setting에서도 제안 프로토콜은 \cite{KLS26}보다
-현저히 낮은 communication cost를 보인다.
-Set size가 $2^{16}$인 경우 communication cost는
-98.253\,MB에서 13.361\,MB로 약 86.4\% 감소하며,
-$2^{20}$인 경우에는 1576.822\,MB에서 215.256\,MB로
-약 86.3\% 감소한다.
-이는 큰 bit-length를 사용하는 경우에도 제안 프로토콜의
-통신 효율성이 유지됨을 보여준다.
-
+Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정과
+다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
+각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
+218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
+MultShare의 이차 증가로 KLSRATIO20배가 된다.
 
 \subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
 본 절에서는 대안 construction을 하나 기술하고, 이를 최종 프로토콜로 채택하지
@@ -2248,6 +2250,9 @@ $\prot{PJC}$\emph{(\Cref{fig:our-pjc})}는 $\func{AF-CPSI}$-hybrid model에서
 semi-honest adversary에 대해 $\func{PJC}$를 securely realize한다.
 \end{theorem}
 
+\Cref{sec:long-items}의 RNS 변형은 같은 프로토콜을 잔여류별로 독립 실행한
+것이므로, 아래 증명이 각 잔여류에 그대로 적용되고 hybrid 수만 $k$배가 된다.
+
 \begin{proof}
 $\Snd$가 corrupt된 경우와 $\Rcv$가 corrupt된 경우를 나누어 보인다.
 
@@ -2387,6 +2392,10 @@ Polynomial modulus degree $N$ & \(4096\) \\
 Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
 Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
 Number of batching slots $d$ & 4096 \\
+\midrule
+\multicolumn{2}{l}{\textit{Long-item setting (\Cref{sec:long-items})}} \\
+Plaintext moduli (RNS) & two 42-bit primes, $L=84$ \\
+Coefficient modulus bit-sizes & \(\{60,45,20\}\) bits, security check off \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -2399,7 +2408,7 @@ Number of batching slots $d$ & 4096 \\
 PJC 프로토콜의 실행 시간과 통신량을 비교한다.
 비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
 \cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
-$\ell = 32$-bit로 평가하였다.
+$\ell=16$-bit payload, $L=32$-bit arithmetic space로 평가하였다.
 반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 수치를 그대로 제시한다.
 또한 이들은 $\ell = 23$을 사용하였으므로, communication의 경우 오히려 \cite{CHI+23}에게 유리한 비교이다.
 
@@ -2497,12 +2506,11 @@ communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
 
 한편 \cite{CHI+23}은 23-bit setting을 사용하여 실험하였으므로,
 Table~\ref{tab:pjc-comparison}의 communication cost는
-\cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
+\cite{KLS26} 및 제안 프로토콜의 $L=32$ setting과 동일한 조건에서
 측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
 communication cost를 보여주는 참고값으로 사용한다.
-한편 inner-product 연산에 실제로 필요한 64-bit arithmetic space를
-기준으로 한 이론적 communication cost 비교는
-\Cref{sec:comm-analysis}에 제시하였다.
+한편 정수 inner product에 필요한 $L=84$-bit arithmetic space를 사용하는
+long-item 설정의 실측 비교는 \Cref{sec:long-items}에 제시하였다.
 
 
 \subsection{Performance Breakdown}
@@ -2572,17 +2580,14 @@ Set size가 \(2^{16}\)인 경우 통신량은
 B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 추가 오버헤드만을 발생시키는 것으로 나타났다.
 
-64-bit arithmetic space에 대한 이론적 분석에서도 제안 프로토콜의
-통신 효율성은 유지되었다. Set size가 \(2^{16}\)인 경우
-\cite{KLS26} 대비 통신량이 98.253\,MB에서 13.361\,MB로 약
-86.4\% 감소하였으며, \(2^{20}\)인 경우에는
-1576.822\,MB에서 215.256\,MB로 약 86.3\% 감소하였다. 이는
-입력 payload의 크기뿐 아니라 실제 inner-product 계산에 필요한
-산술 공간을 고려하는 경우에도 제안 방식이 높은 통신 효율성을
-제공함을 보여준다.
+정수 inner product를 위해 $L=84$-bit arithmetic space가 필요한 long-item
+설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 42-bit 잔여류 두 개의
+RNS로 payload 경로만 두 배가 되어 $n=2^{20}$에서 통신량은 218.010\,MB에서
+340.631\,MB로 약 $1.56$배 증가한 반면, \cite{KLS26}는 MultShare의 이차 증가로
+KLSRATIO20배가 되어 격차가 더 벌어졌다. 이는 payload가 길어질수록 $O(\ell)$
+구성의 이점이 커짐을 실측으로 보인 것이다.
 
-향후 연구에서는 64-bit arithmetic space를 적용한 실제 구현과
-실험을 통해 이론적 분석 결과를 검증하고, 전체 실행 시간과
+향후 연구에서는 long-item 설정을 WAN 환경까지 확장하여 측정하고, 전체 실행 시간과
 통신량에서 가장 큰 비중을 차지하는 Circuit-PSI 단계를 추가로
 최적화할 필요가 있다. 또한 실제 지연 시간이 존재하는 다양한
 네트워크 환경에서 제안 프로토콜의 확장성과 실용성을 평가하는
