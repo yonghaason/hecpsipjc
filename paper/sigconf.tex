@@ -2089,13 +2089,7 @@ coefficient modulus를 $\{60,45,20\}$으로 둔다. Uniformly random한 share를
 \cite{KLS26}에 대해서도 동일한 요구조건이 적용된다. 정수 inner product를
 위해서는 같은 $L=84$ ring이 필요하고, MultShare 항은 $L$에 대해 이차이므로
 $L=32$ 대비 $(84/32)^2\approx6.9$배가 된다(식별자 경로는 변하지 않으므로 전체
-증가율은 이보다 낮다). \cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
-고정되어 있어 ring을 바꾸지 않고는 측정할 수 없으므로, OKVS value, OT message,
-MultShare의 폭을 모두 84 bits로 맞춘 cost harness로 측정하였다. 이 harness는
-비용을 결정하는 모든 폭을 원 프로토콜과 동일하게 유지하며, 연산 자체는
-XOR로 대체되어 있어 inner product 값을 내지는 않는다.
-\cite{CHI+23}은 공개 구현이 없어 재측정할 수 없고, 보고된 수치는
-$\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서는 제외한다.
+증가율은 이보다 낮다).
 
 측정 결과는 \Cref{sec:integer-ip-exp}에 제시한다.
 
@@ -2535,6 +2529,14 @@ inner-product computation은 전체 프로토콜에 제한적인
 \label{sec:integer-ip-exp}
 \Cref{sec:integer-ip}의 설정, 즉 $\ell=32$-bit payload에 대해 $L=84$-bit
 arithmetic space에서 정수 inner product를 계산하는 경우를 LAN에서 측정하였다.
+
+\cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
+고정되어 있어 ring을 바꾸지 않고는 측정할 수 없으므로, OKVS value, OT message,
+MultShare의 폭을 모두 84 bits로 맞춘 cost harness로 측정하였다. 이 harness는
+비용을 결정하는 모든 폭을 원 프로토콜과 동일하게 유지하며, 연산 자체는
+XOR로 대체되어 있어 inner product 값을 내지는 않는다.
+\cite{CHI+23}은 공개 구현이 없어 재측정할 수 없고, 보고된 수치는
+$\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서는 제외한다.
 
 \begin{table}[h]
 \centering
