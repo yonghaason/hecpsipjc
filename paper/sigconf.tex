@@ -293,7 +293,7 @@ space, our protocol uses 32\% less communication and runs 60\% faster on a
 LAN. For 32-bit payloads, where a correct integer inner product needs an
 84-bit arithmetic space, we run the payload path over an RNS of two 42-bit
 primes; our cost grows by $1.56\times$ while the quadratic baseline grows by
-an order of magnitude.
+$4.65\times$.
 \end{abstract}
 
 %%
@@ -399,7 +399,7 @@ $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
 
 이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{F}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
-$n=2^{20}$, $L=32$에서 \cite{KLS26} 대비 통신량은 32.4\%, LAN 실행 시간은 59.5\% 감소하며, 정수 inner product를 위한 $L=84$ 설정에서는 제안 프로토콜의 비용이 $1.56$배 증가하는 동안 \cite{KLS26}의 비용은 MultShare의 이차 증가로 한 자릿수 배 이상 증가한다.
+$n=2^{20}$, $L=32$에서 \cite{KLS26} 대비 통신량은 32.4\%, LAN 실행 시간은 59.5\% 감소하며, 정수 inner product를 위한 $L=84$ 설정에서는 제안 프로토콜의 비용이 $1.56$배 증가하는 동안 \cite{KLS26}의 비용은 MultShare의 이차 증가로 약 $4.65$배 증가한다.
 
 
 
@@ -1954,11 +1954,11 @@ $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서�
 \textbf{Set Size} & \textbf{Protocol} & \textbf{Comm. (MB)} & \textbf{LAN (s)} \\
 \midrule
 \multirow{2}{*}{$2^{16}$}
-& \cite{KLS26} & KLSCOMM16 & KLSTIME16 \\
+& \cite{KLS26} & 93.534 & 2.678 \\
 & \textbf{Ours} & 21.832 & 0.823 \\
 \midrule
 \multirow{2}{*}{$2^{20}$}
-& \cite{KLS26} & KLSCOMM20 & KLSTIME20 \\
+& \cite{KLS26} & 1499.286 & 43.045 \\
 & \textbf{Ours} & 340.631 & 13.386 \\
 \bottomrule
 \end{tabular}
@@ -1974,7 +1974,7 @@ Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정�
 다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
 각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
 218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
-MultShare의 이차 증가로 KLSRATIO20배가 된다.
+MultShare의 이차 증가로 322.622\,MB에서 1499.286\,MB로 약 $4.65$배가 된다.
 
 \subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
 본 절에서는 대안 construction을 하나 기술하고, 이를 최종 프로토콜로 채택하지
@@ -2596,7 +2596,7 @@ B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 42-bit 잔여류 두 개의
 RNS로 payload 경로만 두 배가 되어 $n=2^{20}$에서 통신량은 218.010\,MB에서
 340.631\,MB로 약 $1.56$배 증가한 반면, \cite{KLS26}는 MultShare의 이차 증가로
-KLSRATIO20배가 되어 격차가 더 벌어졌다. 이는 payload가 길어질수록 $O(\ell)$
+약 $4.65$배가 되어 격차가 더 벌어졌다. 이는 payload가 길어질수록 $O(\ell)$
 구성의 이점이 커짐을 실측으로 보인 것이다.
 
 향후 연구에서는 long-item 설정을 WAN 환경까지 확장하여 측정하고, 전체 실행 시간과
