@@ -90,6 +90,9 @@
 \crefformat{section}{\S#2#1#3} % see manual of cleveref, section 8.2.1
 \crefformat{subsection}{\S#2#1#3}
 \crefformat{subsubsection}{\S#2#1#3}
+\Crefformat{section}{\S#2#1#3}
+\Crefformat{subsection}{\S#2#1#3}
+\Crefformat{subsubsection}{\S#2#1#3}
 
 
 \newcommand{\Z}{\mathbb{Z}}
@@ -104,6 +107,10 @@
 \newcommand{\yongha}[1]{{\color{blue}{[yongha:#1}]}}
 \newcommand{\stepheading}[1]{%
   \par\noindent{\normalfont\bfseries #1}\enspace\ignorespaces
+}
+% Unnumbered run-in heading used throughout the body.
+\newcommand{\noindentparagraph}[1]{%
+  \par\medskip\noindent{\normalfont #1}\par\nobreak\noindent\ignorespaces
 }
 
 
@@ -313,16 +320,16 @@
 %% This command processes the author and affiliation and title
 %% information and builds the first part of the formatted document.
 \maketitle
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 PSI(Private Set Intersection)는 두 참여자가 각자 보유한 데이터 집합을 공개하지 않고도 두 집합의 교집합을 계산할 수 있도록 하는 암호 프로토콜이다. % 이 중 Circuit-PSI(Circuit-based Private Set Intersection)는 교집합에 대한 다양한 연산을 불리언 회로(Boolean circuit)로 표현하여 수행하는 PSI 프로토콜이다. 
-이러한 개념들 중 practice에서 매우 유용한 확장 개념으로, PJC(Private Join and Compute)~\cite{LPR+21}가 주목받고 있다. PJC는 두 참여자의 입력 집합에서 교집합 원소에 대응되는 값들의 내적(inner product)을 안전하게 계산하는 two-party 프로토콜로, 통계 분석, 광고 효과 분석, 추천 시스템, 머신러닝 등 다양한 데이터 분석 분야~\cite{IKN+20}에서 활용 등이 논의되고 있는 중요한 암호 프로토콜이다.
+이러한 개념들 중 practice에서 매우 유용한 확장 개념으로, PJC(Private Join and Compute)~\cite{LPR+21}가 주목받고 있다. PJC는 두 참여자의 입력 집합에서 교집합 원소에 대응되는 값들의 내적(inner product)을 안전하게 계산하는 two-party 프로토콜로, 통계 분석, 광고 효과 분석, 추천 시스템, 머신러닝 등 다양한 데이터 분석 분야~\cite{IKN+20}에서의 활용이 논의되고 있는 중요한 암호 프로토콜이다.
 구체적으로, $\mathcal{S}$는 식별자 집합 $X$와 payload 집합 $D^X$를 입력으로 제공하고, $\mathcal{R}$은 식별자 집합 $Y$와 payload 집합 $D^Y$를 입력으로 제공한다. $\mathcal{F}_{\mathrm{PJC}}$는 $X$와 $Y$에서 동일한 식별자를 갖는 원소 쌍을 찾고, 각 쌍에 대응되는 payload $D^X_i$와 $D^Y_j$를 곱한 뒤 이를 모두 합산한다. 최종적으로 수신자 $\mathcal{R}$은 다음 값을 얻는다.
     \[
     \mathsf{sum}
     :=
     \sum_{x_i = y_j} D^X_i \cdot D^Y_j .
     \]
-    따라서 PJC는 교집합 자체를 출력하지 않고, 교집합에 해당하는 payload들의 내적값만을 출력하는 기능이다. Ideal functionality는 figure~\ref{fig:pjc-ideal-functionality}에 나타낸다.
+    따라서 PJC는 교집합 자체를 출력하지 않고, 교집합에 해당하는 payload들의 내적값만을 출력하는 기능이다. Ideal functionality는 Figure~\ref{fig:pjc-ideal-functionality}에 나타낸다.
 
     \begin{figure}[h]
     \centering
@@ -357,28 +364,28 @@ PSI(Private Set Intersection)는 두 참여자가 각자 보유한 데이터 집
 \yongha{$O(\ell^2), O(\ell)$ 얘기가 없네요.}
 \yongha{\cite{KLS26}도 주요 previous work인데 그 얘기도 없네요?}
 
-\subsection{Our Contribution}
+\subsection{Our Contribution}\label{sec:contribution}
 우리는 PJC literature에 대해 two-fold로 contribute한다.
 
-첫번째로, we present a cryptanalysis of PJC protocol proposed in \cite{LTS+26}. 송신자의 데이터를 비밀리에 전달하는 과정에서 하나의 마스킹 값을 전체에 적용하여 수신자가 원본 데이터와 마스킹 값 간의 차분을 알 수 있다는 문제가 존재한다는 것을 발견하였다. 이 경우 실제 데이터 값은 알 수 없더라도 데이터 간의 차분을 통해 수신자가 원본 데이터를 알아내지 않고도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있게 된다. 
+첫 번째로, we present a cryptanalysis of PJC protocol proposed in \cite{LTS+26}. 송신자의 데이터를 비밀리에 전달하는 과정에서 하나의 마스킹 값을 전체에 적용하여 수신자가 원본 데이터와 마스킹 값 간의 차분을 알 수 있다는 문제가 존재한다는 것을 발견하였다. 이 경우 실제 데이터 값은 알 수 없더라도 데이터 간의 차분을 통해 수신자가 원본 데이터를 알아내지 않고도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있게 된다. 
 
-두번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
-현재 Circuit-PSI는 XOR이 출력되도록 filed를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 filed가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
+두 번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
+현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
 
 이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{F}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
 \yongha{구체적인 성능 개선치 (배율) 등 써주기}
 
 
 
-\section{Preliminary}
+\section{Preliminary}\label{sec:prelim}
 
-\subsection{Notation}
+\subsection{Notation}\label{sec:notation}
 양의 정수 $n$에 대해 $[n] := \{1,\ldots,n\}$으로 나타내고 소수 $p$에 대해 $\mathbb{Z}_p := \mathbb{Z}/p\mathbb{Z}$로 나타낸다.
 또한 $x \xleftarrow{\$} S$는 유한 집합 $S$에서 원소 $x$를 균일하게
 무작위로 선택함을 의미하며, $\oplus$는 두 bit string에 대한
 bitwise XOR 연산을 의미한다.
 
-본 논문에서 Sender $S$와 Receiver $R$은 프로토콜에 참여하는 두 참여자이며, $S$와 $R$이 보유한 식별자 집합을 각각 $X=\{x_1,\ldots,x_n\}$과 $Y=\{y_1,\ldots,y_n\}$으로 나타내고, $n=|X|, |Y|$로 둔다.
+본 논문에서 Sender $\mathcal{S}$와 Receiver $\mathcal{R}$은 프로토콜에 참여하는 두 참여자이며, $\mathcal{S}$와 $\mathcal{R}$이 보유한 식별자 집합을 각각 $X=\{x_1,\ldots,x_n\}$과 $Y=\{y_1,\ldots,y_n\}$으로 나타내고, $n=|X|=|Y|$로 둔다.
 각 식별자에 대응하는 연관 데이터는 각각
 $D^X=\{D^X_1,\ldots,D^X_n\}$과
 $D^Y=\{D^Y_1,\ldots,D^Y_n\}$로 나타내며, 임의의 집합 $X$에 대해 simple hashing 또는 cuckoo hashing을
@@ -395,8 +402,8 @@ b_i =
 로 정의한다.
 
 
-\subsection{Oblivious Transfer}
-Oblivious Transfer(OT)은 참여자 $\mathcal{S}$와 $\mathcal{R}$이 각각 두 개의 비밀정보를 가지고 있을 때, $\mathcal{S}$가 1-out-of-2 OT에 의해 두 개의 비밀정보를 불확정 전송하는 상황에서 $\mathcal{R}$은 $\mathcal{S}$의 정보 중 1/2만 알게 되고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 알고 있는 지 알 수 없게 하는 프로토콜이다. 이는 $\mathcal{S}$가 n개의 비밀을 가지고 있을 때의 상황을 가정하여 $\mathcal{R}$은 $\mathcal{S}$의 어떤 정보를 가졌는지 알 수 없고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 가지고 있는지 알 수 없도록 확장할 수 있다. 이에 대한 ideal functionality $\mathcal{F}_{\mathrm{OT}}$는 figure~\ref{fig:ot-1-n-ideal-functionality}에 나타낸다.
+\subsection{Oblivious Transfer}\label{sec:ot}
+Oblivious Transfer(OT)은 참여자 $\mathcal{S}$와 $\mathcal{R}$이 각각 두 개의 비밀정보를 가지고 있을 때, $\mathcal{S}$가 1-out-of-2 OT에 의해 두 개의 비밀정보를 불확정 전송하는 상황에서 $\mathcal{R}$은 $\mathcal{S}$의 정보 중 1/2만 알게 되고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 알고 있는지 알 수 없게 하는 프로토콜이다. 이는 $\mathcal{S}$가 $n$개의 비밀을 가지고 있을 때의 상황을 가정하여 $\mathcal{R}$은 $\mathcal{S}$의 어떤 정보를 가졌는지 알 수 없고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 가지고 있는지 알 수 없도록 확장할 수 있다. 이에 대한 ideal functionality $\mathcal{F}_{\mathrm{OT}}$는 Figure~\ref{fig:ot-ideal-functionality}에 나타낸다.
 
 \begin{figure}[h]
     \centering
@@ -416,7 +423,7 @@ Oblivious Transfer(OT)은 참여자 $\mathcal{S}$와 $\mathcal{R}$이 각각 두
     }
     \caption{Ideal functionality for
     $\mathcal{F}_{\mathrm{OT}}$.}
-    \label{fig:ot-1-n-ideal-functionality}
+    \label{fig:ot-ideal-functionality}
 \end{figure}
 
 그중에서도 B2A-OT는 OT를 활용하여 boolean share로 표현된 비트 \(b\)와 임의의 값 \(v \in \{0,1\}^\ell\)를 입력으로 받아 \(b \cdot v\)에 대한 arithmetic share를 생성하는 프로토콜이다. $\mathcal{S}$는
@@ -447,7 +454,7 @@ v, & b=1
 를 만족하며, $\mathcal{S}$의 output $r$과 $\mathcal{R}$의 output \(m_{b_r}\)은 \(b\cdot v\)에 대한 arithmetic share가 된다.
 
 
-\subsection{Oblivious Pseudorandom Function}
+\subsection{Oblivious Pseudorandom Function}\label{sec:oprf}
 Oblivious Pseudorandom Function (OPRF)은 한 참여자가 보유한
 비밀키 $k$에 대해 정의된 PRF $F_k(\cdot)$를 이용하여,
 다른 참여자가 자신의 입력 $x$에 대한 고정 길이 비트열의 출력 $F_k(x)$를 얻도록 하는
@@ -485,8 +492,8 @@ $\mathcal{R}$ receives no output.
 \end{figure}
 
 
-\subsection{Oblivious Key-Value Store}
-OKVS(Oblivious Key-Value Store)는 다수의 key-value 쌍을 하나의 벡터 형태로 encode하고, 이후 특정 key와 해당 encoding 결과 벡터를 이용하여 그 key에 대응하는 value를 복원할 수 있도록 하는 자료구조이다. OKVS의 encoding 및 decoding 과정은 기본적으로 $\mathbb{F}_2$ 상의 선형 연산으로 구성되므로, 실제 구현에서는 효율적인 bitwise XOR 연산을 통해 처리될 수 있다
+\subsection{Oblivious Key-Value Store}\label{sec:okvs}
+OKVS(Oblivious Key-Value Store)는 다수의 key-value 쌍을 하나의 벡터 형태로 encode하고, 이후 특정 key와 해당 encoding 결과 벡터를 이용하여 그 key에 대응하는 value를 복원할 수 있도록 하는 자료구조이다. OKVS의 encoding 및 decoding 과정은 기본적으로 $\mathbb{F}_2$ 상의 선형 연산으로 구성되므로, 실제 구현에서는 효율적인 bitwise XOR 연산을 통해 처리될 수 있다.
 
 \(\mathsf{Encode}\)는 \(n\)개의 key-value
 쌍
@@ -499,7 +506,7 @@ P\leftarrow
 인코딩에 실패하는 경우에는 NULL을 출력한다.
 
 \(\mathsf{Decode}\)는 인코딩 벡터 \(P\), 조회할 key \(k\), 그리고
-난수 $\mathcal{R}$을 입력받아 해당 키에 대응하는 값 \(v\)를 출력한다.
+난수 $r$을 입력받아 해당 키에 대응하는 값 \(v\)를 출력한다.
 \[
 v\leftarrow\mathsf{Decode}(P,k,r).
 \]
@@ -511,7 +518,7 @@ v\leftarrow\mathsf{Decode}(P,k,r).
 \(\mathsf{Decode}\)에 입력하여 데이터셋에 존재하는 값만 조회할 수 있다.
 
 
-\subsection{Homomorphic Encryption}
+\subsection{Homomorphic Encryption}\label{sec:he}
 동형암호는 데이터를 암호화한 상태에서 연산을 수행할 수 있도록 하는 암호화 기법이다. 동형암호 특성에 따라 암호문에 대한 연산 결과를 복호화하면 평문에 동일한 연산을 적용한 결과를 얻을 수 있으므로, 데이터의 내용을 공개하지 않고도 필요한 계산을 수행할 수 있다.
 
 본 논문에서는 RLWE 계열 난제에 기반한 BGV형 동형암호를 사용한다. BGV에서 평문은 다항식 환 \(R_p\)의 원소로 표현되고, 암호문은 \(R_q\) 위의 다항식 쌍으로 표현된다. 그러나 본 논문에서 처리하는 개별 데이터와 share의 값 영역은 \(\mathbb{Z}_p\)이다. 즉, 각 데이터는 \(\mathbb{Z}_p\)의 원소이지만, 실제 암호화 과정에서는 이러한 값들이 하나의 평문 다항식으로 인코딩된다.
@@ -600,7 +607,7 @@ Batching 환경에서 수행되는 동형연산은 입력의 형태에 따라 �
 \end{align*}
 
 
-\section{Recap of Circuit Private Set Intersection}
+\section{Recap of Circuit Private Set Intersection}\label{sec:cpsi-recap}
 This section에서는, Our contribution--cryptanalysis and construction--을 one stroke로 이해할 수 있는 주요 background인, circuit-based PSI~\cite{PSTY19, RS21}라는 개념을 정리한다. 
 
 Circuit-PSI는 일반적인 PSI와 달리 교집합을 어느 한 참여자에게
@@ -746,7 +753,7 @@ $\mathcal{R}$은 $(b_i^R,w_i)$를 보유한다.
 data share를 이용하여 non-membership 위치에 남아 있는 random value를
 $0$으로 제거한다.
 
-B2A-OT는 Section~2.2에서 설명하였듯, membership bit $b_i$와 입력값 $v$에 대해
+B2A-OT는 \Cref{sec:ot}에서 설명하였듯, membership bit $b_i$와 입력값 $v$에 대해
 $b_i\cdot v$에 대한 share를 생성하는 프로토콜이다.
 따라서 $b_i=1$인 membership 위치에서는 입력값 $v$가 유지되고,
 $b_i=0$인 non-membership 위치에서는 $0$에 대한 share를 얻는다.
@@ -789,7 +796,7 @@ non-membership 위치에서는 $a_i^S\oplus a_i^R=0$이 된다.
 이 과정을 통해 두 참여자는
 Figure~\ref{fig:cpsi-ideal-functionality}에서 정의한 최종 output
 share를 얻는다.
-최종적인 Circuit-PSI의 수행 절차는 figure~\ref{fig:cpsi-construction}에 나타낸다.
+최종적인 Circuit-PSI의 수행 절차는 Figure~\ref{fig:cpsi-construction}에 나타낸다.
 
 \begin{figure}[t]
 \centering
@@ -910,7 +917,7 @@ $a_i^S\oplus a_i^R=b_iD_i^{Y'}$ for each bin $i$.
 % \subsection{PJC}
 %     PJC는 Sender $\mathcal{S}$와 Receiver $\mathcal{R}$이 각각 보유한 식별자 집합과 이에 대응되는 payload를 입력으로 받아 두 식별자 집합의 교집합에 대응되는 payload들의 내적값을 수신자 $\mathcal{R}$에게 출력한다.
 
-\section{Cryptanalysis of \cite{LTS+26}}
+\section{Cryptanalysis of \cite{LTS+26}}\label{sec:cryptanalysis}
 \cite{LTS+26}은 OKVS를 기반으로 하여 새로운 경량 2자간 PSI 프로토콜을 제안하고, 나아가 제안한 PSI를 PSI-Cardinality, PSI-sum, PJC 등 다양한 계산 프로토콜로 확장하였다. 특히 \cite{LTS+26}은 PJC를 포함한 후속 계산을 $O(\ell)$의 비용으로 수행할 수 있도록 구성함으로써, Circuit-PSI와 그 응용에서도 높은 계산 및 통신
 효율성을 달성하였다.
 
@@ -923,12 +930,12 @@ $a_i^S\oplus a_i^R=b_iD_i^{Y'}$ for each bin $i$.
 
 \subsection{\cite{LTS+26} Protocol의 상세}\label{sec:LTSprotocol}
 본 절에서는 \cite{LTS+26}의 PSI-Innerproduct 프로토콜을 분석한다.
-\cite{LTS+26}에서는 Base OT 기반 연산을 통해 2.6절에서 정의된 Circuit-PSI의 Step~1을 수행하여
+\cite{LTS+26}에서는 Base OT 기반 연산을 통해 \Cref{sec:cpsi-recap}에서 정의된 Circuit-PSI의 Step~1을 수행하여
 membership bit $b_i$의 share와, non-intersection 위치의 random value가
 아직 0으로 제거되지 않은 $D^{Y'}$의 share를 얻는다.
 이후 다음의 과정을 통해 PJC에 필요한 나머지 연산을 수행한다.
 
-먼저 $\mathcal{R}$는 하나의 random global mask $g$를 sample한다.
+먼저 $\mathcal{R}$은 하나의 random global mask $g$를 sample한다.
 그리고 Circuit-PSI Step~1의 출력으로 얻은 $D^{Y'}$의 share
 $\{w_i\}_{i\in[n']}$를 $g$로 masking하여
 $\{\omega_i = w_i\oplus g\}_{i\in[n']}$를 생성한 뒤 $\mathcal{S}$에게 전달한다.
@@ -939,17 +946,17 @@ $\{\omega_i = w_i\oplus g\}_{i\in[n']}$를 생성한 뒤 $\mathcal{S}$에게 전
 \begin{aligned}
 \textsf{Masked Sum:}\qquad
 &\alpha^S+\alpha^R
-    =\sum_i b_i \cdot (\omega_i \oplus w'_i) \cdot D^{X'},\\
+    =\sum_i b_i \cdot (\omega_i \oplus w'_i) \cdot D_i^{X'},\\
 \textsf{Y Sum:}\qquad
 &\beta^S+\beta^R
     =\sum_i b_i \cdot D_i^{X'},\\
 \textsf{Mask Cross:}\qquad
 &\gamma^S+\gamma^R
-    =g\sum_i b_i \cdot \beta^S.
+    =g\sum_i b_i \cdot D_i^{X'}.
 \end{aligned}
 \]
 
-이후 $\mathcal{R}$는 자신이 보유한 share와 global mask $g$를 이용하여
+이후 $\mathcal{R}$은 자신이 보유한 share와 global mask $g$를 이용하여
 \[
 \delta
 :=
@@ -1104,18 +1111,18 @@ XOR하여 global mask를 제거할 수 있다.
 참고로, 이러한 추가 정보의 노출을 허용한다면 마스킹 과정에서 요구되는 보안 제약을 완화할 수 있으므로 보다 단순하고 효율적인 construction을 구성하는 것이 가능하다. 그러나 이러한 leakage를 허용하는 construction에서 얻어진 효율성을 동일한 보안 목표를 만족하는 PJC 프로토콜과 동일한 기준으로 해석하기는 어렵다.
 
 
-\section{Our Protocol}
-본 논문에서는 Section~3.2에서 서술한 문제점과,
-기존 Circuit-PSI construction에서 XOR 기반 share를 출력하는 단계로 인해 ${Z_P}$ 위에서 연산되는 동형암호의 message space와 직접 결합하기 어렵다는 문제점을 해결한 새로운 Circuit-PSI의 Arbitrary Field generalization, dubbed AF-CPSI를 제안한다.
+\section{Our Protocol}\label{sec:our-protocol}
+본 논문에서는 \Cref{sec:LTScryptanalysis}에서 서술한 문제점과,
+기존 Circuit-PSI construction에서 XOR 기반 share를 출력하는 단계로 인해 $\mathbb{Z}_p$ 위에서 연산되는 동형암호의 message space와 직접 결합하기 어렵다는 문제점을 해결한 새로운 Circuit-PSI의 Arbitrary Field generalization, dubbed AF-CPSI를 제안한다.
 
-Section~4.1에서는 AF-CPSI를 구성하기 위해 기존 Circuit-PSI에서
+\Cref{sec:cpsi-zp}에서는 AF-CPSI를 구성하기 위해 기존 Circuit-PSI에서
 수정되는 부분을 설명하고, 
-Section~4.2에서는 AF-CPSI에서 얻은 arithmetic share를
+\Cref{sec:our-pjc}에서는 AF-CPSI에서 얻은 arithmetic share를
 동형암호 연산에 입력하여 PJC를 수행하는 구체적인 방법을 설명한다.
 
 
 \subsection{Circuit-PSI over arbitrary fields}\label{sec:cpsi-zp}
-AF-CPSI는 Section~2.6에서 설명한 기존 Circuit-PSI의 두 단계에서 사용되는
+AF-CPSI는 \Cref{sec:cpsi-recap}에서 설명한 기존 Circuit-PSI의 두 단계에서 사용되는
 payload 관련 연산을 $\mathbb{Z}_p$ 위에서 수행할 수 있도록 수정한
 Circuit-PSI over $\mathbb{Z}_p$이다.
 Step~1에서는 OKVS의 data component에 적용되는 masking 방식을 수정하여
@@ -1131,7 +1138,7 @@ a_i^S+a_i^R=b_iD_i^{Y'}\pmod p
 
 \noindentparagraph{\textbf{Modification in Step 1.}}
 
-Section~2.6의 Figure~\ref{fig:cpsi-construction}에서 설명한
+\Cref{sec:cpsi-recap}의 Figure~\ref{fig:cpsi-construction}에서 설명한
 Circuit-PSI의 Step~1-(2)를 보면, OKVS의 value는
 comparison을 위한 tag component와 payload에 대응하는
 data component로 구성된다. 
@@ -1144,7 +1151,7 @@ payload에 대응하는 data component 역시
 와 같이 XOR 기반으로 구성된다.
 
 일반적으로 Circuit-PSI에서 OKVS의 value는 비트열로 구성되는 것으로
-알려져 있시만, 
+알려져 있지만, 
 우리는 이러한 value의 표현 방식과 payload에 대한
 연산 공간을 분리하여 볼 수 있다는 점에 주목하였다.
 구체적으로, payload에 대응하는 data component를
@@ -1170,7 +1177,7 @@ v_i=t_i\parallel\overline{u}_i
 형태의 OKVS value를 구성한다. 
 
 이후의 OPRF masking과 OKVS encoding 및 decoding 과정은
-Section~2.6에서 설명한 기존 Circuit-PSI와 동일하게 수행한다.
+\Cref{sec:cpsi-recap}에서 설명한 기존 Circuit-PSI와 동일하게 수행한다.
 교집합에 해당하는 bin에서는 동일한 식별자에 대해 동일한
 OPRF output이 사용되므로, $\mathcal{S}$는 masking이 제거된
 $v_i=t_i\parallel\overline{u}_i$를 복원할 수 있다.
@@ -1224,7 +1231,7 @@ Step~1의 결과에서, 교집합에 해당하는 bin에서는
 \(w_i+w_i'=D_i^{Y'}\)가 성립하지만 교집합에 해당하지 않는 bin에서는
 두 값을 합한 결과로 임의의 값 \(\rho_i\)가 남는다. 따라서 해당
 임의의 값을 \(0\)으로 제거하기 위해 membership bit를 양측의 data
-component에 각각 적용해야 한다. 이는 두 번에 B2A-OT로 구성된다.
+component에 각각 적용해야 한다. 이는 두 번의 B2A-OT로 구성된다.
 
 첫 번째 B2A-OT에서는 $\mathcal{R}$의 \(w_i\)를 입력으로 하여
 두 참여자는 각각 \(r_i^S+r_i^R=b_iw_i\pmod p\)를 만족하는
@@ -1285,7 +1292,7 @@ $a_i^S+a_i^R=b_iD_i^{Y'}\pmod p$
 \(\mathbf{a}^S\), \(\mathbf{a}^R\) 및 \(\mathsf{idx}\)만을 사용한다.
 
 
-4.1절의 전체적인 수행 절차는
+\Cref{sec:cpsi-zp}의 전체적인 수행 절차는
 Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
 
 \begin{figure}[h]
@@ -1399,7 +1406,7 @@ Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
 \end{figure}
 
 
-\subsection{Our Proposed PJC}
+\subsection{Our Proposed PJC}\label{sec:our-pjc}
 
 Figure~\ref{fig:cpsi-zp-construction}의 Circuit-PSI over
 $\mathbb{Z}_p$를 수행한 결과, $\mathcal{S}$는
@@ -1479,7 +1486,7 @@ $\mathcal{S}$에게 전송한다.
 
 $\mathcal{S}$는 secret key $sk$를 이용하여
 $\mathbf{M}=\mathsf{BGV.Dec}(sk,C^F)$를 계산한다.
-$M$의 모든 slot의 합을 $M'$이라 하면 다음과 같이 표현할 수 있다.
+$\mathbf{M}$의 모든 slot의 합을 $M'$이라 하면 다음과 같이 표현할 수 있다.
 \[
 M'
 =
@@ -1653,10 +1660,10 @@ payload \(D_i^{X'}\)를 보유한다. 수신자 $\mathcal{R}$은 Boolean share
     \left(w_i+w_i'\right)
 \]
 
-우선, $\mathcal{R}$은 $\mathcal{R}$의 Boolean share와 data component를
-암호화하여 $C_{b_i^R}$와 $C_{w_i'}$를 생성한 뒤, 공개키 \(pk\)와 함께 $\mathcal{S}$에게 전송한다.
+우선, $\mathcal{R}$은 자신의 Boolean share와 data component를
+암호화하여 $C_{b_i^R}$와 $C_{w_i}$를 생성한 뒤, 공개키 \(pk\)와 함께 $\mathcal{S}$에게 전송한다.
 
-Boolean 값 \(a,b\in\{0,1\}\)에 대해 XOR 연산은$a\oplus b=a+b-2ab$
+Boolean 값 \(a,b\in\{0,1\}\)에 대해 XOR 연산은 $a\oplus b=a+b-2ab$
 로 나타낼 수 있다. 따라서 $\mathcal{S}$는 자신의 Boolean share \(b_i^S\)와
 $\mathcal{R}$로부터 받은 \(C_{b_i^R}\)를 이용하여
 \[
@@ -1667,8 +1674,8 @@ $\mathcal{R}$로부터 받은 \(C_{b_i^R}\)를 이용하여
     -2(C_{b_i^R}\cdot b_i^S)
 \]
 를 계산한다. 또한 $\mathcal{S}$는 자신이 보유한 data component $w_i'$와
-$\mathcal{R}$로부터 받은 $C_{w_i}$를 이용하여$
-    C_{D_i}
+$\mathcal{R}$로부터 받은 $C_{w_i}$를 이용하여
+    $C_{D_i}
     =
     \mathsf{BGV.PlainAdd}(C_{w_i},w_i')$
 를 계산한다. 교집합에 해당하는 bin에서는
@@ -1815,8 +1822,8 @@ data component를 암호문 상태에서 결합하여 PJC를 계산하면 전체
 
 구체적으로, \(C_{b_i}\)를 생성하는 과정에서 plaintext--ciphertext
 multiplication이 수행되고 ciphertext noise가 증가한다. 이후 \(C_{bD,i}\)를 생성하는 과정에서  ciphertext--ciphertext multiplication이
-추가로 수행된다. 이에 따라 전체 homomorphic evaluation의 multiplicative depth가 증가하고, ciphertext component의
-수를 증가로 인해 relinearization이 필요하다. 또한, 이러한 동형 곱셈 이후에도 올바른 복호화를 보장하려면 충분한 noise budget을 확보할 수 있도록 BGV의 ciphertext modulus
+추가로 수행된다. 이에 따라 전체 homomorphic evaluation의 multiplicative depth가 증가하고, ciphertext component
+수의 증가로 인해 relinearization이 필요하다. 또한, 이러한 동형 곱셈 이후에도 올바른 복호화를 보장하려면 충분한 noise budget을 확보할 수 있도록 BGV의 ciphertext modulus
 \(q\)를 더 크게 설정해야 할 수 있다.
 Ring dimension을 \(N\)이라고 할 때, BGV ciphertext의 크기는
 일반적으로
@@ -1834,7 +1841,7 @@ plaintext--ciphertext multiplication을 결합하는 construction을
 
 
 \section{Experimental Results}
-% \label{sec:experimental-results}
+\label{sec:experimental-results}
 본 절에서는 제안한 AF-CPSI와 이를 동형암호 기반 계산에 결합한
 PJC 프로토콜의 성능을 평가한다.
 먼저 구현 환경과 암호학적 파라미터를 설명한 뒤,
@@ -1853,14 +1860,14 @@ PJC 프로토콜의 성능을 평가한다.
 64\,GB RAM을 갖춘 Ubuntu 24.04.4 LTS 환경에서 수행하였다.
 각 프로토콜은 단일 스레드로 실행하였다.
 네트워크 환경은 LAN과 emulated WAN 환경으로 구성하였다.
-LAN 환경은 별도 네트워크 제한 없는 localhost로, WAN 환경은 linus tc를 이용하여 bandwidth를 각각 100\,Mbps와 10\,Mbps로 제한하여 구성하였다.
+LAN 환경은 별도 네트워크 제한 없는 localhost로, WAN 환경은 Linux \textsf{tc}를 이용하여 bandwidth를 각각 100\,Mbps와 10\,Mbps로 제한하여 구성하였다.
 별도의 network latency는 추가하지 않았으며, 모든 WAN 측정에서
 packet drop이 발생하지 않았음을 확인하였다.
 
 \medskip
 \noindentparagraph{\textbf{Implementation details.}}
 본 논문의 제안 프로토콜은 C++로 구현하였다.
-AF-CPSI의 구성에는 Vole-PSI 구현을 기반으로 하며,
+AF-CPSI의 구현은 \textsf{VOLE-PSI}를 기반으로 하며,
 OT 및 B2A-OT에는 \textsf{libOTe}를 사용하였다.
 프로토콜의 통신에는 \textsf{Coproto}를 사용하였으며,
 동형암호 기반 PJC 계산에는 Microsoft SEAL에서 제공하는
@@ -1883,6 +1890,8 @@ Ciphertext coefficient modulus의 bit-size는
 발생하는 error를 고려하여 coefficient modulus를 설정하였다.
 Batching을 이용하여 하나의 ciphertext에 최대
 \(d = N = 4096\)개의 값을 packing하였다.
+실험에 사용한 파라미터는
+Table~\ref{tab:experimental-parameters}에 정리하였다.
 
 
 \begin{table}[h]
@@ -1913,7 +1922,8 @@ PJC 프로토콜의 실행 시간과 통신량을 비교한다.
 비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
 \cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
 $\ell = 32$-bit로 평가하였다.
-반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 figures를 제시한다. 심지어 이들은 $\ell = 23$을 사용하였기 때문에 communication의 경우 이들에게 유리하다고 볼 수 있음.
+반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 수치를 그대로 제시한다.
+또한 이들은 $\ell = 23$을 사용하였으므로, communication의 경우 오히려 \cite{CHI+23}에게 유리한 비교이다.
 
 
 % \yongha{\cite{KLS26}: https://eprint.iacr.org/2024/1560}
@@ -1983,7 +1993,7 @@ $\ell = 32$-bit로 평가하였다.
 \vspace{2pt}
 \begin{minipage}{0.88\linewidth}
 \footnotesize
-$^\dagger$ \cite{CHI+23}가 구현을 공개하지 않아서 runtime은 논문에 있는 LAN에서의 수치를 그대로 가져왔음. 
+$^\dagger$ \cite{CHI+23}는 구현을 공개하지 않았으므로, runtime은 원 논문에 보고된 LAN 수치를 그대로 인용하였다.
 \end{minipage}
 
 \end{table}
@@ -2007,7 +2017,7 @@ Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
 이는 제한된 bandwidth 환경에서도 제안 프로토콜의 낮은
 communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
 
-한편 \cite{CHI+23}은 23-bit setting를 사용하여 실험하였으므로,
+한편 \cite{CHI+23}은 23-bit setting을 사용하여 실험하였으므로,
 Table~\ref{tab:pjc-comparison}의 communication cost는
 \cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
 측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
@@ -2289,7 +2299,7 @@ B2A-OT는 0.358\,s의 runtime과 22.769\,MB의 communication cost를
 inner-product computation은 전체 프로토콜에 제한적인
 추가 오버헤드만을 발생시킨다.
 
-\section{Conclusion}
+\section{Conclusion}\label{sec:conclusion}
 
 
 본 논문에서는 기존 Circuit-PSI 기반 PJC 프로토콜을 분석하고, XOR 기반 출력 share가 \(\mathbb{Z}_p\)에서 동작하는 동형암호의 message space와 직접 호환되지 않는 문제와 
