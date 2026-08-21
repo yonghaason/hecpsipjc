@@ -401,7 +401,9 @@ $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 두 번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
 현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
 
-이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{F}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
+이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{Z}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
+또한 정수 inner product에 필요한 arithmetic space가 단일 RLWE plaintext modulus를
+넘는 경우를 위해 payload 경로를 RNS로 확장하고, 그 비용을 실측으로 보인다.
 $n=2^{20}$, $L=32$에서 \cite{KLS26} 대비 통신량은 32.4\%, LAN 실행 시간은 59.5\% 감소하며, 정수 inner product를 위한 $L=84$ 설정에서는 제안 프로토콜의 비용이 $1.56$배 증가하는 동안 \cite{KLS26}의 비용은 MultShare의 이차 증가로 약 $4.65$배 증가한다.
 
 
@@ -1267,19 +1269,12 @@ D_i^{Y'}, & \text{if } b_i=1\\
 \]
 와 같이 표현된다.
 
-이 과정에서, OPRF 기반 XOR masking은 payload의 산술연산과 독립적인 표현 계층의 연산이므로 
-별도의 field 원소로 변환할 필요가 없기 때문에 기존 방법을 유지한다.
-오히려 OPRF 출력을 \(\mathbb{Z}_p\)의 원소로 변환하면
-비트열을 field 원소로 매핑하고 modular reduction을 수행하는 추가 과정이 필요하다. 
-또한 OKVS는 XOR에서 효율적인 덧셈이 가능한데, 
-이를 \(\mathbb{Z}_p\) 위의 선형시스템으로 변경하면 modular arithmetic이
-필요하여 계산 비용이 증가한다. 
-
-즉, OPRF masking과 OKVS encoding 및 decoding에서는 해당 값을 비트열로 표현하여 기존의 XOR 방식을 그대로 사용하고,
-랜덤 마스크는 선택과 data component의 산술연산은 \(\mathbb{Z}_p\)에서 수행하는 것이 효율적이며, 
-최종적으로 동형암호의 입력값 중 $\mathcal{R}$이 보유한 \(w_i\)와 $\mathcal{S}$가 보유한 \(w'_i\)는
-해당 연관 데이터 \(D_i^{Y'}\)에 대한 arithmetic share를 구성하게 된다. 
-
+OPRF masking과 OKVS encoding 및 decoding은 비트열 위의 XOR 연산으로 그대로
+둔다. 이들을 \(\mathbb{Z}_p\)로 옮기면 비트열을 field 원소로 매핑하는 추가 변환과
+OKVS 선형 시스템의 modular arithmetic이 필요해져 비용만 늘고 얻는 것이 없다.
+즉 표현 계층은 비트열로, 랜덤 마스크의 선택과 data component의 산술연산만
+\(\mathbb{Z}_p\)에서 수행하며, 그 결과 $\mathcal{R}$의 \(w_i\)와 $\mathcal{S}$의
+\(w'_i\)는 \(D_i^{Y'}\)에 대한 arithmetic share가 된다.
 
 \noindentparagraph{\textbf{Encoding of the data component.}}
 
@@ -1305,34 +1300,34 @@ $D_{i,j}^{Y'}\oplus w_i$로 이미 $\{0,1\}^\ell$ 위에서 uniform하기 때문
 
 이를 해결하기 위해 AF-CPSI에서는 data component를 statistical security
 parameter $\lambda_s$만큼 여유를 두어 encoding한다.
-$L=\lceil\log_2 p\rceil+\lambda_s$로 두고, $\Rcv$는 $u_i$ 자체가 아니라
-$u_i$와 같은 잉여류에 속하는 $L$-bit 값 중 하나를 무작위로 선택하여
+$m=\lceil\log_2 p\rceil+\lambda_s$로 두고, $\Rcv$는 $u_i$ 자체가 아니라
+$u_i$와 같은 잉여류에 속하는 $m$-bit 값 중 하나를 무작위로 선택하여
 \begin{equation}\label{eq:redundant-encoding}
 \overline{u}_i=u_i+p\cdot\rho_i,
 \qquad
 \rho_i\xleftarrow{\$}
 \left[\,0,\;
-\left\lfloor 2^{L}/p \right\rfloor
+\left\lfloor 2^{m}/p \right\rfloor
 \right)
 \end{equation}
 와 같이 구성한다. $\Snd$는 복원한 값에 대해
 $w_i'=\overline{u}_i \bmod p$를 계산하므로 correctness는 그대로 유지된다.
 
-모든 $L$-bit 비트열은 어떤 잉여류에 속하므로, 이 encoding에서는 위와 같은
+모든 $m$-bit 비트열은 어떤 잉여류에 속하므로, 이 encoding에서는 위와 같은
 range check 자체가 성립하지 않는다. 또한 $u_i$가 $\Z_p$ 위에서 uniform하면
-$\overline{u}_i$는 $[0,\,p\lfloor 2^{L}/p\rfloor)$ 위에서 uniform하고,
-$\{0,1\}^{L}$ 위의 uniform distribution과의 statistical distance는
-$\bigl(2^{L}-p\lfloor 2^{L}/p\rfloor\bigr)/2^{L}<p/2^{L}\le 2^{-\lambda_s}$이다.
+$\overline{u}_i$는 $[0,\,p\lfloor 2^{m}/p\rfloor)$ 위에서 uniform하고,
+$\{0,1\}^{m}$ 위의 uniform distribution과의 statistical distance는
+$\bigl(2^{m}-p\lfloor 2^{m}/p\rfloor\bigr)/2^{m}<p/2^{m}\le 2^{-\lambda_s}$이다.
 따라서 $\Snd$가 교집합에 해당하지 않는 bin에서 얻는 pseudorandom한 값과
 구분되지 않으며, 이 성질은 \Cref{thm:afcpsi}의 증명에서 사용된다.
 
 한편 위의 bound는 bin 하나에 대한 것이므로, $\lambda_s$를 정할 때에는 bin의
 개수를 함께 고려해야 한다. $n'$개의 bin 전체에 대해 $2^{-\lambda_s}$를
-보장하려면 $L=\lceil\log_2 p\rceil+\lambda_s+\log_2 n'$로 두면 된다.
+보장하려면 $m=\lceil\log_2 p\rceil+\lambda_s+\log_2 n'$로 두면 된다.
 
 \noindentparagraph{\textbf{Modification in Step 2.}}
 
-이전 Circuit-PSI에서는 해당 관계를 XOR로 구성하여
+기존 Circuit-PSI에서는 Step~1에서 얻은 data share의 관계를 XOR로 구성하여
 \(r_i^S, r_i^R\)와 \(r_i'^S, r_i'^R\)가 모두 bit string으로
 표현되도록 설계하였다.
 하지만 AF-CPSI에서는 B2A-OT의 전체 프로토콜 구조는 변경하지 않고,
@@ -1409,7 +1404,7 @@ $a_i^S+a_i^R=b_iD_i^{Y'}\pmod p$
 \(\mathbf{a}^S\), \(\mathbf{a}^R\) 및 \(\mathsf{idx}\)만을 사용한다.
 
 
-\Cref{sec:cpsi-zp}의 전체적인 수행 절차는
+AF-CPSI의 전체적인 수행 절차는
 Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
 
 \begin{figure}[h]
@@ -1440,7 +1435,7 @@ Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
         $
             u_i=D_i^{Y'}-w_i\pmod p.
         $
-        Then, $\mathcal{R}$ encodes $u_i$ into an $L$-bit string
+        Then, $\mathcal{R}$ encodes $u_i$ into an $m$-bit string
         $\overline{u}_i$ as in \eqref{eq:redundant-encoding} and constructs
         the OKVS value containing the comparison tag $t_i$ and
         $\overline{u}_i$,
@@ -1561,7 +1556,7 @@ OPRF masking과 OKVS의 encoding 및 decoding은 비트열 위의 연산으로 �
 
 두 group의 치환이 형식적이지 않은 지점은 $\Z_p$ 원소를 OKVS value에 담기
 위한 encoding 하나이며, 이는 앞의 \emph{Encoding of the data component}에서 다루었다.
-\eqref{eq:redundant-encoding}에 의해 $\overline{u}_i$의 분포는 $\{0,1\}^{L}$
+\eqref{eq:redundant-encoding}에 의해 $\overline{u}_i$의 분포는 $\{0,1\}^{m}$
 위의 uniform distribution과 statistical distance $2^{-\lambda_s}$ 이내이므로,
 simulator는 해당 component를 uniform한 비트열로 대체할 수 있다. 나머지
 hybrid는 기존 증명과 동일하다.
@@ -1576,8 +1571,7 @@ hybrid는 기존 증명과 동일하다.
 
 \subsection{Construction}\label{sec:pjc-construction}
 
-Figure~\ref{fig:cpsi-zp-construction}의 Circuit-PSI over
-$\mathbb{Z}_p$를 수행한 결과, $\mathcal{S}$는
+Figure~\ref{fig:cpsi-zp-construction}의 AF-CPSI를 수행한 결과, $\mathcal{S}$는
 $(\mathbf{a}^S,\mathsf{idx})$를, $\mathcal{R}$은
 $\mathbf{a}^R$을 각각 보유한다.
 Cuckoo hashing 이후 생성된 bin의 수를 $n'$이라 하면,
@@ -1708,8 +1702,7 @@ $D^Y=\{D_1^Y,\ldots,D_n^Y\}$.
 
 \begin{enumerate}[label=(\arabic*), leftmargin=*]
     \item
-    $\mathcal{S}$ and $\mathcal{R}$ execute Circuit-PSI over
-    $\mathbb{Z}_p$ and obtain
+    $\mathcal{S}$ and $\mathcal{R}$ execute AF-CPSI and obtain
     $(\mathbf{a}^S,\mathsf{idx})$ and $\mathbf{a}^R$, respectively,
     such that
     $a_i^S+a_i^R=b_i\cdot D_i^{Y'} \pmod p$
@@ -2094,8 +2087,9 @@ coefficient modulus를 $\{60,45,20\}$으로 둔다. Uniformly random한 share를
 떨어지고, 둘째 소수는 45까지 내릴 수 있다.
 
 \cite{KLS26}에 대해서도 동일한 요구조건이 적용된다. 정수 inner product를
-위해서는 같은 $L=84$ ring이 필요하고, MultShare가 $L$에 대해 이차이므로 비용은
-$L=32$ 대비 약 $(84/32)^2$배가 된다. \cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
+위해서는 같은 $L=84$ ring이 필요하고, MultShare 항은 $L$에 대해 이차이므로
+$L=32$ 대비 $(84/32)^2\approx6.9$배가 된다(식별자 경로는 변하지 않으므로 전체
+증가율은 이보다 낮다). \cite{KLS26}의 구현은 $\Z_{2^{32}}$ 위에
 고정되어 있어 ring을 바꾸지 않고는 측정할 수 없으므로, OKVS value, OT message,
 MultShare의 폭을 모두 84 bits로 맞춘 cost harness로 측정하였다. 이 harness는
 비용을 결정하는 모든 폭을 원 프로토콜과 동일하게 유지하며, 연산 자체는
@@ -2103,39 +2097,7 @@ XOR로 대체되어 있어 inner product 값을 내지는 않는다.
 \cite{CHI+23}은 공개 구현이 없어 재측정할 수 없고, 보고된 수치는
 $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서는 제외한다.
 
-\begin{table}[h]
-\centering
-\caption{Integer inner product setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
-\label{tab:pjc-long}
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.05}
-\small
-\begin{tabular}{c l c c}
-\toprule
-\textbf{Set Size} & \textbf{Protocol} & \textbf{Comm. (MB)} & \textbf{LAN (s)} \\
-\midrule
-\multirow{2}{*}{$2^{16}$}
-& \cite{KLS26} & 93.534 & 2.678 \\
-& \textbf{Ours} & 21.832 & 0.823 \\
-\midrule
-\multirow{2}{*}{$2^{20}$}
-& \cite{KLS26} & 1499.286 & 43.045 \\
-& \textbf{Ours} & 340.631 & 13.386 \\
-\bottomrule
-\end{tabular}
-\vspace{2pt}
-\begin{minipage}{0.88\linewidth}
-\footnotesize
-\cite{KLS26} is measured with a width-matched cost harness (see text).
-\cite{CHI+23} has no public implementation and reports only $\ell=23$.
-\end{minipage}
-\end{table}
-
-Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정과
-다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
-각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
-218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
-MultShare의 이차 증가로 322.622\,MB에서 1499.286\,MB로 약 $4.65$배가 된다.
+측정 결과는 \Cref{sec:integer-ip-exp}에 제시한다.
 
 \subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
 본 절에서는 대안 construction을 하나 기술하고, 이를 최종 프로토콜로 채택하지
@@ -2383,6 +2345,9 @@ Ciphertext coefficient modulus의 bit-size는
 발생하는 error를 고려하여 coefficient modulus를 설정하였다.
 Batching을 이용하여 하나의 ciphertext에 최대
 \(d = N = 4096\)개의 값을 packing하였다.
+정수 inner product 설정(\Cref{sec:integer-ip})은 42-bit 잔여류 두 개와
+coefficient modulus \(\{60,45,20\}\)을 사용하며, 이 경우 SEAL의 security
+table 검사를 해제한 이유는 \Cref{sec:integer-ip}에 적었다.
 실험에 사용한 파라미터는
 Table~\ref{tab:experimental-parameters}에 정리하였다.
 
@@ -2426,7 +2391,7 @@ $\ell=16$-bit payload, $L=32$-bit arithmetic space로 평가하였다.
 
 \begin{table}[h]
 \centering
-\caption{Performance comparison of PJC protocols under different network settings.}
+\caption{Performance comparison of PJC protocols under different network settings ($\ell=16$, $L=32$, modular inner product).}
 \label{tab:pjc-comparison}
 
 \setlength{\tabcolsep}{3.5pt}
@@ -2527,7 +2492,7 @@ communication cost를 보여주는 참고값으로 사용한다.
 제안 프로토콜의 각 구성요소가 전체 성능에 미치는 영향을 분석하기 위해,
 set size가 $2^{20}$인 경우에 대해 LAN 환경에서 단계별 실행 시간과
 통신량을 측정하였다.
-전체 프로토콜을 Circuit-PSI, B2A-OT, 그리고 동형암호 기반
+전체 프로토콜을 AF-CPSI, B2A-OT, 그리고 동형암호 기반
 PJC computation의 세 단계로 구분하였으며,
 그 결과를 Table~\ref{tab:pjc-breakdown}에 나타낸다.
 
@@ -2544,7 +2509,7 @@ PJC computation의 세 단계로 구분하였으며,
 \textbf{Comm. (MB)}
 \\
 \midrule
-Circuit-PSI&10.743&172.956\\
+AF-CPSI&10.743&172.956\\
 B2A-OT&0.357&22.769\\
 HE Computation&0.255&22.285\\
 \midrule
@@ -2554,8 +2519,8 @@ HE Computation&0.255&22.285\\
 \end{table}
 
 Table~\ref{tab:pjc-breakdown}에서 확인할 수 있듯이,
-전체 비용의 대부분은 Circuit-PSI 단계에서 발생한다.
-특히 Circuit-PSI는 실행 시간과 통신량 모두에서 가장 큰 비중을
+전체 비용의 대부분은 AF-CPSI 단계에서 발생한다.
+특히 AF-CPSI는 실행 시간과 통신량 모두에서 가장 큰 비중을
 차지하며, 제안 프로토콜의 주요 성능 병목으로 나타난다.
 
 반면 arithmetic share를 생성하기 위해 추가되는 B2A-OT와
@@ -2565,6 +2530,46 @@ B2A-OT는 0.357\,s의 runtime과 22.769\,MB의 communication cost를
 따라서 arithmetic share conversion과 이후의 동형암호 기반
 inner-product computation은 전체 프로토콜에 제한적인
 추가 오버헤드만을 발생시킨다.
+
+\subsection{Integer Inner Product Setting}
+\label{sec:integer-ip-exp}
+\Cref{sec:integer-ip}의 설정, 즉 $\ell=32$-bit payload에 대해 $L=84$-bit
+arithmetic space에서 정수 inner product를 계산하는 경우를 LAN에서 측정하였다.
+
+\begin{table}[h]
+\centering
+\caption{Integer inner product setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
+\label{tab:pjc-long}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+\begin{tabular}{c l c c}
+\toprule
+\textbf{Set Size} & \textbf{Protocol} & \textbf{Comm. (MB)} & \textbf{LAN (s)} \\
+\midrule
+\multirow{2}{*}{$2^{16}$}
+& \cite{KLS26} & 93.534 & 2.678 \\
+& \textbf{Ours} & 21.832 & 0.823 \\
+\midrule
+\multirow{2}{*}{$2^{20}$}
+& \cite{KLS26} & 1499.286 & 43.045 \\
+& \textbf{Ours} & 340.631 & 13.386 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.88\linewidth}
+\footnotesize
+\cite{KLS26} is measured with a width-matched cost harness (see text).
+\cite{CHI+23} has no public implementation and reports only $\ell=23$.
+\end{minipage}
+\end{table}
+
+Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정과
+다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
+각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
+218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
+MultShare의 이차 증가로 322.622\,MB에서 1499.286\,MB로 약 $4.65$배가 된다.
+
 
 \section{Conclusion}\label{sec:conclusion}
 
