@@ -416,6 +416,9 @@ bitwise XOR 연산을 의미한다.
 $D^X=\{D^X_1,\ldots,D^X_n\}$과
 $D^Y=\{D^Y_1,\ldots,D^Y_n\}$로 나타내며, 임의의 집합 $X$에 대해 simple hashing 또는 cuckoo hashing을
 적용하여 생성된 hash table은 $X'$로 나타낸다.
+Payload의 bit-length를 $\ell$로, payload에 대한 연산이 수행되는 arithmetic
+space $\mathbb{Z}_P$의 bit-length를 $L=\lceil\log_2 P\rceil$로 표기하며, 두
+값은 일반적으로 다르다.
 
 두 집합 $X$와 $Y$에 대해, 각 $x_i\in X$의 $Y$에 대한 포함 여부를 나타내는 bit를 membership bit $b_i$라 서술하며,
 \[
@@ -1905,15 +1908,7 @@ $\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_2$이고, $\mathsf{Sim}_\Snd$의
 $O(\ell^2)$와 $O(\ell)$의 차이가 실제 파라미터에서 어느 정도의 통신량 차이로
 나타나는지를 확인한다.
 
-이하에서는 payload의 bit-length를 $\ell$, 연산이 수행되는 arithmetic
-space $\Z_P$의 bit-length를 $L=\lceil\log_2 P\rceil$로 구분하여 표기한다.
-앞 절까지의 실험은 $\ell=16$, $L=32$이며, 출력은 $\Z_P$ 위의 값, 즉
-\emph{modular} inner product $\sum_{x_i=y_j} D_i^X D_j^Y \bmod P$이다.
-이는 그 자체로 잘 정의된 functionality이고, 비교 대상인 \cite{KLS26} 역시
-동일한 $L$의 ring 위에서 같은 값을 계산한다. 정수 inner product가 필요한
-경우에 $L$을 어떻게 잡아야 하는지는 \Cref{sec:integer-ip}에서 다룬다.
-
-Arithmetic space의 bit-length를 $L$, set size를 $n$이라 할 때,
+Set size를 $n$이라 할 때 (본 절의 실험 설정은 $\ell=16$, $L=32$이다),
 제안 프로토콜의 전체 communication cost는
 \[
 \begin{aligned}
