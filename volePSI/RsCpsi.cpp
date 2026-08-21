@@ -319,6 +319,7 @@ namespace volePSI
 
         cir = isZeroCircuit(keyBitLength);
         cmp->init(r.rows(), cir, mNumThreads, 1, mPrng.get());
+        applyTriples(*cmp);
 
         cmp->setInput(0, r);
         {
@@ -436,6 +437,7 @@ namespace volePSI
 
         cir = isZeroCircuit(keyBitLength);
         cmp->init(r.rows(), cir, mNumThreads, 0, mPrng.get());
+        applyTriples(*cmp);
 
         cmp->implSetInput(0, r, r.cols());
 

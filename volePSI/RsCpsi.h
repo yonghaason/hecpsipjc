@@ -132,6 +132,17 @@ namespace volePSI
             u64 mPrimeDataBitLength = RsCpsiDataBitLength(RsCpsiDefaultPrime);
             u64 mPrimeDataByteLength = RsCpsiDataByteLength(RsCpsiDefaultPrime);
             u64 mPrimeStatSecParam = RsCpsiDefaultPrimeStatSecParam;
+            // Offline OT preprocessing, used by the KLS26 baseline in Cpso.
+            u64 mOteBatchSize = (1ull << 20);
+            bool mSetup = false;
+            // communication counters used by the KLS26 baseline
+            u64 comm = 0, commexp = 0;
+            // Preprocessed GMW triples, applied to the comparison circuit at
+            // the start of the protocol when the offline phase supplied them.
+            span<block> mTripA, mTripB, mTripC, mTripD;
+            void applyTriples(Gmw& g) const {
+                if (mTripA.size()) g.setTriples(mTripA, mTripB, mTripC, mTripD);
+            }
             u64 mPrimeEncBitLength =
                 RsCpsiPrimeEncBitLength(RsCpsiDefaultPrime, RsCpsiDefaultPrimeStatSecParam);
             u64 mPrimeEncByteLength =
@@ -226,6 +237,13 @@ namespace volePSI
         // The output is written to s.
         Proto send(span<block> Y, oc::MatrixView<u8> values, Sharing& s, Socket& chl);
 
+        void setTriple(span<block> A, span<block> B, u64 numTriples) {
+            mTripA = A.subspan(0, numTriples / 256);
+            mTripB = B.subspan(0, numTriples / 256);
+            mTripC = A.subspan(numTriples / 256);
+            mTripD = B.subspan(numTriples / 256);
+        }
+
     };
 
 
@@ -251,6 +269,13 @@ namespace volePSI
         // perform the join with X being the join keys.
         // The output is written to s.
         Proto receive(span<block> X, Sharing& s, Socket& chl);
+
+        void setTriple(span<block> C, span<block> D, u64 numTriples) {
+            mTripA = C.subspan(numTriples / 256);
+            mTripB = D.subspan(numTriples / 256);
+            mTripC = C.subspan(0, numTriples / 256);
+            mTripD = D.subspan(0, numTriples / 256);
+        }
 
     };
 

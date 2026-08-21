@@ -1,9 +1,0 @@
-Width-matched cost harness for KLS26 at L = 84 (Sec. 6.4 of the paper).
-Apply kls26-84bit-harness.patch to the KLS26 implementation (the volepsi
-tree with Cpso.{h,cpp}); it adds PsoSender::sendInnerProdWide /
-PsoReceiver::receiveInnerProdWide and Psi_innerprod_84_test (unit test 11).
-OKVS value, OT messages and MultShare are all 11 bytes / 84 bits with
-ValueShareType::Xor; arithmetic is replaced by XOR, so the run measures
-cost only and does not compute an inner product. Run:
-  frontend -u 11 -nn 16    # n = 2^16
-  frontend -u 11 -nn 20    # n = 2^20

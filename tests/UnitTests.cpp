@@ -10,6 +10,7 @@
 #include "RsPsi_Tests.h"
 #include "RsCpsi_Tests.h"
 #include "RsPsiInnerproduct_Perf.h"
+#include "Pso_Tests.h"
 #include "GMW_Tests.h"
 #include "volePSI/GMW/Circuit.h"
 #include "FileBase_Tests.h"
@@ -91,8 +92,8 @@ namespace volePSI_Tests
 #ifdef VOLE_PSI_ENABLE_SEAL
         t.add("RsPsiInnerproduct_seal_test", RsPsiInnerproduct_seal_test);
         t.add("RsPsiInnerproduct_seal_rns_test", RsPsiInnerproduct_seal_rns_test);
-        t.add("RsPsiInnerproduct_seal_rns_sweep_test", RsPsiInnerproduct_seal_rns_sweep_test);
-        t.add("RsPsiInnerproduct_seal_repeat_test", RsPsiInnerproduct_seal_repeat_test);
+        t.add("KLS26_innerprod_32_test", Pso_innerprod_32_test);
+        t.add("KLS26_innerprod_84_test", Pso_innerprod_84_test);
 #endif
 #endif
 

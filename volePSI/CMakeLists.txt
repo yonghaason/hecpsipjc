@@ -20,6 +20,7 @@ endif()
 if(VOLE_PSI_ENABLE_CPSI)
     list(APPEND SRCS
         "RsCpsi.cpp"
+        "Cpso.cpp"
         "PSI_Innerproduct.cpp"
     )
 endif()
