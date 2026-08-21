@@ -116,10 +116,6 @@
 \newcommand{\stepheading}[1]{%
   \par\noindent{\normalfont\bfseries #1}\enspace\ignorespaces
 }
-% Unnumbered run-in heading used throughout the body.
-\newcommand{\noindentparagraph}[1]{%
-  \par\medskip\noindent{\normalfont #1}\par\nobreak\noindent\ignorespaces
-}
 
 
 
@@ -1190,7 +1186,9 @@ component \(t_i\)와 결합하여
 \[
 v_i=t_i\parallel\overline{u}_i
 \]
-형태의 OKVS value를 구성한다. 
+형태의 OKVS value를 구성한다.
+여기서 $\overline{u}_i$를 구성하는 방식은 보안에 직접 영향을 주므로 아래에서
+따로 다룬다.
 
 이후의 OPRF masking과 OKVS encoding 및 decoding 과정은
 \Cref{sec:cpsi-recap}에서 설명한 기존 Circuit-PSI와 동일하게 수행한다.

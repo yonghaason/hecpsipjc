@@ -62,6 +62,29 @@ namespace volePSI
         return oc::divCeil(RsCpsiDataBitLength(primeModulus), 8);
     }
 
+    // Statistical security parameter for the redundant encoding of a Z_p
+    // element inside the OKVS value.
+    //
+    // Writing u in [0,p) as a plain ceil(log2 p)-bit string does not cover the
+    // bit strings uniformly when p is not a power of two. In a bin that is not
+    // in the intersection the OKVS decoder recovers a pseudorandom string, so
+    // it can test whether the recovered data component lies in [0,p) and learn
+    // non-membership for free -- with the default prime that test succeeds with
+    // probability (2^32 - p)/2^32 ~= 2^-13.1 per bin. Encoding u as u + p*rho
+    // over ceil(log2 p) + statSecParam bits removes the test, since every
+    // encoded string is then a valid representative of some residue class.
+    constexpr u64 RsCpsiDefaultPrimeStatSecParam = 40;
+
+    inline u64 RsCpsiPrimeEncBitLength(u64 primeModulus, u64 statSecParam)
+    {
+        return RsCpsiPrimeBitLength(primeModulus) + statSecParam;
+    }
+
+    inline u64 RsCpsiPrimeEncByteLength(u64 primeModulus, u64 statSecParam)
+    {
+        return oc::divCeil(RsCpsiPrimeEncBitLength(primeModulus, statSecParam), 8);
+    }
+
     namespace details
     {
 
@@ -81,6 +104,11 @@ namespace volePSI
             //0719
             u64 mPrimeDataBitLength = RsCpsiDataBitLength(RsCpsiDefaultPrime);
             u64 mPrimeDataByteLength = RsCpsiDataByteLength(RsCpsiDefaultPrime);
+            u64 mPrimeStatSecParam = RsCpsiDefaultPrimeStatSecParam;
+            u64 mPrimeEncBitLength =
+                RsCpsiPrimeEncBitLength(RsCpsiDefaultPrime, RsCpsiDefaultPrimeStatSecParam);
+            u64 mPrimeEncByteLength =
+                RsCpsiPrimeEncByteLength(RsCpsiDefaultPrime, RsCpsiDefaultPrimeStatSecParam);
 
             void init(
                 u64 senderSize,
@@ -91,13 +119,22 @@ namespace volePSI
                 u64 numThreads,
                 ValueShareType type = ValueShareType::Xor,
                 //0719
-                u64 primeModulus = RsCpsiDefaultPrime)
+                u64 primeModulus = RsCpsiDefaultPrime,
+                u64 primeStatSecParam = RsCpsiDefaultPrimeStatSecParam)
             {
                 //0719
                 auto primeBitLength = RsCpsiPrimeBitLength(primeModulus);
                 auto primeByteLength = RsCpsiPrimeByteLength(primeModulus);
                 auto primeDataBitLength = RsCpsiDataBitLength(primeModulus);
                 auto primeDataByteLength = RsCpsiDataByteLength(primeModulus);
+                auto primeEncBitLength =
+                    RsCpsiPrimeEncBitLength(primeModulus, primeStatSecParam);
+                auto primeEncByteLength =
+                    RsCpsiPrimeEncByteLength(primeModulus, primeStatSecParam);
+
+                // the encoded element is held in an unsigned __int128
+                if (primeEncBitLength >= 128)
+                    throw RTE_LOC;
 
                 mSenderSize = senderSize;
                 mRecverSize = recverSize;
@@ -112,6 +149,9 @@ namespace volePSI
                 mPrimeByteLength = primeByteLength;
                 mPrimeDataBitLength = primeDataBitLength;
                 mPrimeDataByteLength = primeDataByteLength;
+                mPrimeStatSecParam = primeStatSecParam;
+                mPrimeEncBitLength = primeEncBitLength;
+                mPrimeEncByteLength = primeEncByteLength;
             }
         };
     }

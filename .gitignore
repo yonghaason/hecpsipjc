@@ -7,3 +7,6 @@ CMakeSettings.json
 ~/
 docs/
 .DS_Store
+
+# LaTeX build output
+paper/.build/
