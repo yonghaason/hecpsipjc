@@ -290,9 +290,10 @@ secure against semi-honest adversaries, and identify and close a leakage in
 the $\mathbb{Z}_p$-to-bitstring encoding that the lift introduces. Against
 the best prior circuit-PSI-based PJC at $n=2^{20}$ and a 32-bit arithmetic
 space, our protocol uses 32\% less communication and runs 60\% faster on a
-LAN. When the arithmetic space is widened to 84 bits, as an exact integer
-inner product over 32-bit payloads requires, our communication grows by
-$1.56\times$ while the quadratic baseline grows by $4.65\times$.
+LAN. When the inner product is required as an exact integer rather than
+modulo a fixed prime, which forces a wider arithmetic space, our
+communication grows by $1.56\times$ while the quadratic baseline grows by
+$4.65\times$.
 \end{abstract}
 
 %%
