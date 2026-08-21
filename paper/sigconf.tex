@@ -1649,385 +1649,16 @@ $.
 \end{figure}
 
 
-\noindentparagraph{\textbf{Ct-Ct Mult version.}}
-B2A-OT를 사용하지 않고도 Circuit-PSI의 Boolean share와 data
-component를 동형암호 연산으로 직접 결합하여
-PJC를 구성할 수 있다. Circuit-PSI 수행 후, 송신자 $\mathcal{S}$는
-Boolean share \(b_i^S\), data component \(w_i'\), 그리고 자신의
-payload \(D_i^{X'}\)를 보유한다. 수신자 $\mathcal{R}$은 Boolean share
-\(b_i^R\), data component \(w_i\), 그리고 BGV의 공개키와 비밀키
-\((pk,sk)\)를 보유한다. 이때 각 bin \(i\)에서 계산하고자 하는 값은 다음과 같다.
-\[
-    \left(b_i^S\oplus b_i^R\right)
-    D_i^{X'}
-    \left(w_i+w_i'\right)
-\]
-
-우선, $\mathcal{R}$은 자신의 Boolean share와 data component를
-암호화하여 $C_{b_i^R}$와 $C_{w_i}$를 생성한 뒤, 공개키 \(pk\)와 함께 $\mathcal{S}$에게 전송한다.
-
-Boolean 값 \(a,b\in\{0,1\}\)에 대해 XOR 연산은 $a\oplus b=a+b-2ab$
-로 나타낼 수 있다. 따라서 $\mathcal{S}$는 자신의 Boolean share \(b_i^S\)와
-$\mathcal{R}$로부터 받은 \(C_{b_i^R}\)를 이용하여
-\[
-    C_{b_i}
-    =
-    C_{b_i^R}
-    +b_i^S
-    -2(C_{b_i^R}\cdot b_i^S)
-\]
-를 계산한다. 또한 $\mathcal{S}$는 자신이 보유한 data component $w_i'$와
-$\mathcal{R}$로부터 받은 $C_{w_i}$를 이용하여
-    $C_{D_i}
-    =
-    \mathsf{BGV.PlainAdd}(C_{w_i},w_i')$
-를 계산한다. 교집합에 해당하는 bin에서는
-\(w_i+w_i'=D_i^{Y'}\)이므로, \(C_{D_i}\)는 $\mathcal{R}$의 payload를
-암호화한 결과에 해당한다.
-
-이후 $\mathcal{S}$는 \(C_{b_i}\)와 \(C_{D_i}\)에 대해
-ciphertext-ciphertext multiplication을 수행하여
-\[
-    C_{bD,i}
-    =
-    \mathsf{BGV.CtxtMult}(C_{b_i},C_{D_i})
-    =
-    \mathsf{BGV.Enc}\bigl(b_i(w_i+w_i')\bigr)
-\]
-를 얻고, 자신의 payload $D_i^{X'}$를 평문으로 곱한다.
-따라서 최종적으로 각 bin에 대해
-$\mathsf{BGV.Enc}(b_iD_i^{X'}(w_i+w_i'))$를 얻으며, random mask $r_i$를 생성하여 마스킹 후 $\mathcal{R}$에게 전송한다.
-
-실제 batching 환경에서는 위 연산을 각 bin에 대해 개별적으로 수행하지
-않고, Boolean share, data component, payload 및 random mask를 각각
-평문 벡터로 패킹하여 slot-wise로 병렬 처리한다. $\mathcal{R}$은 수신한
-마스킹된 암호문을 복호화한 뒤 모든 slot의 합을 계산한다.
-\[
-    \mathsf{masked\mbox{-}output}
-    =
-    \sum_{i=1}^{n'}
-    \left(
-        b_iD_i^{X'}(w_i+w_i')-r_i
-    \right)
-    \pmod p.
-\]
-이후 $\mathcal{R}$은 \(\mathsf{masked\mbox{-}output}\)을 $\mathcal{S}$에게
-전송하고, $\mathcal{S}$는 자신이 생성한 random mask의 합을 더하여
-\[
-\begin{aligned}
-    \mathsf{output}
-    &=
-    \mathsf{masked\mbox{-}output}
-    +
-    \sum_{i=1}^{n'}r_i\\
-    &=
-    \sum_{i=1}^{n'}
-    b_iD_i^{X'}(w_i+w_i')\\
-    &=
-    \sum_{i=1}^{n'}
-    b_iD_i^{X'}D_i^{Y'}
-    \pmod p
-\end{aligned}
-\]
-를 얻는다. 구체적인 프로토콜은 
-Figure~\ref{fig:ctct-pjc}를 참고하라.
-
-\begin{figure}[h]
-\centering
-\fbox{%
-\begin{minipage}{0.88\linewidth}
-
-\textbf{Input of $\mathcal{S}$:}
-$
-(\mathbf b^S,\mathbf w',\mathbf D^{X'}).
-$
-
-\textbf{Input of $\mathcal{R}$:}
-$
-(\mathbf b^R,\mathbf w).
-$
-
-\textbf{Procedure:}
-
-\begin{enumerate}
-    \item
-    $\mathcal{R}$ encrypts its Boolean share and data component:
-    \[
-    \mathbf c_{b^R}
-    \leftarrow
-    \mathsf{BGV.Enc}(pk,\mathbf b^R),
-    \qquad
-    \mathbf c_w
-    \leftarrow
-    \mathsf{BGV.Enc}(pk,\mathbf w).
-    \]
-    $\mathcal{R}$ sends $(\mathbf c_{b^R},\mathbf c_w)$ to $\mathcal{S}$.
-
-    \item
-    $\mathcal{S}$ computes
-    \[
-    \mathbf c_b
-    \leftarrow
-    \mathbf c_{b^R}+\mathbf b^S
-    -2(\mathbf c_{b^R}\odot\mathbf b^S),
-    \qquad
-    \mathbf c_D
-    \leftarrow
-    \mathbf c_w+\mathbf w'.
-    \]
-
-    \item
-    $\mathcal{S}$ performs
-    \[
-    \mathbf c_{\mathsf{out}}
-    \leftarrow
-    \mathsf{BGV.CtxtMult}
-    (\mathbf c_b,\mathbf c_D)
-    \]
-    \[
-    \mathbf c_{\mathsf{out}}
-    \leftarrow
-    \mathsf{BGV.PlainMult}
-    (\mathbf c_{\mathsf{out}},\mathbf D^{X'}).
-    \]
-
-    \item
-    $\mathcal{S}$ sums all slots and sends the resulting ciphertext to $\mathcal{R}$:
-    \[
-    \mathbf c_{\mathsf{sum}}
-    \leftarrow
-    \mathsf{SlotSum}(\mathbf c_{\mathsf{out}}).
-    \]
-
-    \item
-    $\mathcal{R}$ decrypts $\mathbf c_{\mathsf{sum}}$.
-\end{enumerate}
-
-\textbf{Output:}
-\[
-\mathsf{sum}
-=
-\sum_{i=1}^{n'}
-b_iD_i^{X'}D_i^{Y'}
-\pmod p.
-\]
-
-\end{minipage}%
-}
-\caption{Ct--Ct multiplication-based PJC protocol.}
-\label{fig:ctct-pjc}
-\end{figure}
-
-이와 같이 B2A-OT를 수행하지 않고도 Circuit-PSI의 Boolean share와
-data component를 암호문 상태에서 결합하여 PJC를 계산하면 전체 흐름을 단순하게 정리할 수 있다.
-그러나 이러한 Ct--Ct construction은 B2A-OT 기반 제안 프로토콜보다
-큰 동형연산 비용과 통신 비용을 요구한다.
-
-구체적으로, \(C_{b_i}\)를 생성하는 과정에서 plaintext--ciphertext
-multiplication이 수행되고 ciphertext noise가 증가한다. 이후 \(C_{bD,i}\)를 생성하는 과정에서  ciphertext--ciphertext multiplication이
-추가로 수행된다. 이에 따라 전체 homomorphic evaluation의 multiplicative depth가 증가하고, ciphertext component
-수의 증가로 인해 relinearization이 필요하다. 또한, 이러한 동형 곱셈 이후에도 올바른 복호화를 보장하려면 충분한 noise budget을 확보할 수 있도록 BGV의 ciphertext modulus
-\(q\)를 더 크게 설정해야 할 수 있다.
-Ring dimension을 \(N\)이라고 할 때, BGV ciphertext의 크기는
-일반적으로
-$
-O(N\log q)
-$
-에 비례한다. 따라서 \(q\)의 bit-length가 증가하면 참여자
-사이에 전송되는 모든 ciphertext의 크기가 증가한다. 즉, 전체 통신량과 동형연산 비용이 함께 증가한다.
-
-이에 본 논문에서는 Ct--Ct construction 대신,
-B2A-OT로 생성한 arithmetic share와
-plaintext--ciphertext multiplication을 결합하는 construction을
-최종 PJC 프로토콜로 채택하였다.
 
 
+\subsection{Communication Cost Analysis}\label{sec:comm-analysis}
+본 절에서는 제안 프로토콜의 communication cost를 closed form으로
+유도하고, 이를 \cite{KLS26}의 cost와 비교한다.
+특히 \cite{KLS26}의 MultShare는 $\ell$-bit 값을 bit decomposition한 뒤
+각 bit마다 OT를 수행하므로 $O(\ell^2)$의 cost를 갖는 반면,
+제안 프로토콜은 해당 단계를 동형암호로 대체하여 $O(\ell)$을 달성한다는
+점을 정량적으로 확인한다.
 
-\section{Experimental Results}
-\label{sec:experimental-results}
-본 절에서는 제안한 AF-CPSI와 이를 동형암호 기반 계산에 결합한
-PJC 프로토콜의 성능을 평가한다.
-먼저 구현 환경과 암호학적 파라미터를 설명한 뒤,
-다양한 입력 크기와 네트워크 환경에서 제안 프로토콜의
-실행 시간과 통신량을 측정하고 기존 PJC 프로토콜과 비교한다.
-마지막으로 프로토콜의 단계별 비용을 분석하여
-전체 성능에 영향을 미치는 주요 구성요소를 확인한다.
-
-
-
-\subsection{Implementation and Experimental Setup}
-\label{sec:experimental-setup}
-
-\noindentparagraph{\textbf{Experiment environments.}}
-모든 실험은 AMD Ryzen Threadripper 9970X 32-Core CPU와
-64\,GB RAM을 갖춘 Ubuntu 24.04.4 LTS 환경에서 수행하였다.
-각 프로토콜은 단일 스레드로 실행하였다.
-네트워크 환경은 LAN과 emulated WAN 환경으로 구성하였다.
-LAN 환경은 별도 네트워크 제한 없는 localhost로, WAN 환경은 Linux \textsf{tc}를 이용하여 bandwidth를 각각 100\,Mbps와 10\,Mbps로 제한하여 구성하였다.
-별도의 network latency는 추가하지 않았으며, 모든 WAN 측정에서
-packet drop이 발생하지 않았음을 확인하였다.
-
-\medskip
-\noindentparagraph{\textbf{Implementation details.}}
-본 논문의 제안 프로토콜은 C++로 구현하였다.
-AF-CPSI의 구현은 \textsf{VOLE-PSI}를 기반으로 하며,
-OT 및 B2A-OT에는 \textsf{libOTe}를 사용하였다.
-프로토콜의 통신에는 \textsf{Coproto}를 사용하였으며,
-동형암호 기반 PJC 계산에는 Microsoft SEAL에서 제공하는
-BGV scheme을 이용하여 구현하였다.
-
-\medskip
-\noindentparagraph{\textbf{Parameters.}}
-모든 실험에서는 128-bit computational security와 40-bit statistical
-security를 만족하도록 cryptographic parameters를 설정하였다.
-BGV의 polynomial modulus degree는 \(N = 4096\), plaintext modulus는
-\(p = 4{,}294{,}475{,}777\)로 설정하였다.
-Ciphertext coefficient modulus의 bit-size는
-\(\{48, 36, 18\}\)로 설정하였으며, 전체 크기는 102 bits로
-\(N = 4096\)에서 SEAL이 제공하는 128-bit security bound인
-109 bits 이하이다.
-
-제안 프로토콜의 homomorphic evaluation에서는
-암호문과 평문 사이의 multiplication을 한 번 수행하므로,
-해당 곱셈으로 인한 noise 증가와 이후 modulus switching 과정에서
-발생하는 error를 고려하여 coefficient modulus를 설정하였다.
-Batching을 이용하여 하나의 ciphertext에 최대
-\(d = N = 4096\)개의 값을 packing하였다.
-실험에 사용한 파라미터는
-Table~\ref{tab:experimental-parameters}에 정리하였다.
-
-
-\begin{table}[h]
-\centering
-\caption{Cryptographic parameters used in our experiments.}
-\label{tab:experimental-parameters}
-\begin{tabular}{ll}
-\toprule
-\textbf{Parameter} & \textbf{Setting} \\
-\midrule
-Computational security & 128 bits \\
-Statistical security & 40 bits \\
-HE scheme & BGV \\
-Polynomial modulus degree $N$ & \(4096\) \\
-Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
-Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
-Number of batching slots $d$ & 4096 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-
-\subsection{Performance Comparison}
-
-\label{sec:performance-comparison}
-본 절에서는 입력 집합의 크기와 네트워크 환경에 따른
-PJC 프로토콜의 실행 시간과 통신량을 비교한다.
-비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
-\cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
-$\ell = 32$-bit로 평가하였다.
-반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 수치를 그대로 제시한다.
-또한 이들은 $\ell = 23$을 사용하였으므로, communication의 경우 오히려 \cite{CHI+23}에게 유리한 비교이다.
-
-
-% \yongha{\cite{KLS26}: https://eprint.iacr.org/2024/1560}
-    % \yongha{\cite{CHI+23}는 구현 없으니까 그냥 논문에서 가져오기, 얘네는 data 23비트썼음. 구현 없어서 바꿔서 못해줌.}
-
-\begin{table}[h]
-\centering
-\caption{Performance comparison of PJC protocols under different network settings.}
-\label{tab:pjc-comparison}
-
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.05}
-\small
-
-\begin{tabular}{c l c c c c}
-\toprule
-
-\multirow{2}{*}{\textbf{Set Size}}
-&
-\multirow{2}{*}{\textbf{Protocol}}
-&
-\multirow{2}{*}{\textbf{Comm. (MB)}}
-&
-\multicolumn{3}{c}{\textbf{Runtime (s)}}
-\\
-
-\cmidrule(lr){4-6}
-
-&
-&
-&
-\textbf{LAN}
-&
-\textbf{WAN}
-&
-\textbf{WAN}
-\\[-2pt]
-
-&
-&
-&
-&
-\textbf{100 Mbps}
-&
-\textbf{10 Mbps}
-\\
-
-\midrule
-
-\multirow{3}{*}{$2^{16}$}
-& \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
-& \cite{KLS26}&20.9&1.74&3.28&18.15\\
-\cmidrule(lr){2-6}%
-& \textbf{Ours}&12.8&0.72&1.48&10.50\\
-
-\midrule
-
-\multirow{3}{*}{$2^{20}$}
-& \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
-& \cite{KLS26}&322.6&28.11&53.53&287.51\\
-\cmidrule(lr){2-6}
-& \textbf{Ours}&196.5&11.12&25.15&175.58\\
-
-\bottomrule
-\end{tabular}
-
-\vspace{2pt}
-\begin{minipage}{0.88\linewidth}
-\footnotesize
-$^\dagger$ \cite{CHI+23}는 구현을 공개하지 않았으므로, runtime은 원 논문에 보고된 LAN 수치를 그대로 인용하였다.
-\end{minipage}
-
-\end{table}
-
-Table~\ref{tab:pjc-comparison}에서 확인할 수 있듯이,
-제안 프로토콜은 모든 입력 크기와 네트워크 환경에서
-\cite{KLS26}보다 낮은 실행 시간과 통신량을 보인다.
-Set size가 $2^{16}$인 경우, 제안 프로토콜의 communication cost는
-12.816\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 38.7\% 감소한다.
-LAN 환경에서의 runtime 역시 1.740\,s에서 0.717\,s로
-약 58.8\% 감소한다.
-
-Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
-제안 프로토콜의 communication cost는 196.552\,MB로,
-\cite{KLS26}의 322.622\,MB보다 약 39.1\% 낮다.
-또한 LAN 환경에서 runtime은 28.105\,s에서 11.123\,s로
-약 60.4\% 감소한다.
-100\,Mbps 및 10\,Mbps의 WAN 환경에서도 제안 프로토콜은
-각각 25.151\,s와 175.580\,s의 runtime을 보이며,
-\cite{KLS26}보다 낮은 실행 시간을 유지한다.
-이는 제한된 bandwidth 환경에서도 제안 프로토콜의 낮은
-communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
-
-한편 \cite{CHI+23}은 23-bit setting을 사용하여 실험하였으므로,
-Table~\ref{tab:pjc-comparison}의 communication cost는
-\cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
-측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
-communication cost를 보여주는 참고값으로 사용한다.
-
-\medskip
-\noindentparagraph{\textbf{Communication analysis.}}
 기존 연구들에서는 payload의 크기와 arithmetic computation space의
 크기를 동일한 파라미터로 취급하는 경우가 많았다.
 그러나 inner product는 각 교집합 원소에 대해 두 payload의 곱을
@@ -2040,7 +1671,7 @@ arithmetic space가 요구된다.
 이에 따라 본 연구에서는 32-bit payload를 입력으로 사용하는
 경우에도 inner-product 연산을 64-bit arithmetic space에서
 수행하는 것으로 설정하고, 이를 기준으로 이론적 communication
-cost를 추가로 평가하였다.
+cost를 산정한다.
 이는 단순히 더 큰 payload를 가정한 것이 아니라, inner-product
 연산 과정에서 요구되는 실제 산술 표현 범위를 반영하기 위한
 설정이다.
@@ -2255,6 +1886,388 @@ $2^{20}$인 경우에는 1576.822\,MB에서 194.809\,MB로
 약 87.6\% 감소한다.
 이는 큰 bit-length를 사용하는 경우에도 제안 프로토콜의
 통신 효율성이 유지됨을 보여준다.
+
+
+\subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
+본 절에서는 최종 프로토콜로 채택하지 않은 대안 construction을 기술하고,
+이를 채택하지 않은 이유를 설명한다.
+
+B2A-OT를 사용하지 않고도 Circuit-PSI의 Boolean share와 data
+component를 동형암호 연산으로 직접 결합하여
+PJC를 구성할 수 있다. Circuit-PSI 수행 후, 송신자 $\mathcal{S}$는
+Boolean share \(b_i^S\), data component \(w_i'\), 그리고 자신의
+payload \(D_i^{X'}\)를 보유한다. 수신자 $\mathcal{R}$은 Boolean share
+\(b_i^R\), data component \(w_i\), 그리고 BGV의 공개키와 비밀키
+\((pk,sk)\)를 보유한다. 이때 각 bin \(i\)에서 계산하고자 하는 값은 다음과 같다.
+\[
+    \left(b_i^S\oplus b_i^R\right)
+    D_i^{X'}
+    \left(w_i+w_i'\right)
+\]
+
+우선, $\mathcal{R}$은 자신의 Boolean share와 data component를
+암호화하여 $C_{b_i^R}$와 $C_{w_i}$를 생성한 뒤, 공개키 \(pk\)와 함께 $\mathcal{S}$에게 전송한다.
+
+Boolean 값 \(a,b\in\{0,1\}\)에 대해 XOR 연산은 $a\oplus b=a+b-2ab$
+로 나타낼 수 있다. 따라서 $\mathcal{S}$는 자신의 Boolean share \(b_i^S\)와
+$\mathcal{R}$로부터 받은 \(C_{b_i^R}\)를 이용하여
+\[
+    C_{b_i}
+    =
+    C_{b_i^R}
+    +b_i^S
+    -2(C_{b_i^R}\cdot b_i^S)
+\]
+를 계산한다. 또한 $\mathcal{S}$는 자신이 보유한 data component $w_i'$와
+$\mathcal{R}$로부터 받은 $C_{w_i}$를 이용하여
+    $C_{D_i}
+    =
+    \mathsf{BGV.PlainAdd}(C_{w_i},w_i')$
+를 계산한다. 교집합에 해당하는 bin에서는
+\(w_i+w_i'=D_i^{Y'}\)이므로, \(C_{D_i}\)는 $\mathcal{R}$의 payload를
+암호화한 결과에 해당한다.
+
+이후 $\mathcal{S}$는 \(C_{b_i}\)와 \(C_{D_i}\)에 대해
+ciphertext-ciphertext multiplication을 수행하여
+\[
+    C_{bD,i}
+    =
+    \mathsf{BGV.CtxtMult}(C_{b_i},C_{D_i})
+    =
+    \mathsf{BGV.Enc}\bigl(b_i(w_i+w_i')\bigr)
+\]
+를 얻고, 자신의 payload $D_i^{X'}$를 평문으로 곱한다.
+따라서 최종적으로 각 bin에 대해
+$\mathsf{BGV.Enc}(b_iD_i^{X'}(w_i+w_i'))$를 얻으며, random mask $r_i$를 생성하여 마스킹 후 $\mathcal{R}$에게 전송한다.
+
+실제 batching 환경에서는 위 연산을 각 bin에 대해 개별적으로 수행하지
+않고, Boolean share, data component, payload 및 random mask를 각각
+평문 벡터로 패킹하여 slot-wise로 병렬 처리한다. $\mathcal{R}$은 수신한
+마스킹된 암호문을 복호화한 뒤 모든 slot의 합을 계산한다.
+\[
+    \mathsf{masked\mbox{-}output}
+    =
+    \sum_{i=1}^{n'}
+    \left(
+        b_iD_i^{X'}(w_i+w_i')-r_i
+    \right)
+    \pmod p.
+\]
+이후 $\mathcal{R}$은 \(\mathsf{masked\mbox{-}output}\)을 $\mathcal{S}$에게
+전송하고, $\mathcal{S}$는 자신이 생성한 random mask의 합을 더하여
+\[
+\begin{aligned}
+    \mathsf{output}
+    &=
+    \mathsf{masked\mbox{-}output}
+    +
+    \sum_{i=1}^{n'}r_i\\
+    &=
+    \sum_{i=1}^{n'}
+    b_iD_i^{X'}(w_i+w_i')\\
+    &=
+    \sum_{i=1}^{n'}
+    b_iD_i^{X'}D_i^{Y'}
+    \pmod p
+\end{aligned}
+\]
+를 얻는다. 구체적인 프로토콜은 
+Figure~\ref{fig:ctct-pjc}를 참고하라.
+
+\begin{figure}[h]
+\centering
+\fbox{%
+\begin{minipage}{0.88\linewidth}
+
+\textbf{Input of $\mathcal{S}$:}
+$
+(\mathbf b^S,\mathbf w',\mathbf D^{X'}).
+$
+
+\textbf{Input of $\mathcal{R}$:}
+$
+(\mathbf b^R,\mathbf w).
+$
+
+\textbf{Procedure:}
+
+\begin{enumerate}
+    \item
+    $\mathcal{R}$ encrypts its Boolean share and data component:
+    \[
+    \mathbf c_{b^R}
+    \leftarrow
+    \mathsf{BGV.Enc}(pk,\mathbf b^R),
+    \qquad
+    \mathbf c_w
+    \leftarrow
+    \mathsf{BGV.Enc}(pk,\mathbf w).
+    \]
+    $\mathcal{R}$ sends $(\mathbf c_{b^R},\mathbf c_w)$ to $\mathcal{S}$.
+
+    \item
+    $\mathcal{S}$ computes
+    \[
+    \mathbf c_b
+    \leftarrow
+    \mathbf c_{b^R}+\mathbf b^S
+    -2(\mathbf c_{b^R}\odot\mathbf b^S),
+    \qquad
+    \mathbf c_D
+    \leftarrow
+    \mathbf c_w+\mathbf w'.
+    \]
+
+    \item
+    $\mathcal{S}$ performs
+    \[
+    \mathbf c_{\mathsf{out}}
+    \leftarrow
+    \mathsf{BGV.CtxtMult}
+    (\mathbf c_b,\mathbf c_D)
+    \]
+    \[
+    \mathbf c_{\mathsf{out}}
+    \leftarrow
+    \mathsf{BGV.PlainMult}
+    (\mathbf c_{\mathsf{out}},\mathbf D^{X'}).
+    \]
+
+    \item
+    $\mathcal{S}$ sums all slots and sends the resulting ciphertext to $\mathcal{R}$:
+    \[
+    \mathbf c_{\mathsf{sum}}
+    \leftarrow
+    \mathsf{SlotSum}(\mathbf c_{\mathsf{out}}).
+    \]
+
+    \item
+    $\mathcal{R}$ decrypts $\mathbf c_{\mathsf{sum}}$.
+\end{enumerate}
+
+\textbf{Output:}
+\[
+\mathsf{sum}
+=
+\sum_{i=1}^{n'}
+b_iD_i^{X'}D_i^{Y'}
+\pmod p.
+\]
+
+\end{minipage}%
+}
+\caption{Ct--Ct multiplication-based PJC protocol.}
+\label{fig:ctct-pjc}
+\end{figure}
+
+이와 같이 B2A-OT를 수행하지 않고도 Circuit-PSI의 Boolean share와
+data component를 암호문 상태에서 결합하여 PJC를 계산하면 전체 흐름을 단순하게 정리할 수 있다.
+그러나 이러한 Ct--Ct construction은 B2A-OT 기반 제안 프로토콜보다
+큰 동형연산 비용과 통신 비용을 요구한다.
+
+구체적으로, \(C_{b_i}\)를 생성하는 과정에서 plaintext--ciphertext
+multiplication이 수행되고 ciphertext noise가 증가한다. 이후 \(C_{bD,i}\)를 생성하는 과정에서  ciphertext--ciphertext multiplication이
+추가로 수행된다. 이에 따라 전체 homomorphic evaluation의 multiplicative depth가 증가하고, ciphertext component
+수의 증가로 인해 relinearization이 필요하다. 또한, 이러한 동형 곱셈 이후에도 올바른 복호화를 보장하려면 충분한 noise budget을 확보할 수 있도록 BGV의 ciphertext modulus
+\(q\)를 더 크게 설정해야 할 수 있다.
+Ring dimension을 \(N\)이라고 할 때, BGV ciphertext의 크기는
+일반적으로
+$
+O(N\log q)
+$
+에 비례한다. 따라서 \(q\)의 bit-length가 증가하면 참여자
+사이에 전송되는 모든 ciphertext의 크기가 증가한다. 즉, 전체 통신량과 동형연산 비용이 함께 증가한다.
+
+이에 본 논문에서는 Ct--Ct construction 대신,
+B2A-OT로 생성한 arithmetic share와
+plaintext--ciphertext multiplication을 결합하는 construction을
+최종 PJC 프로토콜로 채택하였다.
+
+\section{Experimental Results}
+\label{sec:experimental-results}
+본 절에서는 제안한 AF-CPSI와 이를 동형암호 기반 계산에 결합한
+PJC 프로토콜의 성능을 평가한다.
+먼저 구현 환경과 암호학적 파라미터를 설명한 뒤,
+다양한 입력 크기와 네트워크 환경에서 제안 프로토콜의
+실행 시간과 통신량을 측정하고 기존 PJC 프로토콜과 비교한다.
+마지막으로 프로토콜의 단계별 비용을 분석하여
+전체 성능에 영향을 미치는 주요 구성요소를 확인한다.
+
+
+
+\subsection{Implementation and Experimental Setup}
+\label{sec:experimental-setup}
+
+\noindentparagraph{\textbf{Experiment environments.}}
+모든 실험은 AMD Ryzen Threadripper 9970X 32-Core CPU와
+64\,GB RAM을 갖춘 Ubuntu 24.04.4 LTS 환경에서 수행하였다.
+각 프로토콜은 단일 스레드로 실행하였다.
+네트워크 환경은 LAN과 emulated WAN 환경으로 구성하였다.
+LAN 환경은 별도 네트워크 제한 없는 localhost로, WAN 환경은 Linux \textsf{tc}를 이용하여 bandwidth를 각각 100\,Mbps와 10\,Mbps로 제한하여 구성하였다.
+별도의 network latency는 추가하지 않았으며, 모든 WAN 측정에서
+packet drop이 발생하지 않았음을 확인하였다.
+
+\medskip
+\noindentparagraph{\textbf{Implementation details.}}
+본 논문의 제안 프로토콜은 C++로 구현하였다.
+AF-CPSI의 구현은 \textsf{VOLE-PSI}를 기반으로 하며,
+OT 및 B2A-OT에는 \textsf{libOTe}를 사용하였다.
+프로토콜의 통신에는 \textsf{Coproto}를 사용하였으며,
+동형암호 기반 PJC 계산에는 Microsoft SEAL에서 제공하는
+BGV scheme을 이용하여 구현하였다.
+
+\medskip
+\noindentparagraph{\textbf{Parameters.}}
+모든 실험에서는 128-bit computational security와 40-bit statistical
+security를 만족하도록 cryptographic parameters를 설정하였다.
+BGV의 polynomial modulus degree는 \(N = 4096\), plaintext modulus는
+\(p = 4{,}294{,}475{,}777\)로 설정하였다.
+Ciphertext coefficient modulus의 bit-size는
+\(\{48, 36, 18\}\)로 설정하였으며, 전체 크기는 102 bits로
+\(N = 4096\)에서 SEAL이 제공하는 128-bit security bound인
+109 bits 이하이다.
+
+제안 프로토콜의 homomorphic evaluation에서는
+암호문과 평문 사이의 multiplication을 한 번 수행하므로,
+해당 곱셈으로 인한 noise 증가와 이후 modulus switching 과정에서
+발생하는 error를 고려하여 coefficient modulus를 설정하였다.
+Batching을 이용하여 하나의 ciphertext에 최대
+\(d = N = 4096\)개의 값을 packing하였다.
+실험에 사용한 파라미터는
+Table~\ref{tab:experimental-parameters}에 정리하였다.
+
+
+\begin{table}[h]
+\centering
+\caption{Cryptographic parameters used in our experiments.}
+\label{tab:experimental-parameters}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Setting} \\
+\midrule
+Computational security & 128 bits \\
+Statistical security & 40 bits \\
+HE scheme & BGV \\
+Polynomial modulus degree $N$ & \(4096\) \\
+Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
+Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
+Number of batching slots $d$ & 4096 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Performance Comparison}
+
+\label{sec:performance-comparison}
+본 절에서는 입력 집합의 크기와 네트워크 환경에 따른
+PJC 프로토콜의 실행 시간과 통신량을 비교한다.
+비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
+\cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
+$\ell = 32$-bit로 평가하였다.
+반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 수치를 그대로 제시한다.
+또한 이들은 $\ell = 23$을 사용하였으므로, communication의 경우 오히려 \cite{CHI+23}에게 유리한 비교이다.
+
+
+% \yongha{\cite{KLS26}: https://eprint.iacr.org/2024/1560}
+    % \yongha{\cite{CHI+23}는 구현 없으니까 그냥 논문에서 가져오기, 얘네는 data 23비트썼음. 구현 없어서 바꿔서 못해줌.}
+
+\begin{table}[h]
+\centering
+\caption{Performance comparison of PJC protocols under different network settings.}
+\label{tab:pjc-comparison}
+
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+
+\begin{tabular}{c l c c c c}
+\toprule
+
+\multirow{2}{*}{\textbf{Set Size}}
+&
+\multirow{2}{*}{\textbf{Protocol}}
+&
+\multirow{2}{*}{\textbf{Comm. (MB)}}
+&
+\multicolumn{3}{c}{\textbf{Runtime (s)}}
+\\
+
+\cmidrule(lr){4-6}
+
+&
+&
+&
+\textbf{LAN}
+&
+\textbf{WAN}
+&
+\textbf{WAN}
+\\[-2pt]
+
+&
+&
+&
+&
+\textbf{100 Mbps}
+&
+\textbf{10 Mbps}
+\\
+
+\midrule
+
+\multirow{3}{*}{$2^{16}$}
+& \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
+& \cite{KLS26}&20.9&1.74&3.28&18.15\\
+\cmidrule(lr){2-6}%
+& \textbf{Ours}&12.8&0.72&1.48&10.50\\
+
+\midrule
+
+\multirow{3}{*}{$2^{20}$}
+& \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
+& \cite{KLS26}&322.6&28.11&53.53&287.51\\
+\cmidrule(lr){2-6}
+& \textbf{Ours}&196.5&11.12&25.15&175.58\\
+
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\begin{minipage}{0.88\linewidth}
+\footnotesize
+$^\dagger$ \cite{CHI+23}는 구현을 공개하지 않았으므로, runtime은 원 논문에 보고된 LAN 수치를 그대로 인용하였다.
+\end{minipage}
+
+\end{table}
+
+Table~\ref{tab:pjc-comparison}에서 확인할 수 있듯이,
+제안 프로토콜은 모든 입력 크기와 네트워크 환경에서
+\cite{KLS26}보다 낮은 실행 시간과 통신량을 보인다.
+Set size가 $2^{16}$인 경우, 제안 프로토콜의 communication cost는
+12.816\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 38.7\% 감소한다.
+LAN 환경에서의 runtime 역시 1.740\,s에서 0.717\,s로
+약 58.8\% 감소한다.
+
+Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
+제안 프로토콜의 communication cost는 196.552\,MB로,
+\cite{KLS26}의 322.622\,MB보다 약 39.1\% 낮다.
+또한 LAN 환경에서 runtime은 28.105\,s에서 11.123\,s로
+약 60.4\% 감소한다.
+100\,Mbps 및 10\,Mbps의 WAN 환경에서도 제안 프로토콜은
+각각 25.151\,s와 175.580\,s의 runtime을 보이며,
+\cite{KLS26}보다 낮은 실행 시간을 유지한다.
+이는 제한된 bandwidth 환경에서도 제안 프로토콜의 낮은
+communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
+
+한편 \cite{CHI+23}은 23-bit setting을 사용하여 실험하였으므로,
+Table~\ref{tab:pjc-comparison}의 communication cost는
+\cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
+측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
+communication cost를 보여주는 참고값으로 사용한다.
+한편 inner-product 연산에 실제로 필요한 64-bit arithmetic space를
+기준으로 한 이론적 communication cost 비교는
+\Cref{sec:comm-analysis}에 제시하였다.
 
 
 \subsection{Performance Breakdown}
