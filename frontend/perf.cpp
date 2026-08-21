@@ -3,10 +3,32 @@
 #include "volePSI/RsPsi.h"
 #include "volePSI/RsCpsi.h"
 #include "volePSI/SimpleIndex.h"
+#include "coproto/Socket/AsioSocket.h"
 
 #include "libdivide.h"
+#include <chrono>
+#include <future>
 using namespace oc;
 using namespace volePSI;;
+
+namespace
+{
+	std::array<coproto::Socket, 2> makePerfSockets(bool tcp, u64 port)
+	{
+		if (!tcp)
+		{
+			auto local = coproto::LocalAsyncSocket::makePair();
+			return { std::move(local[0]), std::move(local[1]) };
+		}
+
+		auto address = std::string("127.0.0.1:") + std::to_string(port);
+		auto server = std::async(std::launch::async, [&] {
+			return coproto::asioConnect(address, true);
+		});
+		auto client = coproto::asioConnect(address, false);
+		return { server.get(), std::move(client) };
+	}
+}
 
 void perfMod(oc::CLP& cmd)
 {
@@ -351,6 +373,8 @@ void perfPSI(oc::CLP& cmd)
 	auto nt = cmd.getOr("nt", 1);
 	bool fakeBase = cmd.isSet("fakeBase");
 	bool noCompress = cmd.isSet("nc");
+	auto tcp = cmd.isSet("tcp");
+	auto port = cmd.getOr("port", u64(19191));
 
 	// The vole type, default to expand accumulate.
 	auto type = oc::DefaultMultType;
@@ -415,7 +439,8 @@ void perfPSI(oc::CLP& cmd)
 	recv.setTimer(r);
 	send.setTimer(s);
 
-	auto sockets = cp::LocalAsyncSocket::makePair();
+	auto sockets = makePerfSockets(tcp, port);
+	auto wallBegin = std::chrono::steady_clock::now();
 
 	for (u64 i = 0; i < t; ++i)
 	{
@@ -430,6 +455,7 @@ void perfPSI(oc::CLP& cmd)
 		timer.setTimePoint("end");
 
 	}
+	auto wallEnd = std::chrono::steady_clock::now();
 	//auto thrd = std::thread([&] {
 	//	timer.setTimePoint("");
 	//	timer.setTimePoint("end");
@@ -448,6 +474,14 @@ void perfPSI(oc::CLP& cmd)
 			std::cout << "s\n" << s << "\nr\n" << r << std::endl;
 		//std::cout <<"-------------log--------------------\n" << coproto::getLog() << std::endl;
 	}
+
+	auto totalBytes = sockets[0].bytesSent() + sockets[1].bytesSent();
+	std::cout << "VOLE_PSI_PERF n=" << n
+		<< " nt=" << nt
+		<< " transport=" << (tcp ? "tcp" : "local")
+		<< " totalBytes=" << totalBytes
+		<< " seconds=" << std::chrono::duration<double>(wallEnd - wallBegin).count()
+		<< std::endl;
 }
 
 void perfCPSI(oc::CLP& cmd)

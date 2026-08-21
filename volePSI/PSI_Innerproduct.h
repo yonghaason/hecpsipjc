@@ -13,7 +13,7 @@ namespace volePSI
         u64 mPrime = RsCpsiDefaultPrime;
         u64 mStatSecParam = 40;
         u64 mNumThreads = 1;
-        u64 mSealPolyModulusDegree = 8192;
+        u64 mSealPolyModulusDegree = 4096;
 
         u64 dataByteLength() const { return RsCpsiDataByteLength(mPrime); }
         u64 shareByteLength() const { return RsCpsiPrimeByteLength(mPrime); }

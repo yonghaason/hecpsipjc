@@ -29,7 +29,7 @@ namespace
     {
         PsiInnerproductConfig config;
         config.mPrime = RsCpsiDefaultPrime;
-        config.mSealPolyModulusDegree = 8192;
+        config.mSealPolyModulusDegree = 4096;
         auto bytes = config.shareByteLength();
         oc::Matrix<u8> senderShare(rows, bytes), receiverShare(rows, bytes);
         RsCpsiReceiver::Sharing sharing;
@@ -65,9 +65,7 @@ namespace
 
 void RsPsiInnerproduct_seal_test(const CLP& cmd)
 {
-    // Covers all/partial/no-match rows through nonzero/zero product shares,
-    // zero and p-1 payloads, wrap-around, reverse mapping, two chunks and padding.
-    runCase(cmd.getOr("rows", u64(8195)), true);
+    runCase(cmd.getOr("rows", u64(4099)), true);
 }
 
 #endif

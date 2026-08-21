@@ -2,8 +2,10 @@
 
 #include "Common.h"
 #include "volePSI/PSI_Innerproduct.h"
+#include "coproto/Socket/AsioSocket.h"
 
 #include <chrono>
+#include <future>
 #include <iomanip>
 
 using coproto::LocalAsyncSocket;
@@ -69,6 +71,22 @@ namespace
         return { a.mReceiverSent + b.mReceiverSent, a.mSenderSent + b.mSenderSent,
             a.mSeconds + b.mSeconds };
     }
+
+    std::array<Socket, 2> makeSockets(bool tcp, u64 port)
+    {
+        if (!tcp)
+        {
+            auto local = LocalAsyncSocket::makePair();
+            return { std::move(local[0]), std::move(local[1]) };
+        }
+
+        auto address = std::string("127.0.0.1:") + std::to_string(port);
+        auto server = std::async(std::launch::async, [&] {
+            return coproto::asioConnect(address, true);
+        });
+        auto client = coproto::asioConnect(address, false);
+        return { server.get(), std::move(client) };
+    }
 }
 
 void RsPsiInnerproduct_perf_test(const CLP& cmd)
@@ -77,6 +95,8 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
     auto numThreads = cmd.getOr("nt", u64(1));
     auto intersectionSize = cmd.getOr("intersection", n / 2);
+    auto tcp = cmd.isSet("tcp");
+    auto port = cmd.getOr("port", u64(18181));
     if (n == 0 || intersectionSize > n || numThreads == 0)
         throw RTE_LOC;
 
@@ -107,7 +127,7 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
             mulMod(associatedData[senderIdx], receiverData[receiverIdx], prime), prime);
     }
 
-    auto sockets = LocalAsyncSocket::makePair();
+    auto sockets = makeSockets(tcp, port);
     auto config = PsiInnerproductConfig{};
     config.mPrime = prime;
     config.mNumThreads = numThreads;
@@ -246,7 +266,8 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
         << " heChunks=" << oc::divCeil(receiverOutput.rows(), config.mSealPolyModulusDegree)
 #endif
         << " prime=" << prime
-        << " nt=" << numThreads << std::endl;
+        << " nt=" << numThreads
+        << " transport=" << (tcp ? "tcp" : "local") << std::endl;
     std::cout
         << "phase,receiverSentBytes,senderSentBytes,totalBytes,totalMiB,seconds"
         << std::endl;
