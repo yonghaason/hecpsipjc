@@ -1199,9 +1199,9 @@ OPRF output이 사용되므로, $\mathcal{S}$는 masking이 제거된
 $v_i=t_i\parallel\overline{u}_i$를 복원할 수 있다.
 따라서 $\mathcal{S}$는 tag $t_i'=t_i$와
 data component $\overline{u}_i$를 얻고,
-이를 다시 \(\mathbb{Z}_p\)의 원소로 해석하여
+이를 \(\mathbb{Z}_p\)로 되돌려
 \[
- w'_i=u_i=D_i^{Y'}-w_i\pmod p
+ w'_i=\overline{u}_i \bmod p=D_i^{Y'}-w_i\pmod p
 \]
 를 얻는다. 따라서 B2A-OT를 적용하기 전 두 data share의 관계는
 \[
@@ -1228,6 +1228,55 @@ D_i^{Y'}, & \text{if } b_i=1\\
 최종적으로 동형암호의 입력값 중 $\mathcal{R}$이 보유한 \(w_i\)와 $\mathcal{S}$가 보유한 \(w'_i\)는
 해당 연관 데이터 \(D_i^{Y'}\)에 대한 arithmetic share를 구성하게 된다. 
 
+
+\noindentparagraph{\textbf{Encoding of the data component.}}
+
+앞에서 $u_i$를 고정 길이 비트열 $\overline{u}_i$로 변환한다고만 서술하였는데,
+이 변환은 표현 형식을 맞추기 위한 형식적인 단계로 보이지만 실제로는 보안에
+영향을 준다. $p$가 $2$의 거듭제곱이 아닌 경우 $\Z_p$ 원소의
+$\lceil\log_2 p\rceil$-bit 표현은 가능한 비트열 전체를 채우지 못하고
+$[0,p)$에 해당하는 부분만을 차지하기 때문이다.
+
+교집합에 해당하는 bin에서 $\Snd$가 복원하는 값은 항상 이 부분에 속한다.
+반면 교집합에 해당하지 않는 bin에서 복원되는 값은 OPRF output에 의해
+$\{0,1\}^{\lceil\log_2 p\rceil}$ 전체에 걸쳐 분포한다. 따라서 $\Snd$는
+복원한 data component가 $[0,p)$를 벗어나는지 확인하는 것만으로 해당 bin이
+교집합에 속하지 않음을 알 수 있다. 이는 PEQT를 통해 share 형태로만
+공개되어야 하는 membership 정보이며, 확률
+$(2^{\lceil\log_2 p\rceil}-p)/2^{\lceil\log_2 p\rceil}$로 노출된다.
+본 논문이 사용하는 $p=4{,}294{,}475{,}777$에서 이 값은 bin당 약 $2^{-13.1}$로,
+목표하는 statistical security와 비교하면 무시할 수 없는 수준이다.
+
+이는 payload에 대한 연산만 $\Z_p$로 옮기고 OKVS와 OPRF는 비트열 위에 그대로
+두는 설계에서 두 계층이 만나는 지점에 발생하는 문제이므로, 기존
+Circuit-PSI에서는 나타나지 않는다. 기존 구성에서는 data component가
+$D_{i,j}^{Y'}\oplus w_i$로 이미 $\{0,1\}^\ell$ 위에서 uniform하기 때문이다.
+
+이를 해결하기 위해 AF-CPSI에서는 data component를 statistical security
+parameter $\lambda_s$만큼 여유를 두어 encoding한다.
+$L=\lceil\log_2 p\rceil+\lambda_s$로 두고, $\Rcv$는 $u_i$ 자체가 아니라
+$u_i$와 같은 잉여류에 속하는 $L$-bit 값 중 하나를 무작위로 선택하여
+\begin{equation}\label{eq:redundant-encoding}
+\overline{u}_i=u_i+p\cdot\rho_i,
+\qquad
+\rho_i\xleftarrow{\$}
+\left[\,0,\;
+\left\lfloor\frac{2^{L}-1-u_i}{p}\right\rfloor
+\right]
+\end{equation}
+와 같이 구성한다. $\Snd$는 복원한 값에 대해
+$w_i'=\overline{u}_i \bmod p$를 계산하므로 correctness는 그대로 유지된다.
+
+이 encoding에서는 모든 $L$-bit 비트열이 어떤 잉여류엔가 대응되므로 위와 같은
+range check 자체가 성립하지 않는다. 또한 $u_i$가 $\Z_p$ 위에서 uniform할 때
+$\overline{u}_i$의 분포는 $\{0,1\}^{L}$ 위의 uniform distribution과
+statistical distance $p/2^{L}\le 2^{-\lambda_s}$ 이내이므로, 교집합에
+해당하지 않는 bin에서 $\Snd$가 얻는 pseudorandom한 값과 구분되지 않는다.
+이 성질은 \Cref{thm:afcpsi}의 증명에서 사용된다.
+
+한편 위의 bound는 bin 하나에 대한 것이므로, $\lambda_s$를 정할 때에는 bin의
+개수를 함께 고려해야 한다. $n'$개의 bin 전체에 대해 $2^{-\lambda_s}$를
+보장하려면 $L=\lceil\log_2 p\rceil+\lambda_s+\log_2 n'$로 두면 된다.
 
 \noindentparagraph{\textbf{Modification in Step 2.}}
 
@@ -1339,15 +1388,18 @@ Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
         $
             u_i=D_i^{Y'}-w_i\pmod p.
         $
-        Then, $\mathcal{R}$ constructs the OKVS value containing
-        the comparison tag $t_i$ and the masked data component $u_i$,
+        Then, $\mathcal{R}$ encodes $u_i$ into an $L$-bit string
+        $\overline{u}_i$ as in \eqref{eq:redundant-encoding} and constructs
+        the OKVS value containing the comparison tag $t_i$ and
+        $\overline{u}_i$,
         encodes the resulting key--value pairs into an OKVS,
         and sends the encoded vector to $\mathcal{S}$.
 
         \item
         $\mathcal{S}$ decodes the OKVS using its identifiers and OPRF
         outputs, and obtains a comparison tag $t_i'$ and a data
-        component $w_i'$ for each bin $i$.
+        component $\overline{u}_i$ for each bin $i$, from which it sets
+        $w_i'=\overline{u}_i \bmod p$.
 
         \item
         The parties execute PEQT on $t_i'$ and $t_i$ and obtain
@@ -1716,10 +1768,13 @@ C_{\mathsf{OKVS}}
 =
 3\cdot 1.3n
 \left(
-40+\log_2 n+\ell
+40+\log_2 n+\ell+\lambda_s
 \right)
 $
 의 communication cost가 발생한다.
+여기서 $\lambda_s$는 \eqref{eq:redundant-encoding}의 redundant encoding에
+사용되는 statistical security parameter이며, 이하에서는 $\lambda_s=40$으로
+둔다.
 PEQT 단계의 communication cost는
 $
 C_{\mathsf{PEQT}}
@@ -1766,7 +1821,7 @@ C_{\mathsf{Ours}}
 ={}&
 128\cdot1.3n
 +
-3\cdot1.3n(40+\log_2 n+\ell) \\
+3\cdot1.3n(40+\log_2 n+\ell+\lambda_s) \\
 &+
 4\cdot1.3n(40+\log_2 n)
 +
@@ -1869,13 +1924,13 @@ $N=8192$를 사용하였다.
 
 \multirow{2}{*}{$2^{16}$}
 & \cite{KLS26} & 98.253 \\
-& \textbf{Ours} & 12.083 \\
+& \textbf{Ours} & 13.361 \\
 
 \midrule
 
 \multirow{2}{*}{$2^{20}$}
 & \cite{KLS26} & 1576.822 \\
-& \textbf{Ours} & 194.809\\
+& \textbf{Ours} & 215.256\\
 
 \bottomrule
 \end{tabular}
@@ -1894,9 +1949,9 @@ Table~\ref{tab:pjc-comm-64}에서 확인할 수 있듯이,
 64-bit setting에서도 제안 프로토콜은 \cite{KLS26}보다
 현저히 낮은 communication cost를 보인다.
 Set size가 $2^{16}$인 경우 communication cost는
-98.253\,MB에서 12.083\,MB로 약 87.7\% 감소하며,
-$2^{20}$인 경우에는 1576.822\,MB에서 194.809\,MB로
-약 87.6\% 감소한다.
+98.253\,MB에서 13.361\,MB로 약 86.4\% 감소하며,
+$2^{20}$인 경우에는 1576.822\,MB에서 215.256\,MB로
+약 86.3\% 감소한다.
 이는 큰 bit-length를 사용하는 경우에도 제안 프로토콜의
 통신 효율성이 유지됨을 보여준다.
 
@@ -2143,83 +2198,51 @@ $\Z_p$로 옮긴 것이므로, 보안 증명 역시 기존 Circuit-PSI의 증명
 
 \begin{theorem}\label{thm:afcpsi}
 OKVS가 oblivious하고 $F$가 secure PRF이며, OKVS의 data component가
-아래 \Cref{eq:redundant-encoding}의 redundant encoding으로 구성된다고
-하자. 이때 $\prot{AF-CPSI}$\emph{(\Cref{fig:cpsi-zp-construction})}는
+\eqref{eq:redundant-encoding}에 따라 encoding된다고 하자. 이때
+$\prot{AF-CPSI}$\emph{(\Cref{fig:cpsi-zp-construction})}는
 $(\func{OPRF},\func{PEQT},\func{OT})$-hybrid model에서 semi-honest
 adversary에 대해 $\func{AF-CPSI}$를 securely realize한다.
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-기존 Circuit-PSI 증명에서 payload masking이 사용되는 부분은 두 곳이며,
-두 경우 모두 one-time pad argument에 의존한다. AF-CPSI는 이 argument가
-성립하는 group만을 바꾼다.
+기존 Circuit-PSI 증명에서 payload masking이 사용되는 부분은 두 곳이며, 두
+경우 모두 one-time pad argument에 의존한다. AF-CPSI는 이 argument가 성립하는
+group만을 바꾼다.
 
-첫째, OKVS의 data component에서 기존 증명은 $w_i\xleftarrow{\$}\{0,1\}^\ell$에
-대해 $D_i^{Y'}\oplus w_i$가 $\{0,1\}^\ell$ 위에서 uniform함을 사용한다.
-AF-CPSI는 $w_i\xleftarrow{\$}\Z_p$에 대해 $u_i=D_i^{Y'}-w_i \bmod p$가
-$\Z_p$ 위에서 uniform함을 사용한다. 둘째, B2A-OT에서 기존 증명은
+첫째, OKVS의 data component에서 기존 증명은
+$w_i\xleftarrow{\$}\{0,1\}^\ell$에 대해 $D_i^{Y'}\oplus w_i$가
+$\{0,1\}^\ell$ 위에서 uniform함을 사용한다. AF-CPSI는
+$w_i\xleftarrow{\$}\Z_p$에 대해 $u_i=D_i^{Y'}-w_i \bmod p$가 $\Z_p$ 위에서
+uniform함을 사용한다. 둘째, B2A-OT에서 기존 증명은
 $r\xleftarrow{\$}\{0,1\}^\ell$에 대한 $(r,\,v\oplus r)$의 uniformity를
 사용하며, AF-CPSI는 $r\xleftarrow{\$}\Z_p$에 대한 $(r,\,v-r \bmod p)$의
-uniformity를 사용한다. 두 경우 모두 $(\{0,1\}^\ell,\oplus)$를
-$(\Z_p,+)$로 치환한 것에 지나지 않으므로, simulator와 hybrid의 구성은
-기존 증명과 동일하다. OPRF masking과 OKVS의 encoding 및 decoding은
-\Cref{sec:cpsi-zp}에서 기술하였듯 비트열 위의 연산으로 유지되므로 변경되지
-않는다.
+uniformity를 사용한다. 두 경우 모두 $(\{0,1\}^\ell,\oplus)$를 $(\Z_p,+)$로
+치환한 것에 지나지 않으므로, simulator와 hybrid의 구성은 기존 증명과 동일하다.
+OPRF masking과 OKVS의 encoding 및 decoding은 비트열 위의 연산으로 유지되므로
+변경되지 않는다.
 
-한편 두 group의 치환이 형식적이지 않은 지점이 하나 존재한다.
-$u_i\in\Z_p$를 OKVS value에 담기 위해서는 이를 고정 길이 비트열
-$\overline{u}_i$로 encoding해야 하는데, $p$가 $2$의 거듭제곱이 아니면
-$\Z_p$ 원소의 $\lceil\log_2 p\rceil$-bit 표현은
-$\{0,1\}^{\lceil\log_2 p\rceil}$ 위에서 uniform하지 않다.
-교집합에 해당하는 bin에서 $\Snd$는 유효한 encoding을 복원하는 반면,
-교집합에 해당하지 않는 bin에서는 pseudorandom한 비트열을 얻으므로,
-$\Snd$는 복원한 값이 $[0,p)$를 벗어나는지를 확인하는 것만으로
-확률 $(2^{\lceil\log_2 p\rceil}-p)/2^{\lceil\log_2 p\rceil}$로
-해당 bin이 교집합에 속하지 않음을 알 수 있다. 이는 $b_i$에 대한
-정보이므로 simulator가 재현할 수 없다.
-
-따라서 AF-CPSI에서는 statistical security parameter $\lambda_s$에 대해
-$L=\lceil\log_2 p\rceil+\lambda_s$로 두고, data component를
-\begin{equation}\label{eq:redundant-encoding}
-\overline{u}_i
-\xleftarrow{\$}
-\left\{
-    v\in[0,2^{L})
-    \;:\;
-    v\equiv u_i \!\!\pmod p
-\right\}
-\end{equation}
-와 같이 redundant하게 encoding한다. $\Snd$는 복원한 $\overline{u}_i$에
-대해 $w_i'=\overline{u}_i \bmod p$를 계산하며, 이때 임의의
-$\overline{u}_i$가 유효하므로 위의 range check는 불가능하다.
-또한 $u_i$가 $\Z_p$ 위에서 uniform할 때 $\overline{u}_i$는
-$\{0,1\}^{L}$ 위의 uniform distribution과 statistical distance
-$p/2^{L}\le 2^{-\lambda_s}$ 이내이므로, simulator는 해당 component를
-uniform한 비트열로 대체할 수 있다. 나머지 hybrid는 기존 증명과 동일하다.
+두 group의 치환이 형식적이지 않은 지점은 $\Z_p$ 원소를 OKVS value에 담기
+위한 encoding 하나이며, 이는 \Cref{sec:cpsi-zp}에서 다루었다.
+\eqref{eq:redundant-encoding}에 의해 $\overline{u}_i$의 분포는 $\{0,1\}^{L}$
+위의 uniform distribution과 statistical distance $2^{-\lambda_s}$ 이내이므로,
+simulator는 해당 component를 uniform한 비트열로 대체할 수 있다. 나머지
+hybrid는 기존 증명과 동일하다.
 \end{proof}
-
-\begin{remark}\label{rmk:encoding-cost}
-\Cref{eq:redundant-encoding}은 OKVS data component의 길이를
-$\lceil\log_2 p\rceil$에서 $\lceil\log_2 p\rceil+\lambda_s$로 늘리므로,
-\Cref{sec:comm-analysis}의 $C_{\mathsf{OKVS}}$에
-$3\cdot 1.3n\lambda_s$ bits가 추가된다.
-\end{remark}
 
 \subsection{Security of the Proposed PJC Protocol}\label{sec:security-pjc}
 
-제안 PJC 프로토콜에서 $\Snd$는 BGV의 secret key $sk$를 보유하고,
-$\Rcv$가 homomorphic evaluation을 수행한 암호문을 $\Snd$에게 전달한다.
-따라서 $\Snd$는 수신한 암호문을 복호화할 수 있을 뿐 아니라, 복호화
-과정에서 noise를 정확히 복원할 수 있다. 이로 인해 평문에 대한 masking만으로는
-$\Rcv$의 입력을 보호할 수 없으며, 아래에서 보이듯 evaluation 결과에 대한
-sanitization이 필요하다.
+제안 PJC 프로토콜에서 $\Snd$는 BGV의 secret key $sk$를 보유하고, $\Rcv$가
+homomorphic evaluation을 수행한 암호문을 $\Snd$에게 전달한다. 이러한 구조에서는
+평문에 대한 masking만으로 $\Rcv$의 입력이 보호되지 않으며, evaluation 결과가
+평문 이외의 정보를 드러내지 않는다는 성질, 즉 circuit privacy가 추가로
+요구된다. 이는 RLWE 기반 스킴에서 noise flooding을 통해 표준적으로 달성할 수
+있으며, 동형암호를 사용하는 기존 PSI 연구들도 같은 방식을
+취한다~\cite{CLR17,PEPSI}. 아래에서는 circuit privacy를 가정으로 두고 사용한다.
 
 \begin{theorem}\label{thm:pjc}
-BGV가 IND-CPA secure하고, evaluation 결과에 대해 statistical
-parameter $\lambda_s$의 noise flooding이 적용된다고 하자. 이때
-$\prot{PJC}$\emph{(\Cref{fig:our-pjc})}는 $\func{AF-CPSI}$-hybrid
-model에서 semi-honest adversary에 대해 $\func{PJC}$를 securely
-realize한다.
+BGV가 IND-CPA secure하고 circuit private하다고 하자. 이때
+$\prot{PJC}$\emph{(\Cref{fig:our-pjc})}는 $\func{AF-CPSI}$-hybrid model에서
+semi-honest adversary에 대해 $\func{PJC}$를 securely realize한다.
 \end{theorem}
 
 \begin{proof}
@@ -2271,44 +2294,26 @@ $S_t\neq\emptyset$인 모든 slot의 평문은 $\Z_p$ 위에서 독립적이고
 uniform하며, $S_t=\emptyset$인 slot의 평문은 $0$이다. 여기서 $n'$과 $N$은
 public parameter이므로 $\{S_t\}$는 simulator가 계산할 수 있다.
 
-다음으로 noise를 분석한다. $C_j^X$의 noise를 $e_j$라 하면,
-$\mathsf{PlainMult}$와 $\mathsf{PlainAdd}$의 정의에 의해 $C^F$의 noise는
-$\sum_{j\in[n_c]} \mathbf{A}_j^R\cdot e_j$에 modulus switching의 rounding
-error를 더한 값이 된다. $\Snd$는 $sk$를 보유하므로 복호화 과정에서 이
-noise를 정확히 복원할 수 있고, $\{e_j\}$는 $\Snd$ 자신이 생성한
-encryption randomness로부터 계산할 수 있다. 따라서 sanitization이 없다면
-$\Snd$는 $\sum_j \mathbf{A}_j^R\cdot e_j$를 얻으며, 특히 $n_c=1$이고
-$e_1$이 $R_q$에서 invertible한 경우 $\mathbf{A}_1^R=\mathbf{a}^R$를 그대로
-복원할 수 있다. 이 경우 $a_i^S+a_i^R=b_iD_i^{Y'}$로부터 $\Rcv$의 payload와
-교집합이 모두 노출된다. 그러므로 $\Rcv$는 $C^F$를 전송하기 전
-$C^F\leftarrow C^F+\mathsf{BGV.Enc}(pk,\mathbf{0};E)$와 같이 기존 noise
-bound보다 $2^{\lambda_s}$배 큰 noise $E$를 더하는 noise flooding을
-적용해야 하며, 이때 $C^F$의 noise 분포는 $\mathbf{a}^R$ 및 $\mathbf{r}$와
-statistical distance $2^{-\lambda_s}$ 이내에서 독립이 된다.
+한편 $\Snd$는 $sk$를 보유하므로 $C^F$로부터 평문뿐 아니라 noise도 복원할 수
+있으며, $C^F$의 noise는 $\Rcv$의 입력인 $\mathbf{a}^R$에 의존한다. 따라서
+평문이 uniform하다는 것만으로는 충분하지 않고, $C^F$가 그 평문에 대한 fresh
+encryption과 구분되지 않아야 한다. 이는 위에서 가정한 circuit privacy가
+제공하는 성질이다.
 
 이제 $\mathsf{Sim}_\Snd$를 다음과 같이 구성한다. 입력
 $(X,\mathbf{D}^X)$와 $(\mathbf{a}^S,\mathsf{idx})$를 받아, 각 slot
 $t\in[N]$에 대해 $S_t\neq\emptyset$이면
 $\tilde m_t\xleftarrow{\$}\Z_p$를, 그렇지 않으면 $\tilde m_t=0$을 두고
-$\tilde{C}\leftarrow\mathsf{BGV.Enc}(pk,\tilde{\mathbf{m}})$를 계산한 뒤
-동일한 noise flooding을 적용하여 view에 포함시킨다.
+$\tilde{C}\leftarrow\mathsf{BGV.Enc}(pk,\tilde{\mathbf{m}})$를 계산하여
+view에 포함시킨다.
 
 $\mathsf{H}_0$을 실제 view라 하고, $\mathsf{H}_1$을 $C^F$의 평문만
 $\tilde{\mathbf{m}}$으로 대체한 것이라 하자. 위의 평문 분석에 의해 두
-분포는 동일하다. $\mathsf{H}_2$는 $C^F$를 $\tilde C$로 대체한 것이며,
-noise flooding에 의해 두 noise 분포의 statistical distance는
-$2^{-\lambda_s}$ 이하이다. 따라서
+분포는 동일하다. $\mathsf{H}_2$는 $C^F$를 $\tilde C$로 대체한 것이며, circuit privacy에
+의해 두 분포는 statistically indistinguishable하다. 따라서
 $\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_2$이고, $\mathsf{Sim}_\Snd$의
 출력은 실제 view와 구분 불가능하다.
 \end{proof}
-
-\begin{remark}\label{rmk:flooding-cost}
-\Cref{thm:pjc}의 noise flooding은 ciphertext modulus $q$를 약
-$\lambda_s$ bits만큼 크게 설정할 것을 요구한다.
-\Cref{sec:experimental-setup}의 파라미터는 $N=4096$에서 $\log q=102$
-bits로 SEAL이 제공하는 $128$-bit security bound인 $109$ bits에 근접해
-있으므로, flooding을 적용하려면 $N=8192$로 옮겨야 한다.
-\end{remark}
 
 \section{Experimental Results}
 \label{sec:experimental-results}
@@ -2566,9 +2571,9 @@ B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 
 64-bit arithmetic space에 대한 이론적 분석에서도 제안 프로토콜의
 통신 효율성은 유지되었다. Set size가 \(2^{16}\)인 경우
-\cite{KLS26} 대비 통신량이 98.253\,MB에서 12.083\,MB로 약
-87.7\% 감소하였으며, \(2^{20}\)인 경우에는
-1576.822\,MB에서 194.809\,MB로 약 87.6\% 감소하였다. 이는
+\cite{KLS26} 대비 통신량이 98.253\,MB에서 13.361\,MB로 약
+86.4\% 감소하였으며, \(2^{20}\)인 경우에는
+1576.822\,MB에서 215.256\,MB로 약 86.3\% 감소하였다. 이는
 입력 payload의 크기뿐 아니라 실제 inner-product 계산에 필요한
 산술 공간을 고려하는 경우에도 제안 방식이 높은 통신 효율성을
 제공함을 보여준다.
