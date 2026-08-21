@@ -1,6 +1,6 @@
-# Better Private Join and Compute
+# Linear-Cost Private Join and Compute from Arithmetic Circuit-PSI
 
-Artifact for the ASIA CCS 2027 submission *Better Private Join and Compute*.
+Artifact for the ASIA CCS 2027 submission *Linear-Cost Private Join and Compute from Arithmetic Circuit-PSI*.
 
 It contains our PJC protocol, the prior circuit-PSI-based PJC we compare
 against, and the harnesses that produce every number in the paper. The code is
@@ -18,10 +18,40 @@ protocols share its OPRF, OKVS, GMW and circuit-PSI layers.
 | `tests/Pso_Tests.cpp` | Measurement harness for the baseline. |
 | `misc/wan_shape.sh` | Loopback bandwidth shaping for the WAN rows. |
 
+## Getting the code
+
+The anonymized repository serves a file archive, not a git remote, so
+`git clone` cannot be pointed at it. Download and unpack the archive, then
+fetch the one dependency that is carried as a git submodule:
+
+```
+git clone --depth 1 --branch v4.1.2 https://github.com/microsoft/SEAL.git thirdparty/SEAL
+```
+
+A submodule is a recorded commit pointer rather than files, so the archive
+carries nothing under `thirdparty/SEAL`. The tag above is the pinned commit;
+confirm it with
+
+```
+git -C thirdparty/SEAL rev-parse HEAD
+# 119dc32e135cb89c1062076a69310d4413ebc824
+```
+
+The other two dependencies need no such step. CMake clones libOTe
+(`d558671`) and sparsehash-c11 (`edd6f11`) at their pinned commits during the
+first build, so `git` has to be on `PATH` either way.
+
+Working from a git checkout of the repository instead, the equivalent is
+
+```
+git submodule update --init --recursive
+```
+
 ## Build
 
 Needs a C++20 compiler, CMake >= 3.18, and network access on the first build
-(dependencies are fetched automatically). Everything lands under `out/`.
+(the remaining dependencies are fetched automatically). Everything lands
+under `out/`.
 
 ```
 python3 build.py -DVOLE_PSI_ENABLE_BOOST=ON -DVOLE_PSI_ENABLE_SEAL=ON
