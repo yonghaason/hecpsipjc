@@ -14,6 +14,11 @@ namespace volePSI
         u64 mStatSecParam = 40;
         u64 mNumThreads = 1;
         u64 mSealPolyModulusDegree = 4096;
+        // Coefficient modulus bit sizes. The last entry is SEAL's special
+        // prime, reserved for key switching; this protocol never key switches,
+        // so it is kept as small as SEAL allows and the rest of the budget is
+        // left to the ciphertext modulus.
+        std::vector<int> mSealCoeffModulusBits = { 48, 36, 18 };
 
         // Residue primes for the long-item setting. Empty means single residue.
         std::vector<u64> mPrimes = {};
@@ -77,6 +82,8 @@ namespace volePSI
     Proto psiIpHeReceiver(span<const u64> receiverPayload,
         const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
         const PsiInnerproductConfig& config, Socket& chl);
+
+    bool psiIpSealParamsValid(const PsiInnerproductConfig& config);
 
     // RNS variants: evaluate one residue at a time and combine by CRT.
     Proto psiIpHeSenderRns(oc::MatrixView<u8> arithmeticShare, unsigned __int128& result,

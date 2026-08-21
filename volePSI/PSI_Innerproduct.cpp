@@ -313,7 +313,7 @@ namespace volePSI
                 throw std::invalid_argument("invalid BGV parameters");
             seal::EncryptionParameters parms(seal::scheme_type::bgv);
             parms.set_poly_modulus_degree(config.mSealPolyModulusDegree);
-            parms.set_coeff_modulus(seal::CoeffModulus::Create(config.mSealPolyModulusDegree,{48, 36, 18}));
+            parms.set_coeff_modulus(seal::CoeffModulus::Create(config.mSealPolyModulusDegree, config.mSealCoeffModulusBits));
             parms.set_plain_modulus(config.mPrime);
             return parms;
         }
@@ -564,6 +564,21 @@ namespace volePSI
             auto slice = residueSlice(arithmeticShare, j, width);
             co_await psiIpHeReceiver(receiverPayload, sharing, slice, cfg, chl);
         }
+    }
+
+    bool psiIpSealParamsValid(const PsiInnerproductConfig& config)
+    {
+        try
+        {
+            seal::EncryptionParameters parms(seal::scheme_type::bgv);
+            parms.set_poly_modulus_degree(config.mSealPolyModulusDegree);
+            parms.set_coeff_modulus(seal::CoeffModulus::Create(
+                config.mSealPolyModulusDegree, config.mSealCoeffModulusBits));
+            parms.set_plain_modulus(config.mPrime);
+            seal::SEALContext ctx(parms, true, seal::sec_level_type::tc128);
+            return ctx.parameters_set();
+        }
+        catch (...) { return false; }
     }
 
 }

@@ -91,6 +91,7 @@ namespace volePSI_Tests
 #ifdef VOLE_PSI_ENABLE_SEAL
         t.add("RsPsiInnerproduct_seal_test", RsPsiInnerproduct_seal_test);
         t.add("RsPsiInnerproduct_seal_rns_test", RsPsiInnerproduct_seal_rns_test);
+        t.add("RsPsiInnerproduct_seal_rns_sweep_test", RsPsiInnerproduct_seal_rns_sweep_test);
 #endif
 #endif
 

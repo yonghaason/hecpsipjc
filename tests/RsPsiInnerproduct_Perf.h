@@ -7,3 +7,8 @@ void RsPsiInnerproduct_perf_test(const oc::CLP&);
 void RsPsiInnerproduct_seal_test(const oc::CLP&);
 void RsPsiInnerproduct_seal_rns_test(const oc::CLP&);
 #endif
+#ifdef VOLE_PSI_ENABLE_SEAL
+#include <vector>
+bool psiIpRnsProbe(std::vector<oc::u64> primes, oc::u64 N, std::vector<int> cmBits, oc::u64 rows);
+void RsPsiInnerproduct_seal_rns_sweep_test(const oc::CLP&);
+#endif
