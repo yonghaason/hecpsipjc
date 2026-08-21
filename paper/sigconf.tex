@@ -274,12 +274,26 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-  A clear and well-documented \LaTeX\ document is presented as an
-  article formatted for publication by ACM in a conference proceedings
-  or journal publication. Based on the ``acmart'' document class, this
-  article presents and explains many of the common variations, as well
-  as many of the formatting elements an author may use in the
-  preparation of the documentation of their work.
+Private join and compute (PJC) lets two parties learn the inner product of
+the payloads attached to the identifiers their sets share, and nothing else.
+The fastest recent constructions build it from circuit-PSI over OKVS. We
+make two contributions. First, we show that the PJC implementation behind
+the reported numbers of a recent OKVS-based protocol reuses a single global
+mask across all payload shares, which lets the sender recover the XOR of any
+two of the receiver's shares; the reported performance was therefore
+obtained at a weaker security level than the one claimed, and is not
+comparable like for like. Second, we give a PJC protocol whose cost is
+linear in the payload width $\ell$ rather than quadratic. We lift
+circuit-PSI from $\mathbb{F}_2$ to $\mathbb{Z}_p$ (AF-CPSI) so that its
+output shares feed a BGV inner product directly, prove the construction
+secure against semi-honest adversaries, and identify and close a leakage in
+the $\mathbb{Z}_p$-to-bitstring encoding that the lift introduces. Against
+the best prior circuit-PSI-based PJC at $n=2^{20}$ and a 32-bit arithmetic
+space, our protocol uses 32\% less communication and runs 60\% faster on a
+LAN. For 32-bit payloads, where a correct integer inner product needs an
+84-bit arithmetic space, we run the payload path over an RNS of two 42-bit
+primes; our cost grows by $1.56\times$ while the quadratic baseline grows by
+an order of magnitude.
 \end{abstract}
 
 %%
@@ -385,7 +399,7 @@ $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
 
 이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{F}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
-\yongha{구체적인 성능 개선치 (배율) 등 써주기}
+$n=2^{20}$, $L=32$에서 \cite{KLS26} 대비 통신량은 32.4\%, LAN 실행 시간은 59.5\% 감소하며, 정수 inner product를 위한 $L=84$ 설정에서는 제안 프로토콜의 비용이 $1.56$배 증가하는 동안 \cite{KLS26}의 비용은 MultShare의 이차 증가로 한 자릿수 배 이상 증가한다.
 
 
 
