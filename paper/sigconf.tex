@@ -1,0 +1,2336 @@
+%% This is file `sigconf.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `all,proceedings,sigconf')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sigconf.tex.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+%% The first command in your LaTeX source must be the \documentclass
+%% command.
+%%
+%% For submission and review of your manuscript please change the
+%% command to \documentclass[manuscript, screen, review]{acmart}.
+%%
+%% When submitting camera ready or to TAPS, please change the command
+%% to \documentclass[sigconf]{acmart} or whichever template is required
+%% for your publication.
+%%
+%%
+\documentclass[sigconf]{acmart}
+% \usepackage{enumitem}
+% \usepackage{float}
+
+\newcommand{\Snd}{\mathcal{S}}
+\newcommand{\Rcv}{\mathcal{R}}
+\newcommand{\Enc}{\mathsf{Encode}}
+\newcommand{\Dec}{\mathsf{Decode}}
+\newcommand{\High}{\mathsf{High}_{64}}
+\newcommand{\Low}{\mathsf{Low}_{64}}
+
+\usepackage{kotex}
+% \usepackage[pdftex]{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{multirow, multicol}
+\usepackage{array}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{pifont}
+\usepackage{wrapfig}
+\usepackage{tablefootnote}
+\usepackage[thinlines]{easytable}
+\usepackage{pgfplotstable}
+\usepackage{float} 
+\usepackage{placeins}
+\usepackage{xcolor}
+%\usepackage{hyperref}
+%\usepackage{hyperref}
+%\hypersetup{ colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan, }
+\usepackage{comment}
+\usepackage{hhline}
+\usepackage{makecell}
+\usepackage{pgfplots}
+\usepackage{graphicx, subcaption}
+\usepackage[font=small]{caption}
+\usepackage{booktabs}
+\usepackage{cleveref}
+\usepackage{colortbl}
+\usepackage{hhline}
+ 
+\crefformat{section}{\S#2#1#3} % see manual of cleveref, section 8.2.1
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Fstar}{\mathbb{F}^{\sf{x}}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\func}[1]{\mathcal{F}_{\textsf{#1}}}
+\newcommand{\prot}[1]{\Pi_\textsf{#1}}
+\newcommand{\red}[1]{{\color{red}{#1}}}
+\newcommand{\yongha}[1]{{\color{blue}{[yongha:#1}]}}
+\newcommand{\stepheading}[1]{%
+  \par\noindent{\normalfont\bfseries #1}\enspace\ignorespaces
+}
+
+
+
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmlicensed}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{XXXXXXX.XXXXXXX}
+%% These commands are for a PROCEEDINGS abstract or paper.
+\acmConference[Conference acronym 'XX]{Make sure to enter the correct
+  conference title from your rights confirmation email}{June 03--05,
+  2018}{Woodstock, NY}
+%%
+%%  Uncomment \acmBooktitle if the title of the proceedings is different
+%%  from ``Proceedings of ...''!
+%%
+%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+%%  June 03--05, 2018, Woodstock, NY}
+\acmISBN{978-1-4503-XXXX-X/2018/06}
+
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+\raggedbottom
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Better Private Join and Compute}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+% \author{Ben Trovato}
+% \authornote{Both authors contributed equally to this research.}
+% \email{trovato@corporation.com}
+% \orcid{1234-5678-9012}
+% \author{G.K.M. Tobin}
+% \correspondingauthor
+% \authornotemark[1]
+% \email{webmaster@marysville-ohio.com}
+% \affiliation{%
+%   \institution{Institute for Clarity in Documentation}
+%   \city{Dublin}
+%   \state{Ohio}
+%   \country{USA}
+% }
+
+% \author{Lars Th{\o}rv{\"a}ld}
+% \affiliation{%
+%   \institution{The Th{\o}rv{\"a}ld Group}
+%   \city{Hekla}
+%   \country{Iceland}}
+% \email{larst@affiliation.org}
+
+% \author{Valerie B\'eranger}
+% \affiliation{%
+%   \institution{Inria Paris-Rocquencourt}
+%   \city{Rocquencourt}
+%   \country{France}
+% }
+
+% \author{Aparna Patel}
+% \affiliation{%
+%  \institution{Rajiv Gandhi University}
+%  \city{Doimukh}
+%  \state{Arunachal Pradesh}
+%  \country{India}}
+
+% \author{Huifen Chan}
+% \affiliation{%
+%   \institution{Tsinghua University}
+%   \city{Haidian Qu}
+%   \state{Beijing Shi}
+%   \country{China}}
+
+% \author{Charles Palmer}
+% \affiliation{%
+%   \institution{Palmer Research Laboratories}
+%   \city{San Antonio}
+%   \state{Texas}
+%   \country{USA}}
+% \email{cpalmer@prl.com}
+
+% \author{John Smith}
+% \affiliation{%
+%   \institution{The Th{\o}rv{\"a}ld Group}
+%   \city{Hekla}
+%   \country{Iceland}}
+% \email{jsmith@affiliation.org}
+
+% \author{Julius P. Kumquat}
+% \correspondingauthor
+% \affiliation{%
+%   \institution{The Kumquat Consortium}
+%   \city{New York}
+%   \country{USA}}
+% \email{jpkumquat@consortium.net}
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+\renewcommand{\shortauthors}{Trovato et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+  A clear and well-documented \LaTeX\ document is presented as an
+  article formatted for publication by ACM in a conference proceedings
+  or journal publication. Based on the ``acmart'' document class, this
+  article presents and explains many of the common variations, as well
+  as many of the formatting elements an author may use in the
+  preparation of the documentation of their work.
+\end{abstract}
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>00000000.0000000.0000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>300</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+ <concept>
+  <concept_id>00000000.00000000.00000000</concept_id>
+  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_significance>100</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+
+\received{20 February 2007}
+\received[revised]{12 March 2009}
+\received[accepted]{5 June 2009}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+\section{Introduction}
+PSI(Private Set Intersection)는 두 참여자가 각자 보유한 데이터 집합을 공개하지 않고도 두 집합의 교집합을 계산할 수 있도록 하는 암호 프로토콜이다. % 이 중 Circuit-PSI(Circuit-based Private Set Intersection)는 교집합에 대한 다양한 연산을 불리언 회로(Boolean circuit)로 표현하여 수행하는 PSI 프로토콜이다. 
+이러한 개념들 중 practice에서 매우 유용한 확장 개념으로, PJC(Private Join and Compute)~\cite{LPR+21}가 주목받고 있다. PJC는 두 참여자의 입력 집합에서 교집합 원소에 대응되는 값들의 내적(inner product)을 안전하게 계산하는 two-party 프로토콜로, 통계 분석, 광고 효과 분석, 추천 시스템, 머신러닝 등 다양한 데이터 분석 분야~\cite{IKN+20}에서 활용 등이 논의되고 있는 중요한 암호 프로토콜이다.
+구체적으로, $\mathcal{S}$는 식별자 집합 $X$와 payload 집합 $D^X$를 입력으로 제공하고, $\mathcal{R}$은 식별자 집합 $Y$와 payload 집합 $D^Y$를 입력으로 제공한다. $\mathcal{F}_{\mathrm{PJC}}$는 $X$와 $Y$에서 동일한 식별자를 갖는 원소 쌍을 찾고, 각 쌍에 대응되는 payload $D^X_i$와 $D^Y_j$를 곱한 뒤 이를 모두 합산한다. 최종적으로 수신자 $\mathcal{R}$은 다음 값을 얻는다.
+    \[
+    \mathsf{sum}
+    :=
+    \sum_{x_i = y_j} D^X_i \cdot D^Y_j .
+    \]
+    따라서 PJC는 교집합 자체를 출력하지 않고, 교집합에 해당하는 payload들의 내적값만을 출력하는 기능이다. Ideal functionality는 figure~\ref{fig:pjc-ideal-functionality}에 나타낸다.
+
+    \begin{figure}[h]
+    \centering
+    \fbox{%
+    \begin{minipage}{0.88\linewidth}
+    \textbf{Input of $\mathcal{S}$:} 
+    $X := \{x_1,\ldots,x_n\}$ and 
+    $D^X := \{D^X_1,\ldots,D^X_n\}$.
+
+    \textbf{Input of $\mathcal{R}$:} 
+    $Y := \{y_1,\ldots,y_n\}$ and 
+    $D^Y := \{D^Y_1,\ldots,D^Y_n\}$.
+
+    \textbf{Output:} $\mathcal{R}$ receives the result
+    \[
+    \mathsf{sum}
+    :=
+    \sum_{x_i = y_j} D^X_i \cdot D^Y_j .
+    \]
+    \end{minipage}%
+    }
+    \caption{Ideal functionality for $\mathcal{F}_{\mathrm{PJC}}$ for two-party PJC.}
+    \label{fig:pjc-ideal-functionality}
+    \end{figure}
+
+
+
+초기 PJC 연구에서는 DDH(Decisional Diffie-Hellman) 가정을 기반으로 PSI를 수행한 뒤, 교집합에 대한 연산을 추가하는 구조가 제안되었다. 그러나 높은 통신량과 계산량으로 인해 대규모 데이터 환경에서의 활용에 한계가 있었고, 이에 \cite{CHI+23}에서는 DDH를 기반으로 PSI와 PIS(Private Intersection-Sum)을 결합하여 교집합에 대한 내적을 계산하는 PJC 프로토콜을 제안하였다. 이 프로토콜은 교집합의 크기(Cardinality)를 추가적으로 공개하는 대신, 통신량을 크게 감소시켜 기존 PJC보다 높은 효율성을 달성하였다. 
+
+% 이들은 대부분 VOLE(Vector Oblivious Linear Evaluation) 기반으로 설계되어 있는데, VOLE는 높은 효율성을 제공하는 대신 구현이 복잡하여 
+한편, 최근에는 OKVS(Oblivious Key-Value Store)~\cite{GPR+21}라는 기반 기술을 이용한 새로운 PSI 프로토콜들이 제안되고 있다~\cite{RR22,BPSY23}. 이들은 특히 단순 PSI 뿐 아니라, PJC와 같은 확장에도 유용하게 사용되고 있으며, 특히 \cite{LTS+26}는 대부분의 연산을 해시 함수와 비트 연산으로 수행하여 기존 PSI보다도 더 빠른 실행 속도와 낮은 통신량을 달성하였으며, 제안한 PSI를 기반으로 Circuit-PSI, PSI-Cardinality, PSI-Sum, PJC까지 제시하였다. 
+\yongha{$O(\ell^2), O(\ell)$ 얘기가 없네요.}
+\yongha{\cite{KLS26}도 주요 previous work인데 그 얘기도 없네요?}
+
+\subsection{Our Contribution}
+우리는 PJC literature에 대해 two-fold로 contribute한다.
+
+첫번째로, we present a cryptanalysis of PJC protocol proposed in \cite{LTS+26}. 송신자의 데이터를 비밀리에 전달하는 과정에서 하나의 마스킹 값을 전체에 적용하여 수신자가 원본 데이터와 마스킹 값 간의 차분을 알 수 있다는 문제가 존재한다는 것을 발견하였다. 이 경우 실제 데이터 값은 알 수 없더라도 데이터 간의 차분을 통해 수신자가 원본 데이터를 알아내지 않고도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있게 된다. 
+
+두번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
+현재 Circuit-PSI는 XOR이 출력되도록 filed를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 filed가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
+
+이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{F}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
+\yongha{구체적인 성능 개선치 (배율) 등 써주기}
+
+
+
+\section{Preliminary}
+
+\subsection{Notation}
+양의 정수 $n$에 대해 $[n] := \{1,\ldots,n\}$으로 나타내고 소수 $p$에 대해 $\mathbb{Z}_p := \mathbb{Z}/p\mathbb{Z}$로 나타낸다.
+또한 $x \xleftarrow{\$} S$는 유한 집합 $S$에서 원소 $x$를 균일하게
+무작위로 선택함을 의미하며, $\oplus$는 두 bit string에 대한
+bitwise XOR 연산을 의미한다.
+
+본 논문에서 Sender $S$와 Receiver $R$은 프로토콜에 참여하는 두 참여자이며, $S$와 $R$이 보유한 식별자 집합을 각각 $X=\{x_1,\ldots,x_n\}$과 $Y=\{y_1,\ldots,y_n\}$으로 나타내고, $n=|X|, |Y|$로 둔다.
+각 식별자에 대응하는 연관 데이터는 각각
+$D^X=\{D^X_1,\ldots,D^X_n\}$과
+$D^Y=\{D^Y_1,\ldots,D^Y_n\}$로 나타내며, 임의의 집합 $X$에 대해 simple hashing 또는 cuckoo hashing을
+적용하여 생성된 hash table은 $X'$로 나타낸다.
+
+두 집합 $X$와 $Y$에 대해, 각 $x_i\in X$의 $Y$에 대한 포함 여부를 나타내는 bit를 membership bit $b_i$라 서술하며,
+\[
+b_i =
+\begin{cases}
+1, & \text{if } x_i \in Y\\
+0, & \text{otherwise}
+\end{cases}
+\]
+로 정의한다.
+
+
+\subsection{Oblivious Transfer}
+Oblivious Transfer(OT)은 참여자 $\mathcal{S}$와 $\mathcal{R}$이 각각 두 개의 비밀정보를 가지고 있을 때, $\mathcal{S}$가 1-out-of-2 OT에 의해 두 개의 비밀정보를 불확정 전송하는 상황에서 $\mathcal{R}$은 $\mathcal{S}$의 정보 중 1/2만 알게 되고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 알고 있는 지 알 수 없게 하는 프로토콜이다. 이는 $\mathcal{S}$가 n개의 비밀을 가지고 있을 때의 상황을 가정하여 $\mathcal{R}$은 $\mathcal{S}$의 어떤 정보를 가졌는지 알 수 없고, $\mathcal{S}$는 $\mathcal{R}$이 어떤 정보를 가지고 있는지 알 수 없도록 확장할 수 있다. 이에 대한 ideal functionality $\mathcal{F}_{\mathrm{OT}}$는 figure~\ref{fig:ot-1-n-ideal-functionality}에 나타낸다.
+
+\begin{figure}[h]
+    \centering
+    \fbox{%
+    \begin{minipage}{0.88\linewidth}
+    \textbf{Parameters:} Message length $m$.
+
+    \textbf{Input of $\mathcal{S}$:}
+    The sender $\mathcal{S}$ inputs $(x_0,x_1)$, where $x_0,x_1\in\{0,1\}^{m}$.
+    
+    \textbf{Input of $\mathcal{R}$:}
+    The receiver $\mathcal{R}$ inputs a random choice bit $b\in\{0,1\}$.
+    
+    \textbf{Output:}
+    $\mathcal{R}$ obtains $x_b$.
+    \end{minipage}%
+    }
+    \caption{Ideal functionality for
+    $\mathcal{F}_{\mathrm{OT}}$.}
+    \label{fig:ot-1-n-ideal-functionality}
+\end{figure}
+
+그중에서도 B2A-OT는 OT를 활용하여 boolean share로 표현된 비트 \(b\)와 임의의 값 \(v \in \{0,1\}^\ell\)를 입력으로 받아 \(b \cdot v\)에 대한 arithmetic share를 생성하는 프로토콜이다. $\mathcal{S}$는
+\(b_s\in\{0,1\}\)와 \(v\in\{0,1\}^\ell\)를 입력으로 가지고,
+$\mathcal{R}$은 \(b_r\in\{0,1\}\)를 입력으로 가진다고 가정하자. 이때 \(b_s\)와 \(b_r\)는 $b=b_s\oplus b_r$
+를 만족하는 \(b\)의 Boolean share이다.
+
+먼저 $\mathcal{S}$는 랜덤 비트열 $r\overset{\$}{\leftarrow}\{0,1\}^\ell$
+를 생성하고, 이를 자신의 share로 설정한다. 이후 $\mathcal{S}$는
+OT sender로서
+\[
+m_{b_s}=r,\qquad m_{1-b_s}=v \oplus r
+\]
+의 두 메시지를 구성한다. $\mathcal{R}$은 자신의 boolean share \(b_r\)를
+OT의 choice bit로 사용하여 \(m_{b_r}\)를 얻고, 이를 자신의 share로 설정한다.
+이때, 만약 \(b_s=b_r\)이라면 \(b=0\)이 되고, $\mathcal{R}$은
+OT를 통해 \(m_{b_r}=r\)를 얻는다. 반대로 \(b_s\neq b_r\)이면
+\(b=1\)이 되고, $\mathcal{R}$은 \(m_{b_r}=v \oplus r\)를 얻는다. 따라서 두 참여자들의
+share의 XOR값은
+\[
+r \oplus m_{b_r}
+=
+\begin{cases}
+0, & b=0\\
+v, & b=1
+\end{cases}
+\]
+를 만족하며, $\mathcal{S}$의 output $r$과 $\mathcal{R}$의 output \(m_{b_r}\)은 \(b\cdot v\)에 대한 arithmetic share가 된다.
+
+
+\subsection{Oblivious Pseudorandom Function}
+Oblivious Pseudorandom Function (OPRF)은 한 참여자가 보유한
+비밀키 $k$에 대해 정의된 PRF $F_k(\cdot)$를 이용하여,
+다른 참여자가 자신의 입력 $x$에 대한 고정 길이 비트열의 출력 $F_k(x)$를 얻도록 하는
+2자간 프로토콜이다. 이 과정에서 입력을 제공하는 참여자는
+비밀키 $k$에 대한 정보를 얻지 못하며, 키를 보유한 참여자는
+입력 $x$에 대한 정보를 얻지 못한다.
+
+본 논문에서는 \cite{RS21}에서 제안된 VOLE-based OPRF를 사용한다.
+구체적으로, $\mathcal{R}$은 PRF key $k$를 보유하고
+$\mathcal{S}$는 입력 $x$를 제공한다고 했을 때 OPRF 수행 후
+$\mathcal{S}$는 $F_k(x)$를 얻으며, $\mathcal{R}$은 비밀키 $k$를
+이용하여 임의의 입력에 대해 $F_k(\cdot)$를 얻는다.
+이에 대한 ideal functionality $\mathcal{F}_{\mathrm{OPRF}}$는
+Figure~\ref{fig:oprf-ideal-functionality}에 나타낸다.
+
+\begin{figure}[h]
+\centering
+\fbox{%
+\begin{minipage}{0.88\linewidth}
+
+\textbf{Input of $\mathcal{S}$:} 
+$x$.
+
+\textbf{Input of $\mathcal{R}$:} 
+$k$.
+
+\textbf{Output:}
+$\mathcal{S}$ receives $F_k(x)$, while
+$\mathcal{R}$ receives no output.
+
+\end{minipage}%
+}
+\caption{Ideal functionality for $\mathcal{F}_{\mathrm{OPRF}}$.}
+\label{fig:oprf-ideal-functionality}
+\end{figure}
+
+
+\subsection{Oblivious Key-Value Store}
+OKVS(Oblivious Key-Value Store)는 다수의 key-value 쌍을 하나의 벡터 형태로 encode하고, 이후 특정 key와 해당 encoding 결과 벡터를 이용하여 그 key에 대응하는 value를 복원할 수 있도록 하는 자료구조이다. OKVS의 encoding 및 decoding 과정은 기본적으로 $\mathbb{F}_2$ 상의 선형 연산으로 구성되므로, 실제 구현에서는 효율적인 bitwise XOR 연산을 통해 처리될 수 있다
+
+\(\mathsf{Encode}\)는 \(n\)개의 key-value
+쌍
+\(\{(k_i,v_i)\}_{i=1}^{n}\)과 난수 $r$을 입력받아 길이 \(m\)의
+인코딩 벡터 \(P\)를 출력한다.
+\[
+P\leftarrow
+\mathsf{Encode}\bigl(\{(k_i,v_i)\}_{i=1}^{n},r\bigr).
+\]
+인코딩에 실패하는 경우에는 NULL을 출력한다.
+
+\(\mathsf{Decode}\)는 인코딩 벡터 \(P\), 조회할 key \(k\), 그리고
+난수 $\mathcal{R}$을 입력받아 해당 키에 대응하는 값 \(v\)를 출력한다.
+\[
+v\leftarrow\mathsf{Decode}(P,k,r).
+\]
+키 \(k_i\)가 인코딩에 사용된 key라면 \(\mathsf{Decode}(P,k_i,r)=v_i\)가
+성립한다. 반면, 인코딩에 포함되지 않은 key를 입력하면 random한 값으로 보이는 결과가 출력된다.
+
+따라서 OKVS의 첫 입력은 소유한 데이터셋의 key-value 쌍들이고, 출력은 해당 정보를
+직접 드러내지 않는 인코딩 벡터이다. 이후 원하는 키를
+\(\mathsf{Decode}\)에 입력하여 데이터셋에 존재하는 값만 조회할 수 있다.
+
+
+\subsection{Homomorphic Encryption}
+동형암호는 데이터를 암호화한 상태에서 연산을 수행할 수 있도록 하는 암호화 기법이다. 동형암호 특성에 따라 암호문에 대한 연산 결과를 복호화하면 평문에 동일한 연산을 적용한 결과를 얻을 수 있으므로, 데이터의 내용을 공개하지 않고도 필요한 계산을 수행할 수 있다.
+
+본 논문에서는 RLWE 계열 난제에 기반한 BGV형 동형암호를 사용한다. BGV에서 평문은 다항식 환 \(R_p\)의 원소로 표현되고, 암호문은 \(R_q\) 위의 다항식 쌍으로 표현된다. 그러나 본 논문에서 처리하는 개별 데이터와 share의 값 영역은 \(\mathbb{Z}_p\)이다. 즉, 각 데이터는 \(\mathbb{Z}_p\)의 원소이지만, 실제 암호화 과정에서는 이러한 값들이 하나의 평문 다항식으로 인코딩된다.
+
+BGV는 batching 기능을 지원하며, 적절한 파라미터 선택 하에서 하나의 평문 다항식에
+$
+    (m_1, m_2, \ldots, m_n) \in \mathbb{Z}_p^n
+$
+과 같은 여러 메시지를 함께 인코딩할 수 있다. 이때 패킹된 각각의 위치를 slot이라 하며, 하나의 암호문에 포함된 각 slot에 동일한 동형 연산을 병렬적으로 적용할 수 있다. 본 논문에서는 이러한 BGV의 batching 기능을 활용하여 각 값을 개별적으로 암호화하지 않고, 하나의 암호문을 이용하여 여러 위치의 데이터를 동시에 처리하도록 한다. 즉, slot 단위의 병렬 처리로 여러 위치의 데이터에 대한 곱셈과 합산이 필요한 PJC 계산을 효율적으로 수행할 수 있다. 
+
+이러한 batching된 평문 벡터와 이에 대응하는 암호문을 각각
+\[
+\mathbf{m}=(m_1,\ldots,m_N)\in\mathbb{Z}_p^N,
+\quad
+\mathbf{c}\in R_q^2
+\]
+로 표기한다. BGV의 암호화 및 복호화 과정은 각각 다음과 같이
+나타낸다.
+\begin{align*}
+\mathsf{BGV.KeyGen}(1^\lambda)
+&\longrightarrow
+(pk,sk),\\
+\mathsf{BGV.Enc}(pk,\mathbf{m})
+&\longrightarrow
+\mathbf{c},\\
+\mathsf{BGV.Dec}(sk,\mathbf{c})
+&\longrightarrow
+\mathbf{m}.
+\end{align*}
+여기서 \(\mathsf{BGV.Enc}\)는 여러 slot에 패킹된 평문 벡터를
+암호문으로 변환하고, \(\mathsf{BGV.Dec}\)는 암호문을 복호화하여
+각 slot에 대응하는 평문 벡터를 반환한다.
+
+Batching 환경에서 수행되는 동형연산은 입력의 형태에 따라 암호문과
+평문 사이의 연산 및 두 암호문 사이의 연산으로 구분할 수 있다.
+먼저 암호문 \(\mathbf{c}_1\)이 평문 벡터
+\(\mathbf{m}_1\in\mathbb{Z}_p^N\)을 암호화하고,
+\(\mathbf{v}\in\mathbb{Z}_p^N\)가 평문 벡터라고 하자. 암호문과
+평문 사이의 덧셈 및 곱셈은 다음을 만족한다.
+\begin{align*}
+    \mathsf{BGV.Dec}
+    \left(
+        sk,
+        \mathsf{BGV.PlainAdd}(\mathbf{c}_1,\mathbf{v})
+    \right)
+    &=
+    \mathbf{m}_1+\mathbf{v},\\
+    \mathsf{BGV.Dec}
+    \left(
+        sk,
+        \mathsf{BGV.PlainMult}(\mathbf{c}_1,\mathbf{v})
+    \right)
+    &=
+    \mathbf{m}_1\odot\mathbf{v}.
+\end{align*}
+
+한편 두 암호문 \(\mathbf{c}_1,\mathbf{c}_2\)가 각각
+\(\mathbf{m}_1,\mathbf{m}_2\in\mathbb{Z}_p^N\)을 암호화할 때,
+암호문 사이의 덧셈 및 곱셈은 다음을 만족한다.
+\begin{align*}
+    \mathsf{BGV.Dec}
+    \left(
+        sk,
+        \mathsf{BGV.CtxtAdd}(\mathbf{c}_1,\mathbf{c}_2)
+    \right)
+    &=
+    \mathbf{m}_1+\mathbf{m}_2,\\
+    \mathsf{BGV.Dec}
+    \left(
+        sk,
+        \mathsf{BGV.CtxtMult}(\mathbf{c}_1,\mathbf{c}_2)
+    \right)
+    &=
+    \mathbf{m}_1\odot\mathbf{m}_2.
+\end{align*}
+
+여기서 \(+\)와 \(\odot\)는 각각 slot-wise 덧셈과 곱셈을 의미하며,
+구체적으로 다음과 같이 정의된다.
+\begin{align*}
+    \mathbf{m}_1+\mathbf{m}_2
+    &=
+    (m_{1,1}+m_{2,1},\ldots,m_{1,N}+m_{2,N}),\\
+    \mathbf{m}_1\odot\mathbf{m}_2
+    &=
+    (m_{1,1}m_{2,1},\ldots,m_{1,N}m_{2,N})
+\end{align*}
+
+
+\section{Recap of Circuit Private Set Intersection}
+This section에서는, Our contribution--cryptanalysis and construction--을 one stroke로 이해할 수 있는 주요 background인, circuit-based PSI~\cite{PSTY19, RS21}라는 개념을 정리한다. 
+
+Circuit-PSI는 일반적인 PSI와 달리 교집합을 어느 한 참여자에게
+직접 공개하지 않고, 교집합 여부를 나타내는 결과를 두 참여자에게
+secret share 형태로 출력하는 프로토콜이다. 이러한 출력은 이후
+MPC 프로토콜의 입력으로 사용될 수 있으므로, 두 참여자는 교집합을
+복원하지 않고도 교집합에 대응하는 데이터에 대한 추가 연산을
+수행할 수 있다.
+
+Circuit-PSI는 두 단계로 구성된다. 첫 번째 단계가 끝나면
+membership 위치에서는 해당 위치의 연관 데이터 $D_i^{Y'}$에 대한
+share를 얻고, non-membership 위치에서는 random한 값에 대한 share를
+얻는다. 두 번째 단계에서는 membership 정보를 이용하여
+non-membership 위치의 random value를 $0$으로 소거한다.
+따라서 최종적으로 membership 위치에서는 $D_i^{Y'}$에 대한 share가
+유지되고, non-membership 위치에서는 $0$에 대한 share를 얻는다.
+
+이러한 두 단계의 입출력 관계를
+Figure~\ref{fig:cpsi-ideal-functionality}의 ideal functionality로 정리하고, 이어서 구체적으로 설명한다.
+
+\begin{figure}[h]
+\centering
+\fbox{%
+\begin{minipage}{0.88\linewidth}
+
+\textbf{Input of $\mathcal{S}$:} 
+$X := \{x_1,\ldots,x_n\}$.
+
+\textbf{Input of $\mathcal{R}$:} 
+$Y := \{y_1,\ldots,y_n\}$ and
+$D^Y := \{D^Y_1,\ldots,D^Y_n\}$.
+
+\textbf{Output of Step 1:} $\mathcal{S}$ and $\mathcal{R}$ receive Boolean shares
+$(b_i^S,b_i^R)$ and data shares $(w_i,w_i')$ satisfying
+\[
+b_i^S \oplus b_i^R = b_i,
+\qquad
+w_i \oplus w_i'
+=
+\begin{cases}
+D_i^{Y'}, & \text{if } b_i=1\\
+\rho_i, & \text{if } b_i=0
+\end{cases}
+\]
+where $\rho_i \xleftarrow{\$} \{0,1\}^{\ell}$ is a uniformly random
+$\ell$-bit string.
+
+\textbf{Output of Step 2:} $\mathcal{S}$ and $\mathcal{R}$ receive output shares
+$(a_i^S,a_i^R)$ satisfying
+\[
+a_i^S \oplus a_i^R
+=
+\begin{cases}
+D_i^{Y'}, & \text{if } b_i=1\\
+0, & \text{if } b_i=0.
+\end{cases}
+\]
+
+\end{minipage}
+}
+\caption{Ideal functionality for $\mathcal{F}_{\mathrm{Circuit-PSI}}$.}
+\label{fig:cpsi-ideal-functionality}
+\end{figure}
+
+\noindentparagraph{\textbf{Construction of Step 1.}}
+
+먼저, 첫 번째 단계인 hashing phase에서 $\mathcal{S}$는 세 개의
+hash function $h_1,h_2,h_3$를 사용하는 Cuckoo hashing을 적용하여
+자신의 식별자 집합 $X$의 원소들을 bin에 배치하고,
+Cuckoo-hash table $X'$를 생성한다.
+Cuckoo hashing에서 각 식별자는 $h_1,h_2,h_3$에 의해 결정되는
+후보 bin들 중 하나에 배치된다.
+
+이와 함께 $\mathrm{idx}:[n]\rightarrow[n']$을 정의하여,
+각 $i\in[n]$에 대해 $x_i\in X$가 Cuckoo hashing을 통해
+hash table $X'$의 어느 위치에 저장되었는지를 나타낸다.
+즉, $\mathrm{idx}(i)$는 식별자 $x_i$가 저장된 bin의 index를 의미한다.
+
+$\mathcal{R}$은 동일한 세 개의 hash function을
+사용하여 Simple hashing을 통해 자신의 식별자 집합 $Y$를
+Simple-hash table $Y'$에 배치한다. 이때 각 $y\in Y$는
+$h_1(y)$, $h_2(y)$, $h_3(y)$에 의해 결정되는 세 bin에 모두
+배치된다. 여기서 $x_i'$는 $X'$의 $i$번째 bin에 배치된 식별자를
+의미하고, $\mathrm{idx}(X)$는 $X'$에서 식별자가 배치된 bin의
+index 집합을 나타낸다. 또한 $y_{i,j}'$는 $Y'$의 $i$번째 bin에
+배치된 $j$번째 식별자를 의미하며, $D_{i,j}^{Y'}$는
+$y_{i,j}'$에 대응하는 연관 데이터를 나타낸다.
+
+이후 $\mathcal{R}$은 PRF key $k$를 생성하고,
+$\mathcal{S}$는 각 $x_i' \in X'$를 입력으로 하여
+$\mathcal{R}$과 $\mathcal{F}_{\mathrm{OPRF}}$를 수행한다.
+그 결과 $\mathcal{S}$는 각 $x_i'$에 대한 $F_k(x_i')$를 얻는다. $\mathcal{R}$은 PRF key $k$를 이용하여
+각 $y_{i,j}' \in Y'$에 대한 $F_k(y_{i,j}')$를 locally 계산한다.
+
+다음으로, $\mathcal{R}$은 OKVS의 value를 구성한다. 먼저 각 bin $i$에 대해 random tag $t_i$와
+random mask $w_i$를 생성하고, 각 $y_{i,j}'$에 대해
+\[
+    t_i \parallel \left(D_{i,j}^{Y'} \oplus w_i\right)
+\]
+를 계산한다.
+여기서 $t_i$는 이후 PEQT에 사용되는 tag component가 되고,
+$D_{i,j}^{Y'} \oplus w_i$는 연관 데이터를 마스킹한 data component가 된다.
+
+그 다음, $\mathcal{R}$은 이를 $F_k(y_{i,j}')$로 masking하여
+\[
+    v_{i,j}
+    :=
+    \left(
+        t_i \parallel \left(D_{i,j}^{Y'} \oplus w_i\right)
+    \right)
+    \oplus F_k(y_{i,j}')
+\]
+를 OKVS의 value로 구성한다.
+마지막으로, $\mathcal{R}$은 생성한 key-value pair를 OKVS로 encode하고,
+encoding 결과 $P$를 $\mathcal{S}$에게 전송한다.
+
+$\mathcal{S}$는 자신의 hashed identifier $x_i'$와 OPRF를 통해 얻은
+$F_k(x_i')$를 이용하여 OKVS를 decode한다. 이를 통해 각
+$i\in\mathrm{idx}(X)$에 대해 tag $t_i'$와 data share $w_i'$를
+얻는다. 
+
+$x_i'=y_{i,j}'$인 경우에는 동일한 식별자에 대해 동일한 PRF output이
+사용되므로 masking이 제거되고 $t_i'=t_i$가 성립한다.
+반면 일치하는 식별자가 존재하지 않는 경우에는 $t_i'$가 random한
+값으로 복원된다.
+
+이후 $\mathcal{S}$와 $\mathcal{R}$은 두 tag의 일치 여부를
+각자의 입력을 공개하지 않고 확인하기 위해 PEQT를 수행한다.
+PEQT는 두 입력의 equality를 안전하게 판별하는 프로토콜이며,
+$\mathcal{S}$와 $\mathcal{R}$은 각각 $t_i'$와 $t_i$를 입력으로 제공한다.
+그 결과 두 참여자는 membership bit $b_i$에 대한 Boolean shares
+$(b_i^S,b_i^R)$를 얻으며, 이는 $b_i^S \oplus b_i^R = b_i$
+를 만족한다. 여기서 $b_i=1$이면 $x_i'$와 일치하는 식별자가
+$Y$에 존재하고, 그렇지 않으면 $b_i=0$이다.
+
+따라서 첫 번째 단계가 끝난 후
+$\mathcal{S}$는 $(b_i^S,w_i')$를,
+$\mathcal{R}$은 $(b_i^R,w_i)$를 보유한다.
+
+\noindentparagraph{\textbf{Construction of Step 2.}}
+
+두 번째 단계에서는 Step~1에서 얻은 membership bit의 Boolean share와
+data share를 이용하여 non-membership 위치에 남아 있는 random value를
+$0$으로 제거한다.
+
+B2A-OT는 Section~2.2에서 설명하였듯, membership bit $b_i$와 입력값 $v$에 대해
+$b_i\cdot v$에 대한 share를 생성하는 프로토콜이다.
+따라서 $b_i=1$인 membership 위치에서는 입력값 $v$가 유지되고,
+$b_i=0$인 non-membership 위치에서는 $0$에 대한 share를 얻는다.
+
+Step~1의 data는 $\mathcal{R}$이 보유한 $w_i$와
+$\mathcal{S}$가 보유한 $w_i'$의 두 share로 나뉘어 있으며,
+membership 위치에서는 $w_i\oplus w_i'=D_i^{Y'}$가 성립한다.
+따라서 최종적으로 $b_i\cdot(w_i\oplus w_i')$에 대한 share를
+생성해야 한다. 그러나 $\mathcal{R}$은 $w_i$만을,
+$\mathcal{S}$는 $w_i'$만을 보유하므로, 어느 한 참여자도
+$w_i\oplus w_i'$를 하나의 B2A-OT 입력으로 제공할 수 없다.
+이에 각 data share에 membership bit를 개별적으로 적용하기 위해
+B2A-OT를 두 번 수행한다.
+
+첫 번째 B2A-OT에서는 $\mathcal{R}$이 자신이 보유한 $w_i$를
+입력으로 제공한다. 그 결과 두 참여자는 각각 $r_i^S$와 $r_i^R$을
+얻으며, $r_i^S\oplus r_i^R=b_i\cdot w_i$를 만족한다.
+
+두 번째 B2A-OT에서는 역할을 바꾸어 $\mathcal{S}$가 자신이 보유한
+$w_i'$를 입력으로 제공한다. 그 결과 두 참여자는 각각
+$r_i^{\prime S}$와 $r_i^{\prime R}$을 얻으며,
+$r_i^{\prime S}\oplus r_i^{\prime R}=b_i\cdot w_i'$를 만족한다.
+
+이후 각 참여자는 두 번의 B2A-OT에서 얻은 자신의 share를 XOR하여
+$a_i^S=r_i^S\oplus r_i^{\prime S}$와
+$a_i^R=r_i^R\oplus r_i^{\prime R}$을 계산한다. 따라서 최종 output
+share는
+\[
+\begin{aligned}
+a_i^S\oplus a_i^R
+&=(r_i^S\oplus r_i^R)
+  \oplus(r_i^{\prime S}\oplus r_i^{\prime R})\\
+&=(b_i\cdot w_i)\oplus(b_i\cdot w_i')\\
+&=b_i\cdot(w_i\oplus w_i')
+\end{aligned}
+\]
+를 만족한다. 따라서 membership 위치에서는
+$a_i^S\oplus a_i^R=D_i^{Y'}$가 성립하고,
+non-membership 위치에서는 $a_i^S\oplus a_i^R=0$이 된다.
+이 과정을 통해 두 참여자는
+Figure~\ref{fig:cpsi-ideal-functionality}에서 정의한 최종 output
+share를 얻는다.
+최종적인 Circuit-PSI의 수행 절차는 figure~\ref{fig:cpsi-construction}에 나타낸다.
+
+\begin{figure}[t]
+\centering
+\fbox{%
+\begin{minipage}{0.95\linewidth}
+
+\textbf{Input of $\mathcal{S}$:}
+$X$.
+
+\textbf{Input of $\mathcal{R}$:}
+$(Y,D^Y)$.
+
+\textbf{Procedure:}
+
+\textbf{Step 1.}
+
+\begin{enumerate}
+
+    \item \textbf{Hashing.}
+
+    $\mathcal{S}$ applies Cuckoo hashing to $X$ using three hash functions
+    $h_1,h_2,h_3$ and obtains $X'$.
+    $\mathcal{R}$ applies Simple hashing to $Y$ using the same hash functions
+    and obtains $Y'$.
+
+    Let $x_i'$ denote the identifier in the $i$-th bin of $X'$,
+    $y_{i,j}'$ the $j$-th identifier in the $i$-th bin of $Y'$,
+    and $D_{i,j}^{Y'}$ the associated data of $y_{i,j}'$.
+
+    \item \textbf{OPRF and OKVS Encode.}
+
+    $\mathcal{R}$ samples a PRF key $k$, and $\mathcal{S}$ and $\mathcal{R}$ execute OPRF.
+    $\mathcal{S}$ obtains
+    \[
+        \{F_k(x_i')\}_i,
+    \]
+    while $\mathcal{R}$ locally computes $F_k(y_{i,j}')$ for each
+    $y_{i,j}'\in Y'$.
+
+    For each bin $i$, $\mathcal{R}$ samples a random tag $t_i$ and
+    a random data share $w_i$. For each $y_{i,j}'$, $\mathcal{R}$ computes
+    \[
+        v_{i,j}
+        :=
+        \left(
+            t_i \parallel (D_{i,j}^{Y'}\oplus w_i)
+        \right)
+        \oplus F_k(y_{i,j}').
+    \]
+
+    $\mathcal{R}$ encodes the resulting key--value pairs into an OKVS,
+    obtains the encoded vector $P$, and sends $P$ to $\mathcal{S}$.
+
+    \item \textbf{OKVS Decode.}
+
+    For each $x_i'\in X'$, $\mathcal{S}$ computes
+    \[
+        v_i'
+        :=
+        \mathsf{OKVS.Decode}(x_i',P)
+        \oplus F_k(x_i')
+    \]
+    and parses
+    \[
+        v_i'=t_i'\parallel w_i'
+    \]
+    to obtain $t_i'$ and $w_i'$.
+
+    \item \textbf{PEQT.}
+
+    $\mathcal{S}$ and $\mathcal{R}$ execute PEQT using $t_i'$ and $t_i$,
+    respectively, and obtain Boolean shares
+    $(b_i^S,b_i^R)$ satisfying
+    \[
+        b_i^S\oplus b_i^R=b_i.
+    \]
+    
+
+\end{enumerate}
+
+At the end of Step 1, $\mathcal{S}$ holds $(b_i^S,w_i')$ and
+$\mathcal{R}$ holds $(b_i^R,w_i)$ for each bin $i$.
+
+\medskip
+
+\textbf{Step 2.}
+
+\begin{enumerate}
+    \item
+    $\mathcal{S}$ inputs $b_i^S$, while $\mathcal{R}$ inputs $(b_i^R,w_i)$
+    to B2A-OT. The parties obtain shares $(r_i^S,r_i^R)$
+    satisfying
+    \[
+        r_i^S\oplus r_i^R=b_i\cdot w_i.
+    \]
+
+    \item
+    $\mathcal{S}$ inputs $(b_i^S,w_i')$, while $\mathcal{R}$ inputs $b_i^R$
+    to B2A-OT. The parties obtain shares
+    $(r_i^{\prime S},r_i^{\prime R})$ satisfying
+    \[
+        r_i^{\prime S}\oplus r_i^{\prime R}
+        =b_i\cdot w_i'.
+    \]
+
+\end{enumerate}
+At the end of Step 2, $\mathcal{S}$ and $\mathcal{R}$ obtain output shares
+$(a_i^S,a_i^R)$ satisfying
+$a_i^S\oplus a_i^R=b_iD_i^{Y'}$ for each bin $i$.
+
+
+\end{minipage}%
+}
+\caption{Circuit-PSI construction.}
+\label{fig:cpsi-construction}
+\end{figure}
+
+% \subsection{PJC}
+%     PJC는 Sender $\mathcal{S}$와 Receiver $\mathcal{R}$이 각각 보유한 식별자 집합과 이에 대응되는 payload를 입력으로 받아 두 식별자 집합의 교집합에 대응되는 payload들의 내적값을 수신자 $\mathcal{R}$에게 출력한다.
+
+\section{Cryptanalysis of \cite{LTS+26}}
+\cite{LTS+26}은 OKVS를 기반으로 하여 새로운 경량 2자간 PSI 프로토콜을 제안하고, 나아가 제안한 PSI를 PSI-Cardinality, PSI-sum, PJC 등 다양한 계산 프로토콜로 확장하였다. 특히 \cite{LTS+26}은 PJC를 포함한 후속 계산을 $O(\ell)$의 비용으로 수행할 수 있도록 구성함으로써, Circuit-PSI와 그 응용에서도 높은 계산 및 통신
+효율성을 달성하였다.
+
+우리는 해당 논문의 PJC 구현을 분석하는 과정에서 보안상 문제가 발생할 수 있음을 확인하였다. 이에 해당 문제를 구체적으로 파악하고 대안을 제시하기 위해 기존 프로토콜의 PJC computation 과정을 추가적으로 분석하였다. 그러나 기존 논문에서는 Circuit-PSI 수행 이후 PJC를 구성하는 구체적인 계산 과정을 명시적으로 제시하지 않고, generic $\mathcal{F}_{\mathrm{2PC}}$를 통해 계산을 수행한다고만 설명하고 있다.
+
+그러나 이들은 실제로 specific한 구현을 바탕으로 PJC의 performance를 제공하였고, 그것을 기반으로 기존보다 훨씬 efficient함을 주장하였다. 우리는 그들의 실제 $\mathcal{F}_{\mathrm{2PC}}$ 구현이 어떠한 방식으로 수행되는지를 살펴보았으나, 그 결과 그것이 안전하지 않은 방식으로 수행되고 있음을 확인하였다. 해당 보안 문제와 그 원인에 대해서는 \Cref{sec:LTScryptanalysis}에서 구체적으로 설명한다.
+
+그 전에, 문제의 발생 원인과 기존 구현의 계산 구조를 명확히 이해할 수 있도록 \Cref{sec:LTSprotocol}에서는 공개된 구현을 기반으로 기존 논문의 PJC 프로토콜이 실제 어떠한 방식으로 계산을 수행하는지 먼저 설명한다.
+
+
+\subsection{\cite{LTS+26} Protocol의 상세}\label{sec:LTSprotocol}
+본 절에서는 \cite{LTS+26}의 PSI-Innerproduct 프로토콜을 분석한다.
+\cite{LTS+26}에서는 Base OT 기반 연산을 통해 2.6절에서 정의된 Circuit-PSI의 Step~1을 수행하여
+membership bit $b_i$의 share와, non-intersection 위치의 random value가
+아직 0으로 제거되지 않은 $D^{Y'}$의 share를 얻는다.
+이후 다음의 과정을 통해 PJC에 필요한 나머지 연산을 수행한다.
+
+먼저 $\mathcal{R}$는 하나의 random global mask $g$를 sample한다.
+그리고 Circuit-PSI Step~1의 출력으로 얻은 $D^{Y'}$의 share
+$\{w_i\}_{i\in[n']}$를 $g$로 masking하여
+$\{\omega_i = w_i\oplus g\}_{i\in[n']}$를 생성한 뒤 $\mathcal{S}$에게 전달한다.
+두 참여자는 이를 이용하여
+\textsf{Masked Sum}, \textsf{Y Sum}, \textsf{Mask Cross}의 세 연산을
+수행하며, 각 연산을 통해 다음과 같은 additive share를 얻는다.
+\[
+\begin{aligned}
+\textsf{Masked Sum:}\qquad
+&\alpha^S+\alpha^R
+    =\sum_i b_i \cdot (\omega_i \oplus w'_i) \cdot D^{X'},\\
+\textsf{Y Sum:}\qquad
+&\beta^S+\beta^R
+    =\sum_i b_i \cdot D_i^{X'},\\
+\textsf{Mask Cross:}\qquad
+&\gamma^S+\gamma^R
+    =g\sum_i b_i \cdot \beta^S.
+\end{aligned}
+\]
+
+이후 $\mathcal{R}$는 자신이 보유한 share와 global mask $g$를 이용하여
+\[
+\delta
+:=
+\alpha^R+\gamma^R+g \cdot \beta^R
+\]
+를 계산한 뒤 이를 $\mathcal{S}$에게 전달한다.
+$\mathcal{S}$는 전달받은 $\delta$에 자신이 보유한
+$\alpha^S$와 $\gamma^S$를 더하여 최종 결과를 복원한다. 즉,
+\[
+\begin{aligned}
+\mathsf{Output}
+    &=\delta+\alpha^S+\gamma^S\\
+    &=\alpha^S+\alpha^R+\gamma^S+\gamma^R+g\beta^R.
+\end{aligned}
+\]
+이며, 각 연산에서 생성된 share를 결합하면 최종적으로
+\[
+\mathsf{Output}
+=
+\sum_i b_iD_i^{X'}D_i^{Y'}
+\]
+를 얻을 수 있고, 이는 교집합에 해당되는 위치의 내적값에 해당한다.
+구체적인 PJC 프로토콜의 수행 과정은
+Figure~\ref{fig:ndss-pjc}에 나타낸다.
+
+\begin{figure}[t]
+\centering
+\fbox{%
+\begin{minipage}{0.88\linewidth}
+
+\textbf{Input of $\mathcal{S}$:}
+$X=\{x_1,\ldots,x_n\}$ and
+$D^X=\{D_1^X,\ldots,D_n^X\}$.
+
+\textbf{Input of $\mathcal{R}$:}
+$Y=\{y_1,\ldots,y_n\}$ and
+$D^Y=\{D_1^Y,\ldots,D_n^Y\}$.
+
+\textbf{Procedure:}
+
+\begin{enumerate}[label=(\arabic*), leftmargin=*]
+
+    \item \textbf{CPSI.}
+    $\mathcal{S}$ and $\mathcal{R}$ invoke the CPSI protocol and obtain
+    \[
+    \mathcal{S}:\ (b^S,\,w_i'),
+    \qquad
+    \mathcal{R}:\ (b^R,\,w_i).
+    \]
+
+    \item \textbf{Masked Share.}
+    $\mathcal{R}$ randomly samples a single global mask $g$ and sends $\omega_i = w_i \oplus g$ to $\mathcal{S}$.
+
+    \item \textbf{Masked Sum.}
+    $\mathcal{S}$ locally computes $(\omega_i \oplus w_i') \cdot D_i^{X'}$.
+    Then, $\mathcal{S}$ and $\mathcal{R}$ invoke
+    $\mathsf{MaskedSum}$ with
+    \[
+    \mathcal{S}:\ ((\omega_i \oplus w_i') \cdot D_i^{X'},\,b_i^S),
+    \qquad
+    \mathcal{R}:\ b_i^R,
+    \]
+    and obtain $\alpha^S$ and $\alpha^R$, respectively, such that
+    \[
+    \alpha^S+\alpha^R
+    =
+    \sum_i b_i \cdot (\omega_i \oplus w_i') \cdot D_i^{X'}.
+    \]
+
+    \item \textbf{Y Sum.}
+    $\mathcal{S}$ and $\mathcal{R}$ invoke
+    $\mathsf{YSum}$ with
+    \[
+    \mathcal{S}:\ (D_i^{X'},\,b_i^S),
+    \qquad
+    \mathcal{R}:\ b_i^R,
+    \]
+    and obtain $\beta^S$ and $\beta^R$, respectively, such that
+    \[
+    \beta^S+\beta^R
+    =
+    \sum_i b_i \cdot D_i^{X'}.
+    \]
+
+    \item \textbf{Mask Cross.}
+    $\mathcal{S}$ and $\mathcal{R}$ invoke
+    $\mathsf{MaskCross}$ with
+    \[
+    \mathcal{S}:\ \beta^S,
+    \qquad
+    \mathcal{R}:\ (g,\,\beta^R),
+    \]
+    and obtain $\gamma^S$ and $\gamma^R$, respectively, such that
+    \[
+    \gamma^S+\gamma^R
+    =
+    g\sum_i b_i \cdot D_i^{X'}.
+    \]
+
+\end{enumerate}
+
+    \textbf{Output:}
+    $\mathcal{R}$ computes
+    \[
+    \delta
+    =
+    \alpha^R+\gamma^R+g\cdot\beta^R
+    \]
+    and sends $\delta$ to $\mathcal{S}$.
+    Then, $\mathcal{S}$ computes
+    \[
+    \mathsf{Output}
+    =
+    \delta+\alpha^S+\gamma^S
+    =
+    \sum_i b_i\cdot D_i^{X'}\cdot D_i^{Y'}.
+    \]
+
+\end{minipage}}
+\caption{PJC protocol of \cite{LTS+26} represented using our notation.}
+\label{fig:ndss-pjc}
+\end{figure}
+
+
+\subsection{\cite{LTS+26} Protocol의 문제점}\label{sec:LTScryptanalysis}
+기존 프로토콜 Figure~\ref{fig:ndss-pjc}에서는 Circuit-PSI 수행 이후
+$\mathcal{R}$이 보유한 share $w_i$를 하나의 global mask $g$를 이용하여
+마스킹한
+\[
+    \omega_i = w_i \oplus g
+\]
+를 $\mathcal{S}$에게 전달한다. 이때 동일한 global mask $g$가 모든 위치에
+반복적으로 사용된다. 그러나 동일한 mask가 두 share에 재사용되면, $\mathcal{S}$는 두 마스킹된 값을
+XOR하여 global mask를 제거할 수 있다.
+\[
+\begin{aligned}
+    \omega_i \oplus \omega_j
+    &= (w_i \oplus g) \oplus (w_j \oplus g)\\
+    &= w_i \oplus w_j.
+\end{aligned}
+\]
+따라서 $\mathcal{S}$는 $w_i$와 $w_j$의 실제 값을 알지 못하더라도
+두 share 사이의 XOR 관계를 알 수 있게 된다.
+
+이러한 관계가 노출되면 서로 다른 위치의 데이터가 동일한지 여부를
+확인하거나, 여러 위치 사이의 관계를 비교할 수 있다. 이를 여러 데이터에
+반복적으로 적용하면 중복 원소의 존재 여부나 데이터 간의 구조적 관계, 분포 등에 관한 정보를 추론할 수 있다. 특히 데이터의 후보 범위가 작거나 형식에 대한 사전 지식이 존재하는 경우에는, 추측한 데이터로부터 유도되는 XOR 관계와 관찰된 share 사이의 관계를 비교함으로써 원본 데이터의 후보를 좁힐 수 있다.
+
+정리하면 동일한 global mask를 여러 share에 반복해서 사용하는 방식은 각 share의
+값 자체를 직접 노출하지 않더라도, share 사이의 XOR 관계를 그대로 노출한다. 이러한 관계는 PJC의 의도된 출력으로부터는 얻을 수 없는 추가 정보이므로, 기존 프로토콜은 Circuit-PSI를 통해 분리되어 있던 payload share 사이의 관계에 관한 정보를 $\mathcal{S}$에게 추가적으로 제공하는 것과 같다. 따라서 이는 프로토콜이 허용한 출력 이외의 정보를 노출하는 명백한 data leakage에 해당한다.
+
+참고로, 이러한 추가 정보의 노출을 허용한다면 마스킹 과정에서 요구되는 보안 제약을 완화할 수 있으므로 보다 단순하고 효율적인 construction을 구성하는 것이 가능하다. 그러나 이러한 leakage를 허용하는 construction에서 얻어진 효율성을 동일한 보안 목표를 만족하는 PJC 프로토콜과 동일한 기준으로 해석하기는 어렵다.
+
+
+\section{Our Protocol}
+본 논문에서는 Section~3.2에서 서술한 문제점과,
+기존 Circuit-PSI construction에서 XOR 기반 share를 출력하는 단계로 인해 ${Z_P}$ 위에서 연산되는 동형암호의 message space와 직접 결합하기 어렵다는 문제점을 해결한 새로운 Circuit-PSI의 Arbitrary Field generalization, dubbed AF-CPSI를 제안한다.
+
+Section~4.1에서는 AF-CPSI를 구성하기 위해 기존 Circuit-PSI에서
+수정되는 부분을 설명하고, 
+Section~4.2에서는 AF-CPSI에서 얻은 arithmetic share를
+동형암호 연산에 입력하여 PJC를 수행하는 구체적인 방법을 설명한다.
+
+
+\subsection{Circuit-PSI over arbitrary fields}\label{sec:cpsi-zp}
+AF-CPSI는 Section~2.6에서 설명한 기존 Circuit-PSI의 두 단계에서 사용되는
+payload 관련 연산을 $\mathbb{Z}_p$ 위에서 수행할 수 있도록 수정한
+Circuit-PSI over $\mathbb{Z}_p$이다.
+Step~1에서는 OKVS의 data component에 적용되는 masking 방식을 수정하여
+$\mathbb{Z}_p$ 위의 임시 arithmetic share를 생성하고,
+Step~2에서는 B2A-OT 과정을 수정하여 membership bit가 적용된
+최종 output share가 $\mathbb{Z}_p$ 위에서 생성되도록 한다.
+이를 통해 최종적으로
+\[
+a_i^S+a_i^R=b_iD_i^{Y'}\pmod p
+\]
+를 만족하는 arithmetic share를 얻으며,
+해당 share는 이후 동형암호 기반 PJC 계산의 입력으로 직접 사용할 수 있다.
+
+\noindentparagraph{\textbf{Modification in Step 1.}}
+
+Section~2.6의 Figure~\ref{fig:cpsi-construction}에서 설명한
+Circuit-PSI의 Step~1-(2)를 보면, OKVS의 value는
+comparison을 위한 tag component와 payload에 대응하는
+data component로 구성된다. 
+기존 Circuit-PSI에서는 OKVS에 저장되는 value를 비트열로 표현하고,
+OPRF output을 이용한 XOR masking을 적용하므로,
+payload에 대응하는 data component 역시
+\[
+    D_{i,j}^{Y'}\oplus w_i
+\]
+와 같이 XOR 기반으로 구성된다.
+
+일반적으로 Circuit-PSI에서 OKVS의 value는 비트열로 구성되는 것으로
+알려져 있시만, 
+우리는 이러한 value의 표현 방식과 payload에 대한
+연산 공간을 분리하여 볼 수 있다는 점에 주목하였다.
+구체적으로, payload에 대응하는 data component를
+$\mathbb{Z}_p$의 원소로 정의하여 산술연산을 수행하더라도,
+그 결과를 비트열로 변환하면 기존 OKVS value의 형태로
+처리할 수 있음을 관찰하였다.
+
+이에 AF-CPSI에서는 기존의
+$D_{i,j}^{Y'}\oplus w_i$와 같은 XOR 기반 data masking 대신,
+payload와 random mask를 $\mathbb{Z}_p$의 원소로 두고
+data component를 $\mathbb{Z}_p$ 위에서 구성한다.
+
+구체적으로, $\mathcal{R}$은 각 bin \(i\)에 대해 랜덤 마스크를 $w_i\overset{\$}{\leftarrow}\mathbb Z_p$와 같이 선택하고, 해당 위치의 연관 데이터 \(D_i^{Y'}\in\mathbb Z_p\)에 대해
+\[
+u_i=D_i^{Y'}-w_i\pmod p
+\]
+를 \(\mathbb{Z}_p\)에서 계산하도록 한다. 그리고 $\mathcal{R}$은 \(u_i\)를
+고정 길이 비트열 \(\overline{u}_i\)로 변환하고, 이를 tag
+component \(t_i\)와 결합하여
+\[
+v_i=t_i\parallel\overline{u}_i
+\]
+형태의 OKVS value를 구성한다. 
+
+이후의 OPRF masking과 OKVS encoding 및 decoding 과정은
+Section~2.6에서 설명한 기존 Circuit-PSI와 동일하게 수행한다.
+교집합에 해당하는 bin에서는 동일한 식별자에 대해 동일한
+OPRF output이 사용되므로, $\mathcal{S}$는 masking이 제거된
+$v_i=t_i\parallel\overline{u}_i$를 복원할 수 있다.
+따라서 $\mathcal{S}$는 tag $t_i'=t_i$와
+data component $\overline{u}_i$를 얻고,
+이를 다시 \(\mathbb{Z}_p\)의 원소로 해석하여
+\[
+ w'_i=u_i=D_i^{Y'}-w_i\pmod p
+\]
+를 얻는다. 따라서 B2A-OT를 적용하기 전 두 data share의 관계는
+\[
+w_i+w'_i=
+\begin{cases}
+D_i^{Y'}, & \text{if } b_i=1\\
+\rho_i, & \text{if } b_i=0,
+\end{cases}
+\qquad
+\rho_i\overset{\$}{\leftarrow}\mathbb Z_p
+\]
+와 같이 표현된다.
+
+이 과정에서, OPRF 기반 XOR masking은 payload의 산술연산과 독립적인 표현 계층의 연산이므로 
+별도의 field 원소로 변환할 필요가 없기 때문에 기존 방법을 유지한다.
+오히려 OPRF 출력을 \(\mathbb{Z}_p\)의 원소로 변환하면
+비트열을 field 원소로 매핑하고 modular reduction을 수행하는 추가 과정이 필요하다. 
+또한 OKVS는 XOR에서 효율적인 덧셈이 가능한데, 
+이를 \(\mathbb{Z}_p\) 위의 선형시스템으로 변경하면 modular arithmetic이
+필요하여 계산 비용이 증가한다. 
+
+즉, OPRF masking과 OKVS encoding 및 decoding에서는 해당 값을 비트열로 표현하여 기존의 XOR 방식을 그대로 사용하고,
+랜덤 마스크는 선택과 data component의 산술연산은 \(\mathbb{Z}_p\)에서 수행하는 것이 효율적이며, 
+최종적으로 동형암호의 입력값 중 $\mathcal{R}$이 보유한 \(w_i\)와 $\mathcal{S}$가 보유한 \(w'_i\)는
+해당 연관 데이터 \(D_i^{Y'}\)에 대한 arithmetic share를 구성하게 된다. 
+
+
+\noindentparagraph{\textbf{Modification in Step 2.}}
+
+이전 Circuit-PSI에서는 해당 관계를 XOR로 구성하여
+\(r_i^S, r_i^R\)와 \(r_i'^S, r_i'^R\)가 모두 bit string으로
+표현되도록 설계하였다.
+하지만 AF-CPSI에서는 B2A-OT의 전체 프로토콜 구조는 변경하지 않고,
+기존 Circuit-PSI 프로토콜 내부에서 사용하는 random mask를
+\(\mathbb{Z}_p\)에서 선택하며,
+OT message와 output share에 대한 모든 연산을 modulo \(p\)에서
+수행하도록 수정한다.
+이를 통해 B2A-OT의 output share를 \(\mathbb{Z}_p\) 위의
+arithmetic share로 얻을 수 있으며,
+해당 share를 이후 동형암호 기반 PJC 계산의 입력으로 직접 사용할 수 있다.
+
+Step~1의 결과에서, 교집합에 해당하는 bin에서는
+\(w_i+w_i'=D_i^{Y'}\)가 성립하지만 교집합에 해당하지 않는 bin에서는
+두 값을 합한 결과로 임의의 값 \(\rho_i\)가 남는다. 따라서 해당
+임의의 값을 \(0\)으로 제거하기 위해 membership bit를 양측의 data
+component에 각각 적용해야 한다. 이는 두 번에 B2A-OT로 구성된다.
+
+첫 번째 B2A-OT에서는 $\mathcal{R}$의 \(w_i\)를 입력으로 하여
+두 참여자는 각각 \(r_i^S+r_i^R=b_iw_i\pmod p\)를 만족하는
+\(r_i^S,r_i^R\in\mathbb{Z}_p\)를 얻는다. 
+두 번째 B2A-OT에서는 역할을 바꾸어 $\mathcal{S}$가 자신이 보유한
+\(w_i'\)를 입력으로 제공한다. 두 참여자는 각각 \(r_i'^S+r_i'^R=b_iw_i'\pmod p\)를 만족하는
+\(r_i'^S,r_i'^R\in\mathbb{Z}_p\)를 얻는다.
+
+이후 각 참여자는 두 번의 B2A-OT에서 얻은 자신의 출력 share를 지역적으로
+합산하여
+\[
+    a_i^S=r_i^S+r_i'^S\pmod p,
+    \qquad
+    a_i^R=r_i^R+r_i'^R\pmod p
+\]
+를 계산한다. 그리고 두 값을 합하면 얻고자 했던 Output을 획득할 수 있다.
+
+\[
+    a_i^S+a_i^R
+    =
+    \begin{cases}
+        D_i^{Y'}, & \text{if } b_i=1\\
+        0, & \text{if } b_i=0.
+    \end{cases}
+\]
+최종적으로 정의된 식은 교집합에 해당하는 bin에서는 연관 데이터에 대한 arithmetic
+share가 생성되고, 교집합에 해당하지 않는 bin에서는 기존
+Circuit-PSI에서 남아 있던 임의의 값이 \(0\)으로 제거된 식이다.
+또한, share는 \(\mathbb{Z}_p\) 위에서 정의되므로,
+이후 동형암호 기반 PJC 계산의 입력으로도 직접 사용할 수 있다.
+
+\noindentparagraph{\textbf{AF-CPSI Functionality.}}
+위의 두 단계로 구성된 Circuit-PSI over $\mathbb{Z}_p$의
+입출력 관계는 다음과 같이 표현할 수 있다.
+\[
+\left(
+    (\mathbf{a}^S,\mathsf{idx}),
+    \mathbf{a}^R
+\right)
+\leftarrow
+\mathsf{CircuitPSI}_{\mathbb{Z}_p}
+\left(
+    X,
+    (Y,\mathbf{D}^Y)
+\right).
+\]
+
+여기서 $\mathcal{S}$는 식별자 집합 \(X\)를 입력하고, $\mathcal{R}$은 식별자 집합
+\(Y\)와 이에 대응하는 payload 벡터 \(\mathbf{D}^Y\)를 입력한다.
+실행 후 $\mathcal{S}$는 \((\mathbf{a}^S,\mathsf{idx})\)를 얻고,
+$\mathcal{R}$은 \(\mathbf{a}^R\)을 얻는다. 이 때 $\mathbf{a}^S=(a_1^S,\ldots,a_{n'}^S)$,
+$\mathbf{a}^R=(a_1^R,\ldots,a_{n'}^R)$
+은 각각 $\mathcal{S}$와 $\mathcal{R}$이 보유하는 최종 arithmetic share 벡터이며,
+모든 \(i\in[n']\)에 대해
+$a_i^S+a_i^R=b_iD_i^{Y'}\pmod p$
+를 만족한다. 
+이후 동형암호 기반 PJC 계산에서는 Circuit-PSI의 내부 과정과 관계없이
+\(\mathbf{a}^S\), \(\mathbf{a}^R\) 및 \(\mathsf{idx}\)만을 사용한다.
+
+
+4.1절의 전체적인 수행 절차는
+Figure~\ref{fig:cpsi-zp-construction}에서 정리한다.
+
+\begin{figure}[h]
+    \centering
+    \fbox{%
+    \begin{minipage}{0.88\linewidth}
+
+    \textbf{Input of $\mathcal{S}$:}
+    $X=\{x_1,\ldots,x_n\}$.
+
+    \textbf{Input of $\mathcal{R}$:}
+    $Y=\{y_1,\ldots,y_n\}$ and
+    $D^Y=\{D_1^Y,\ldots,D_n^Y\}$.
+
+    \textbf{Procedure:}
+
+    \textbf{Step 1: Modification of the OKVS data component.}
+
+    \begin{enumerate}
+
+        \item
+        The parties execute the hashing and OPRF procedures
+        described in Figure~\ref{fig:cpsi-construction}.
+
+        \item
+        For each bin $i$, $\mathcal{R}$ samples
+        $w_i\xleftarrow{\$}\mathbb{Z}_p$ and computes
+        $
+            u_i=D_i^{Y'}-w_i\pmod p.
+        $
+        Then, $\mathcal{R}$ constructs the OKVS value containing
+        the comparison tag $t_i$ and the masked data component $u_i$,
+        encodes the resulting key--value pairs into an OKVS,
+        and sends the encoded vector to $\mathcal{S}$.
+
+        \item
+        $\mathcal{S}$ decodes the OKVS using its identifiers and OPRF
+        outputs, and obtains a comparison tag $t_i'$ and a data
+        component $w_i'$ for each bin $i$.
+
+        \item
+        The parties execute PEQT on $t_i'$ and $t_i$ and obtain
+        Boolean shares $(b_i^S,b_i^R)$ satisfying
+        $
+            b_i^S\oplus b_i^R=b_i.
+        $
+
+    \end{enumerate}
+
+    At the end of Step~1, $\mathcal{S}$ holds $(b_i^S,w_i')$ and
+    $\mathcal{R}$ holds $(b_i^R,w_i)$ for each bin $i$, where
+    $w_i+w_i'=D_i^{Y'}$ if $b_i=1$, and
+    $w_i+w_i'=\rho_i$ otherwise, for
+    $\rho_i\xleftarrow{\$}\mathbb{Z}_p$.
+
+    \medskip
+
+    \textbf{Step 2: Modification of B2A-OT over $\mathbb{Z}_p$.}
+
+    \begin{enumerate}
+
+        \item
+        The parties execute the first B2A-OT using the Boolean
+        shares of $b_i$ and $\mathcal{R}$'s input $w_i$.
+        They obtain arithmetic shares $(r_i^S,r_i^R)$ satisfying
+        \[
+            r_i^S+r_i^R=b_iw_i\pmod p.
+        \]
+
+        \item
+        The parties execute the second B2A-OT using the Boolean
+        shares of $b_i$ and $\mathcal{S}$'s input $w_i'$.
+        They obtain arithmetic shares
+        $(r_i^{\prime S},r_i^{\prime R})$ satisfying
+        \[
+            r_i^{\prime S}+r_i^{\prime R}
+            =b_iw_i'\pmod p.
+        \]
+
+        \item
+        Each party locally computes
+        \[
+            a_i^S=r_i^S+r_i^{\prime S}\pmod p,
+            \qquad
+            a_i^R=r_i^R+r_i^{\prime R}\pmod p.
+        \]
+
+    \end{enumerate}
+
+    At the end of Step~2, $\mathcal{S}$ and $\mathcal{R}$ obtain
+    arithmetic shares $(a_i^S,a_i^R)$ satisfying
+    $a_i^S+a_i^R=b_iD_i^{Y'}\pmod p$ for each bin $i$.
+
+
+    \textbf{Output:}
+    $\mathcal{S}$ obtains
+    $(\mathbf{a}^S,\mathsf{idx})$, where
+    $\mathbf{a}^S=(a_1^S,\ldots,a_{n'}^S)\in\mathbb{Z}_p^{n'}$,
+    and $\mathcal{R}$ obtains
+    $\mathbf{a}^R=(a_1^R,\ldots,a_{n'}^R)\in\mathbb{Z}_p^{n'}$,
+    satisfying
+    \[
+        a_i^S+a_i^R=b_iD_i^{Y'}\pmod p
+    \]
+    for every $i\in[n']$.
+
+    \end{minipage}%
+    }
+    \caption{AF-CPSI: Circuit-PSI over $\mathbb{Z}_p$.}
+    \label{fig:cpsi-zp-construction}
+\end{figure}
+
+
+\subsection{Our Proposed PJC}
+
+Figure~\ref{fig:cpsi-zp-construction}의 Circuit-PSI over
+$\mathbb{Z}_p$를 수행한 결과, $\mathcal{S}$는
+$(\mathbf{a}^S,\mathsf{idx})$를, $\mathcal{R}$은
+$\mathbf{a}^R$을 각각 보유한다.
+Cuckoo hashing 이후 생성된 bin의 수를 $n'$이라 하면,
+$\mathbf{a}^S=(a_1^S,\ldots,a_{n'}^S)$,
+$\mathbf{a}^R=(a_1^R,\ldots,a_{n'}^R)$이며,
+모든 $i\in[n']$에 대해
+$a_i^S+a_i^R=b_i\cdot D_i^{Y'}\pmod p$를 만족한다.
+
+한편, $\mathcal{S}$는 $\mathsf{idx}$를 이용하여 자신의 payload를
+Cuckoo-hash table의 bin 순서에 맞게
+$\mathbf{D}^{X'}=(D_1^{X'},\ldots,D_{n'}^{X'})$로 재배열한다.
+따라서 최종적으로 계산하고자 하는 값은 다음과 같다.
+\[
+\sum_{i=1}^{n'}
+(a_i^S+a_i^R)\cdot D_i^{X'}
+=
+\sum_{i=1}^{n'}
+b_i\cdot D_i^{Y'}\cdot D_i^{X'}
+\pmod p.
+\]
+여기서 $b_i=0$인 non-intersection 위치의 항은 제거되므로,
+최종 합에는 교집합에 대응하는 두 payload의 곱만 남는다.
+
+이를 효율적으로 계산하기 위해 본 논문에서는 BGV의 batching과
+slot-wise homomorphic operation을 이용한다.
+하나의 BGV ciphertext가 $N$개의 slot을 제공한다고 할 때,
+필요한 ciphertext의 수는
+$n_c=\lceil n'/N\rceil$이다.
+각 $j\in[n_c]$에 대해 $j$번째 ciphertext가 포함하는 bin의 index를
+$I_j=\{(j-1)N+1,\ldots,\min(jN,n')\}$로 두며,
+마지막 block에서 사용되지 않는 slot은 $0$으로 padding한다.
+$\mathsf{Pack}_N$은 해당 field 원소들을 동일한 순서로
+$N$개의 slot에 배치하는 연산을 의미한다.
+
+먼저 $\mathcal{S}$는 BGV key pair $(pk,sk)$를 생성하고
+$pk$를 $\mathcal{R}$에게 전달한다.
+이후 각 $j\in[n_c]$에 대해
+$\mathbf{D}_j^{X'}
+=\mathsf{Pack}_N((D_i^{X'})_{i\in I_j})$를 구성하고,
+$C_j^X=\mathsf{BGV.Enc}(pk,\mathbf{D}_j^{X'})$를 계산하여
+$\mathcal{R}$에게 전송한다.
+
+각 $C_j^X$는 $(c_0,c_1)\in R_q^2$ 형태의 두 degree-$N$
+다항식으로 구성된다.
+본 논문에서는 communication cost를 줄이기 위해 seed compression을
+적용한다.
+구체적으로 $c_0$ 전체를 직접 전송하지 않고 이를 재생성할 수 있는
+seed와 $c_1$만 전송하며, $\mathcal{R}$은 해당 seed를 이용하여
+동일한 $c_0$를 locally expand한다.
+
+$\mathcal{R}$은 자신의 arithmetic share를 동일한 slot 배치에 맞추어
+$\mathbf{A}_j^R=\mathsf{Pack}_N((a_i^R)_{i\in I_j})$로 구성한 뒤,
+$C_j^R=\mathsf{BGV.PlainMult}(C_j^X,\mathbf{A}_j^R)$를 계산한다.
+BGV의 slot-wise multiplication에 의해 각 유효한 slot에는
+$a_i^R\cdot D_i^{X'}\pmod p$가 암호화된 상태로 저장된다.
+
+이후 $\mathcal{R}$은 각 bin에 대해 random mask
+$r_i\in\mathbb{Z}_p$를 sample하고,
+$\mathbf{R}_j=\mathsf{Pack}_N((r_i)_{i\in I_j})$를 구성한다.
+그 다음
+$C_j^M=\mathsf{BGV.PlainAdd}(C_j^R,-\mathbf{R}_j)$를 계산하므로,
+각 유효한 slot에는
+$a_i^R\cdot D_i^{X'}-r_i\pmod p$가 암호화된다.
+이 masking은 $\mathcal{S}$가 복호화 과정에서
+$\mathcal{R}$의 개별 중간값을 직접 확인하지 못하도록 하기 위한 것이다.
+
+$\mathcal{R}$은 $C_1^M,\ldots,C_{n_c}^M$을 ciphertext addition으로
+slot-wise 합산하여 하나의 ciphertext $C^F$를 생성한다.
+동일한 slot index의 값들이 서로 더해지므로, $C^F$를 복호화한 뒤
+모든 slot을 다시 합산하면 전체 bin에 대한 합을 얻을 수 있다.
+더 이상의 homomorphic operation이 필요하지 않으므로,
+$\mathcal{R}$은 $C^F$에 modulus switching을 적용하여 암호문의 크기를 줄인 후
+$\mathcal{S}$에게 전송한다.
+
+$\mathcal{S}$는 secret key $sk$를 이용하여
+$\mathbf{M}=\mathsf{BGV.Dec}(sk,C^F)$를 계산한다.
+$M$의 모든 slot의 합을 $M'$이라 하면 다음과 같이 표현할 수 있다.
+\[
+M'
+=
+\sum_{i=1}^{n'}
+\left(
+a_i^R\cdot D_i^{X'}-r_i
+\right)
+\pmod p.
+\]
+
+한편, $\mathcal{S}$는 자신의 arithmetic share를 이용하여
+$\sum_i a_i^S\cdot D_i^{X'}$를 locally 계산할 수 있다.
+따라서
+$z=\sum_{i=1}^{n'}a_i^S\cdot D_i^{X'}+M'\pmod p$를 계산하여
+$\mathcal{R}$에게 전송한다.
+마지막으로 $\mathcal{R}$은 자신이 알고 있는 random mask의 합을
+다시 더함으로써
+\[
+\begin{aligned}
+\mathsf{sum}
+&=
+z+\sum_{i=1}^{n'}r_i\\
+&=
+\sum_{i=1}^{n'}
+(a_i^S+a_i^R)\cdot D_i^{X'}\\
+&=
+\sum_{i=1}^{n'}
+b_i\cdot D_i^{Y'}\cdot D_i^{X'}
+\pmod p
+\end{aligned}
+\]
+를 복원하며, 최종적으로
+$\sum_{x_i=y_j}D_i^X\cdot D_j^Y\pmod p$를 얻는다.
+
+구체적인 프로토콜은 Figure~\ref{fig:our-pjc}에 제시한다.
+
+\begin{figure}[t]
+\centering
+\fbox{
+\begin{minipage}{0.88\columnwidth}
+
+\textbf{Input of $\mathcal{S}$:}
+$X=\{x_1,\ldots,x_n\}$,
+$D^X=\{D_1^X,\ldots,D_n^X\}$.
+
+\textbf{Input of $\mathcal{R}$:}
+$Y=\{y_1,\ldots,y_n\}$,
+$D^Y=\{D_1^Y,\ldots,D_n^Y\}$.
+
+\textbf{Procedure:}
+
+\begin{enumerate}[label=(\arabic*), leftmargin=*]
+    \item
+    $\mathcal{S}$ and $\mathcal{R}$ execute Circuit-PSI over
+    $\mathbb{Z}_p$ and obtain
+    $(\mathbf{a}^S,\mathsf{idx})$ and $\mathbf{a}^R$, respectively,
+    such that
+    $a_i^S+a_i^R=b_i\cdot D_i^{Y'} \pmod p$
+    for all $i\in[n']$.
+
+    \item
+    $\mathcal{S}$ rearranges its payloads using $\mathsf{idx}$ as
+    $\mathbf{D}^{X'}=(D_1^{X'},\ldots,D_{n'}^{X'})$.
+    Let
+    $n_c=\lceil n'/N\rceil$ and
+    $I_j=\{(j-1)N+1,\ldots,\min(jN,n')\}$.
+
+    \item
+    $\mathcal{S}$ generates $(pk,sk)$ and sends $pk$ to $\mathcal{R}$.
+    For each $j\in[n_c]$, it computes
+    \[
+        \mathbf{D}^{X'}_j
+        =\mathsf{Pack}_N((D_i^{X'})_{i\in I_j}),
+        \qquad
+        C_j^X
+        =\mathsf{BGV.Enc}(pk,\mathbf{D}^{X'}_j),
+    \]
+    and sends $\{C_j^X\}_{j\in[n_c]}$ using seed compression.
+
+    \item
+    For each $j\in[n_c]$, $\mathcal{R}$ computes
+    \[
+        \mathbf{A}_j^R
+        =\mathsf{Pack}_N((a_i^R)_{i\in I_j}),
+        \qquad
+        C_j^R
+        =\mathsf{BGV.PlainMult}(C_j^X,\mathbf{A}_j^R).
+    \]
+
+    \item
+    $\mathcal{R}$ samples
+    $\mathbf{r}\xleftarrow{\$}\mathbb{Z}_p^{n'}$ and computes
+    \[
+        C_j^M
+        =
+        \mathsf{BGV.PlainAdd}
+        \left(
+            C_j^R,
+            -\mathsf{Pack}_N((r_i)_{i\in I_j})
+        \right).
+    \]
+
+    \item
+    $\mathcal{R}$ computes
+    \[
+        C^F=\sum_{j=1}^{n_c} C_j^M,
+    \]
+    applies modulus switching to $C^F$, and sends it to $\mathcal{S}$.
+
+    \item
+    $\mathcal{S}$ decrypts $C^F$, sums all slots, and obtains
+    \[
+        M'
+        =
+        \sum_{i=1}^{n'}
+        \left(
+            a_i^R\cdot D_i^{X'}-r_i
+        \right)
+        \pmod p.
+    \]
+    It then computes
+    $
+        z=
+        \sum_{i=1}^{n'}
+        a_i^S\cdot D_i^{X'}
+        +M'
+        \pmod p
+    $
+    and sends $z$ to $\mathcal{R}$.
+
+    \item
+    $\mathcal{R}$ outputs
+    \[
+        \mathsf{sum}
+        =
+        z+\sum_{i=1}^{n'}r_i
+        =
+        \sum_{i=1}^{n'}
+        b_i\cdot D_i^{X'}\cdot D_i^{Y'}
+        \pmod p.
+    \]
+\end{enumerate}
+
+\noindent\textbf{Output:}
+$\mathcal{R}$ obtains
+$
+\sum_{x_i=y_j}
+D_i^X\cdot D_j^Y
+\pmod p
+$.
+
+\end{minipage}%
+}
+\caption{The proposed PJC protocol.}
+\Description{The proposed private join-and-compute protocol.}
+\label{fig:our-pjc}
+\end{figure}
+
+
+\noindentparagraph{\textbf{Ct-Ct Mult version.}}
+B2A-OT를 사용하지 않고도 Circuit-PSI의 Boolean share와 data
+component를 동형암호 연산으로 직접 결합하여
+PJC를 구성할 수 있다. Circuit-PSI 수행 후, 송신자 $\mathcal{S}$는
+Boolean share \(b_i^S\), data component \(w_i'\), 그리고 자신의
+payload \(D_i^{X'}\)를 보유한다. 수신자 $\mathcal{R}$은 Boolean share
+\(b_i^R\), data component \(w_i\), 그리고 BGV의 공개키와 비밀키
+\((pk,sk)\)를 보유한다. 이때 각 bin \(i\)에서 계산하고자 하는 값은 다음과 같다.
+\[
+    \left(b_i^S\oplus b_i^R\right)
+    D_i^{X'}
+    \left(w_i+w_i'\right)
+\]
+
+우선, $\mathcal{R}$은 $\mathcal{R}$의 Boolean share와 data component를
+암호화하여 $C_{b_i^R}$와 $C_{w_i'}$를 생성한 뒤, 공개키 \(pk\)와 함께 $\mathcal{S}$에게 전송한다.
+
+Boolean 값 \(a,b\in\{0,1\}\)에 대해 XOR 연산은$a\oplus b=a+b-2ab$
+로 나타낼 수 있다. 따라서 $\mathcal{S}$는 자신의 Boolean share \(b_i^S\)와
+$\mathcal{R}$로부터 받은 \(C_{b_i^R}\)를 이용하여
+\[
+    C_{b_i}
+    =
+    C_{b_i^R}
+    +b_i^S
+    -2(C_{b_i^R}\cdot b_i^S)
+\]
+를 계산한다. 또한 $\mathcal{S}$는 자신이 보유한 data component $w_i'$와
+$\mathcal{R}$로부터 받은 $C_{w_i}$를 이용하여$
+    C_{D_i}
+    =
+    \mathsf{BGV.PlainAdd}(C_{w_i},w_i')$
+를 계산한다. 교집합에 해당하는 bin에서는
+\(w_i+w_i'=D_i^{Y'}\)이므로, \(C_{D_i}\)는 $\mathcal{R}$의 payload를
+암호화한 결과에 해당한다.
+
+이후 $\mathcal{S}$는 \(C_{b_i}\)와 \(C_{D_i}\)에 대해
+ciphertext-ciphertext multiplication을 수행하여
+\[
+    C_{bD,i}
+    =
+    \mathsf{BGV.CtxtMult}(C_{b_i},C_{D_i})
+    =
+    \mathsf{BGV.Enc}\bigl(b_i(w_i+w_i')\bigr)
+\]
+를 얻고, 자신의 payload $D_i^{X'}$를 평문으로 곱한다.
+따라서 최종적으로 각 bin에 대해
+$\mathsf{BGV.Enc}(b_iD_i^{X'}(w_i+w_i'))$를 얻으며, random mask $r_i$를 생성하여 마스킹 후 $\mathcal{R}$에게 전송한다.
+
+실제 batching 환경에서는 위 연산을 각 bin에 대해 개별적으로 수행하지
+않고, Boolean share, data component, payload 및 random mask를 각각
+평문 벡터로 패킹하여 slot-wise로 병렬 처리한다. $\mathcal{R}$은 수신한
+마스킹된 암호문을 복호화한 뒤 모든 slot의 합을 계산한다.
+\[
+    \mathsf{masked\mbox{-}output}
+    =
+    \sum_{i=1}^{n'}
+    \left(
+        b_iD_i^{X'}(w_i+w_i')-r_i
+    \right)
+    \pmod p.
+\]
+이후 $\mathcal{R}$은 \(\mathsf{masked\mbox{-}output}\)을 $\mathcal{S}$에게
+전송하고, $\mathcal{S}$는 자신이 생성한 random mask의 합을 더하여
+\[
+\begin{aligned}
+    \mathsf{output}
+    &=
+    \mathsf{masked\mbox{-}output}
+    +
+    \sum_{i=1}^{n'}r_i\\
+    &=
+    \sum_{i=1}^{n'}
+    b_iD_i^{X'}(w_i+w_i')\\
+    &=
+    \sum_{i=1}^{n'}
+    b_iD_i^{X'}D_i^{Y'}
+    \pmod p
+\end{aligned}
+\]
+를 얻는다. 구체적인 프로토콜은 
+Figure~\ref{fig:ctct-pjc}를 참고하라.
+
+\begin{figure}[h]
+\centering
+\fbox{%
+\begin{minipage}{0.88\linewidth}
+
+\textbf{Input of $\mathcal{S}$:}
+$
+(\mathbf b^S,\mathbf w',\mathbf D^{X'}).
+$
+
+\textbf{Input of $\mathcal{R}$:}
+$
+(\mathbf b^R,\mathbf w).
+$
+
+\textbf{Procedure:}
+
+\begin{enumerate}
+    \item
+    $\mathcal{R}$ encrypts its Boolean share and data component:
+    \[
+    \mathbf c_{b^R}
+    \leftarrow
+    \mathsf{BGV.Enc}(pk,\mathbf b^R),
+    \qquad
+    \mathbf c_w
+    \leftarrow
+    \mathsf{BGV.Enc}(pk,\mathbf w).
+    \]
+    $\mathcal{R}$ sends $(\mathbf c_{b^R},\mathbf c_w)$ to $\mathcal{S}$.
+
+    \item
+    $\mathcal{S}$ computes
+    \[
+    \mathbf c_b
+    \leftarrow
+    \mathbf c_{b^R}+\mathbf b^S
+    -2(\mathbf c_{b^R}\odot\mathbf b^S),
+    \qquad
+    \mathbf c_D
+    \leftarrow
+    \mathbf c_w+\mathbf w'.
+    \]
+
+    \item
+    $\mathcal{S}$ performs
+    \[
+    \mathbf c_{\mathsf{out}}
+    \leftarrow
+    \mathsf{BGV.CtxtMult}
+    (\mathbf c_b,\mathbf c_D)
+    \]
+    \[
+    \mathbf c_{\mathsf{out}}
+    \leftarrow
+    \mathsf{BGV.PlainMult}
+    (\mathbf c_{\mathsf{out}},\mathbf D^{X'}).
+    \]
+
+    \item
+    $\mathcal{S}$ sums all slots and sends the resulting ciphertext to $\mathcal{R}$:
+    \[
+    \mathbf c_{\mathsf{sum}}
+    \leftarrow
+    \mathsf{SlotSum}(\mathbf c_{\mathsf{out}}).
+    \]
+
+    \item
+    $\mathcal{R}$ decrypts $\mathbf c_{\mathsf{sum}}$.
+\end{enumerate}
+
+\textbf{Output:}
+\[
+\mathsf{sum}
+=
+\sum_{i=1}^{n'}
+b_iD_i^{X'}D_i^{Y'}
+\pmod p.
+\]
+
+\end{minipage}%
+}
+\caption{Ct--Ct multiplication-based PJC protocol.}
+\label{fig:ctct-pjc}
+\end{figure}
+
+이와 같이 B2A-OT를 수행하지 않고도 Circuit-PSI의 Boolean share와
+data component를 암호문 상태에서 결합하여 PJC를 계산하면 전체 흐름을 단순하게 정리할 수 있다.
+그러나 이러한 Ct--Ct construction은 B2A-OT 기반 제안 프로토콜보다
+큰 동형연산 비용과 통신 비용을 요구한다.
+
+구체적으로, \(C_{b_i}\)를 생성하는 과정에서 plaintext--ciphertext
+multiplication이 수행되고 ciphertext noise가 증가한다. 이후 \(C_{bD,i}\)를 생성하는 과정에서  ciphertext--ciphertext multiplication이
+추가로 수행된다. 이에 따라 전체 homomorphic evaluation의 multiplicative depth가 증가하고, ciphertext component의
+수를 증가로 인해 relinearization이 필요하다. 또한, 이러한 동형 곱셈 이후에도 올바른 복호화를 보장하려면 충분한 noise budget을 확보할 수 있도록 BGV의 ciphertext modulus
+\(q\)를 더 크게 설정해야 할 수 있다.
+Ring dimension을 \(N\)이라고 할 때, BGV ciphertext의 크기는
+일반적으로
+$
+O(N\log q)
+$
+에 비례한다. 따라서 \(q\)의 bit-length가 증가하면 참여자
+사이에 전송되는 모든 ciphertext의 크기가 증가한다. 즉, 전체 통신량과 동형연산 비용이 함께 증가한다.
+
+이에 본 논문에서는 Ct--Ct construction 대신,
+B2A-OT로 생성한 arithmetic share와
+plaintext--ciphertext multiplication을 결합하는 construction을
+최종 PJC 프로토콜로 채택하였다.
+
+
+
+\section{Experimental Results}
+% \label{sec:experimental-results}
+본 절에서는 제안한 AF-CPSI와 이를 동형암호 기반 계산에 결합한
+PJC 프로토콜의 성능을 평가한다.
+먼저 구현 환경과 암호학적 파라미터를 설명한 뒤,
+다양한 입력 크기와 네트워크 환경에서 제안 프로토콜의
+실행 시간과 통신량을 측정하고 기존 PJC 프로토콜과 비교한다.
+마지막으로 프로토콜의 단계별 비용을 분석하여
+전체 성능에 영향을 미치는 주요 구성요소를 확인한다.
+
+
+
+\subsection{Implementation and Experimental Setup}
+\label{sec:experimental-setup}
+
+\noindentparagraph{\textbf{Experiment environments.}}
+모든 실험은 AMD Ryzen Threadripper 9970X 32-Core CPU와
+64\,GB RAM을 갖춘 Ubuntu 24.04.4 LTS 환경에서 수행하였다.
+각 프로토콜은 단일 스레드로 실행하였다.
+네트워크 환경은 LAN과 emulated WAN 환경으로 구성하였다.
+LAN 환경은 별도 네트워크 제한 없는 localhost로, WAN 환경은 linus tc를 이용하여 bandwidth를 각각 100\,Mbps와 10\,Mbps로 제한하여 구성하였다.
+별도의 network latency는 추가하지 않았으며, 모든 WAN 측정에서
+packet drop이 발생하지 않았음을 확인하였다.
+
+\medskip
+\noindentparagraph{\textbf{Implementation details.}}
+본 논문의 제안 프로토콜은 C++로 구현하였다.
+AF-CPSI의 구성에는 Vole-PSI 구현을 기반으로 하며,
+OT 및 B2A-OT에는 \textsf{libOTe}를 사용하였다.
+프로토콜의 통신에는 \textsf{Coproto}를 사용하였으며,
+동형암호 기반 PJC 계산에는 Microsoft SEAL에서 제공하는
+BGV scheme을 이용하여 구현하였다.
+
+\medskip
+\noindentparagraph{\textbf{Parameters.}}
+모든 실험에서는 128-bit computational security와 40-bit statistical
+security를 만족하도록 cryptographic parameters를 설정하였다.
+BGV의 polynomial modulus degree는 \(N = 4096\), plaintext modulus는
+\(p = 4{,}294{,}475{,}777\)로 설정하였다.
+Ciphertext coefficient modulus의 bit-size는
+\(\{48, 36, 18\}\)로 설정하였으며, 전체 크기는 102 bits로
+\(N = 4096\)에서 SEAL이 제공하는 128-bit security bound인
+109 bits 이하이다.
+
+제안 프로토콜의 homomorphic evaluation에서는
+암호문과 평문 사이의 multiplication을 한 번 수행하므로,
+해당 곱셈으로 인한 noise 증가와 이후 modulus switching 과정에서
+발생하는 error를 고려하여 coefficient modulus를 설정하였다.
+Batching을 이용하여 하나의 ciphertext에 최대
+\(d = N = 4096\)개의 값을 packing하였다.
+
+
+\begin{table}[h]
+\centering
+\caption{Cryptographic parameters used in our experiments.}
+\label{tab:experimental-parameters}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Setting} \\
+\midrule
+Computational security & 128 bits \\
+Statistical security & 40 bits \\
+HE scheme & BGV \\
+Polynomial modulus degree $N$ & \(4096\) \\
+Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
+Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
+Number of batching slots $d$ & 4096 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Performance Comparison}
+
+\label{sec:performance-comparison}
+본 절에서는 입력 집합의 크기와 네트워크 환경에 따른
+PJC 프로토콜의 실행 시간과 통신량을 비교한다.
+비교 대상은 \cite{CHI+23}, \cite{KLS26}, 그리고 제안 프로토콜이다.
+\cite{KLS26}과 제안 프로토콜은 동일한 실험 환경에서
+$\ell = 32$-bit로 평가하였다.
+반면 \cite{CHI+23}은 공개 구현이 제공되지 않아 원 논문에서 보고된 figures를 제시한다. 심지어 이들은 $\ell = 23$을 사용하였기 때문에 communication의 경우 이들에게 유리하다고 볼 수 있음.
+
+
+% \yongha{\cite{KLS26}: https://eprint.iacr.org/2024/1560}
+    % \yongha{\cite{CHI+23}는 구현 없으니까 그냥 논문에서 가져오기, 얘네는 data 23비트썼음. 구현 없어서 바꿔서 못해줌.}
+
+\begin{table}[h]
+\centering
+\caption{Performance comparison of PJC protocols under different network settings.}
+\label{tab:pjc-comparison}
+
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+
+\begin{tabular}{c l c c c c}
+\toprule
+
+\multirow{2}{*}{\textbf{Set Size}}
+&
+\multirow{2}{*}{\textbf{Protocol}}
+&
+\multirow{2}{*}{\textbf{Comm. (MB)}}
+&
+\multicolumn{3}{c}{\textbf{Runtime (s)}}
+\\
+
+\cmidrule(lr){4-6}
+
+&
+&
+&
+\textbf{LAN}
+&
+\textbf{WAN}
+&
+\textbf{WAN}
+\\[-2pt]
+
+&
+&
+&
+&
+\textbf{100 Mbps}
+&
+\textbf{10 Mbps}
+\\
+
+\midrule
+
+\multirow{3}{*}{$2^{16}$}
+& \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
+& \cite{KLS26}&20.9&1.74&3.28&18.15\\
+\cmidrule(lr){2-6}%
+& \textbf{Ours}&12.8&0.72&1.48&10.50\\
+
+\midrule
+
+\multirow{3}{*}{$2^{20}$}
+& \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
+& \cite{KLS26}&322.6&28.11&53.53&287.51\\
+\cmidrule(lr){2-6}
+& \textbf{Ours}&196.5&11.12&25.15&175.58\\
+
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\begin{minipage}{0.88\linewidth}
+\footnotesize
+$^\dagger$ \cite{CHI+23}가 구현을 공개하지 않아서 runtime은 논문에 있는 LAN에서의 수치를 그대로 가져왔음. 
+\end{minipage}
+
+\end{table}
+
+Table~\ref{tab:pjc-comparison}에서 확인할 수 있듯이,
+제안 프로토콜은 모든 입력 크기와 네트워크 환경에서
+\cite{KLS26}보다 낮은 실행 시간과 통신량을 보인다.
+Set size가 $2^{16}$인 경우, 제안 프로토콜의 communication cost는
+12.816\,MB로 \cite{KLS26}의 20.900\,MB에 비해 약 38.7\% 감소한다.
+LAN 환경에서의 runtime 역시 1.740\,s에서 0.717\,s로
+약 58.8\% 감소한다.
+
+Set size가 $2^{20}$인 경우에도 이러한 경향은 유지된다.
+제안 프로토콜의 communication cost는 196.552\,MB로,
+\cite{KLS26}의 322.622\,MB보다 약 39.1\% 낮다.
+또한 LAN 환경에서 runtime은 28.105\,s에서 11.123\,s로
+약 60.4\% 감소한다.
+100\,Mbps 및 10\,Mbps의 WAN 환경에서도 제안 프로토콜은
+각각 25.151\,s와 175.580\,s의 runtime을 보이며,
+\cite{KLS26}보다 낮은 실행 시간을 유지한다.
+이는 제한된 bandwidth 환경에서도 제안 프로토콜의 낮은
+communication cost가 전체 실행 시간 감소에 기여함을 보여준다.
+
+한편 \cite{CHI+23}은 23-bit setting를 사용하여 실험하였으므로,
+Table~\ref{tab:pjc-comparison}의 communication cost는
+\cite{KLS26} 및 제안 프로토콜의 32-bit setting과 동일한 조건에서
+측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
+communication cost를 보여주는 참고값으로 사용한다.
+
+\medskip
+\noindentparagraph{\textbf{Communication analysis.}}
+기존 연구들에서는 payload의 크기와 arithmetic computation space의
+크기를 동일한 파라미터로 취급하는 경우가 많았다.
+그러나 inner product는 각 교집합 원소에 대해 두 payload의 곱을
+계산한 뒤 이를 누적하는 연산이므로, 단순히 입력 데이터의 표현
+범위만을 기준으로 연산 파라미터를 설정하는 것은 충분하지 않다.
+예를 들어, 두 개의 32-bit payload를 곱할 경우 하나의 곱셈 결과를
+표현하기 위해 최대 약 64-bit의 공간이 필요할 수 있으므로,
+정확한 곱셈 결과를 유지하기 위해서는 최소한 이에 상응하는 크기의
+arithmetic space가 요구된다.
+이에 따라 본 연구에서는 32-bit payload를 입력으로 사용하는
+경우에도 inner-product 연산을 64-bit arithmetic space에서
+수행하는 것으로 설정하고, 이를 기준으로 이론적 communication
+cost를 추가로 평가하였다.
+이는 단순히 더 큰 payload를 가정한 것이 아니라, inner-product
+연산 과정에서 요구되는 실제 산술 표현 범위를 반영하기 위한
+설정이다.
+
+데이터의 bit-length를 $\ell$, set size를 $n$이라 할 때,
+제안 프로토콜의 전체 communication cost는
+\[
+\begin{aligned}
+C_{\mathsf{Ours}}
+={}&
+C_{\mathsf{OPRF}}
++C_{\mathsf{OKVS}}
++C_{\mathsf{PEQT}} \\
+&+2C_{\mathsf{B2A\mbox{-}OT}}
++C_{\mathsf{HE}}
+\end{aligned}
+\]
+로 표현된다.
+각 단계의 communication cost는 다음과 같다.
+먼저, OPRF 단계의 communication cost는
+$
+C_{\mathsf{OPRF}}
+=
+128\cdot 1.3n
+$
+이며, OKVS 단계에서는
+$
+C_{\mathsf{OKVS}}
+=
+3\cdot 1.3n
+\left(
+40+\log_2 n+\ell
+\right)
+$
+의 communication cost가 발생한다.
+PEQT 단계의 communication cost는
+$
+C_{\mathsf{PEQT}}
+=
+4\cdot 1.3n
+\left(
+40+\log_2 n
+\right)
+$
+으로 계산한다.
+
+B2A-OT의 경우, $\ell$-bit message에 대한 하나의 OT가
+$2\ell+1$ bits의 communication cost를 요구하므로,
+전체 $1.3n$개의 원소에 대한 한 번의 B2A-OT communication
+cost는
+$
+C_{\mathsf{B2A\mbox{-}OT}}
+=
+(2\ell+1)\cdot 1.3n
+$
+으로 나타낼 수 있다.
+제안 프로토콜에서는 이러한 B2A-OT가 두 번 수행되므로
+$2C_{\mathsf{B2A\mbox{-}OT}}$가 전체 communication cost에
+포함된다.
+
+마지막으로, 제안 프로토콜의 homomorphic-encryption-based
+PJC 단계에서 발생하는 communication cost는
+$
+C_{\mathsf{HE}}
+=
+\left\lceil
+\frac{1.3n}{N}
+\right\rceil
+N(2\ell+16)
++
+2N\ell,
+$
+으로 계산하며, 여기서 $N$은 homomorphic encryption에서
+사용되는 polynomial modulus degree를 나타낸다.
+따라서 제안 프로토콜의 전체 communication cost는
+\[
+\begin{aligned}
+C_{\mathsf{Ours}}
+={}&
+128\cdot1.3n
++
+3\cdot1.3n(40+\log_2 n+\ell) \\
+&+
+4\cdot1.3n(40+\log_2 n)
++
+2(2\ell+1)\cdot1.3n \\
+&+
+\left\lceil
+\frac{1.3n}{N}
+\right\rceil
+N(2\ell+16)
++
+2N\ell
+\end{aligned}
+\]
+으로 정리할 수 있다.
+
+동일하게, \cite{KLS26}의 전체 communication cost는
+\[
+\begin{aligned}
+C_{\mathsf{KLS26}}
+={}&
+C_{\mathsf{OPRF}}
++C_{\mathsf{OKVS}}
++C_{\mathsf{PEQT}}
++2C_{\mathsf{B2A\mbox{-}OT}} \\
+&+
+C_{\mathsf{MultShare}}
++C_{\mathsf{Open}}
+\end{aligned}
+\]
+으로 표현된다.
+$C_{\mathsf{OPRF}}$, $C_{\mathsf{OKVS}}$,
+$C_{\mathsf{PEQT}}$, $C_{\mathsf{B2A\mbox{-}OT}}$는
+위와 동일하게 계산한다.
+
+\cite{KLS26}에서는 PJC computation 과정에서 MultShare를
+수행하며, $\ell$-bit 값을 bit decomposition한 뒤 각 bit에 대해
+OT를 수행하므로, 이에 대한 communication cost는
+$
+C_{\mathsf{MultShare}}
+=
+\ell(2\ell+1)\cdot1.3n
+$
+으로 표현된다.
+또한 최종 결과를 복원하기 위해 하나의 arithmetic share를
+전송하므로,
+$
+C_{\mathsf{Open}}
+=
+\ell
+$
+의 communication cost가 추가된다.
+따라서 \cite{KLS26}의 전체 communication cost는
+\[
+\begin{aligned}
+C_{\mathsf{KLS26}}
+={}&
+128\cdot1.3n
++
+3\cdot1.3n(40+\log_2 n+\ell) \\
+&+
+4\cdot1.3n(40+\log_2 n)
++
+2(2\ell+1)\cdot1.3n \\
+&+
+\ell(2\ell+1)\cdot1.3n
++
+\ell
+\end{aligned}
+\]
+으로 정리할 수 있다.
+
+Table~\ref{tab:pjc-comm-64}에서는 arithmetic computation
+space의 bit-length를 $\ell=64$로 설정하고, set size가
+$2^{16}$ 및 $2^{20}$인 경우에 대해 위 식을 이용하여
+이론적 communication cost를 산정하였다.
+제안 프로토콜의 경우 64-bit arithmetic space에 대응하여
+$N=8192$를 사용하였다.
+한편, \cite{CHI+23}은 64-bit setting에 대한 결과를 제공하지
+않으므로 해당 비교에서는 제외하였다.
+
+
+\begin{table}[h]
+\centering
+\caption{Estimated communication cost under the 64-bit setting.}
+\label{tab:pjc-comm-64}
+
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+
+\begin{tabular}{c l c}
+\toprule
+\textbf{Set Size}
+&
+\textbf{Protocol}
+&
+\textbf{Comm. (MB)}
+\\
+\midrule
+
+\multirow{2}{*}{$2^{16}$}
+& \cite{KLS26} & 98.253 \\
+& \textbf{Ours} & 12.083 \\
+
+\midrule
+
+\multirow{2}{*}{$2^{20}$}
+& \cite{KLS26} & 1576.822 \\
+& \textbf{Ours} & 194.809\\
+
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\begin{minipage}{0.88\linewidth}
+\footnotesize
+\cite{CHI+23} is excluded from the 64-bit comparison because
+its reported experiments use 23-bit payloads and do not provide
+a 64-bit setting.
+\end{minipage}
+
+\end{table}
+
+Table~\ref{tab:pjc-comm-64}에서 확인할 수 있듯이,
+64-bit setting에서도 제안 프로토콜은 \cite{KLS26}보다
+현저히 낮은 communication cost를 보인다.
+Set size가 $2^{16}$인 경우 communication cost는
+98.253\,MB에서 12.083\,MB로 약 87.7\% 감소하며,
+$2^{20}$인 경우에는 1576.822\,MB에서 194.809\,MB로
+약 87.6\% 감소한다.
+이는 큰 bit-length를 사용하는 경우에도 제안 프로토콜의
+통신 효율성이 유지됨을 보여준다.
+
+
+\subsection{Performance Breakdown}
+\label{sec:performance-breakdown}
+
+제안 프로토콜의 각 구성요소가 전체 성능에 미치는 영향을 분석하기 위해,
+set size가 $2^{20}$인 경우에 대해 LAN 환경에서 단계별 실행 시간과
+통신량을 측정하였다.
+전체 프로토콜을 Circuit-PSI, B2A-OT, 그리고 동형암호 기반
+PJC computation의 세 단계로 구분하였으며,
+그 결과를 Table~\ref{tab:pjc-breakdown}에 나타낸다.
+
+\begin{table}[h]
+\centering
+\caption{Breakdown of our PJC protocol over LAN for $n=2^{20}$.}
+\label{tab:pjc-breakdown}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Stage}
+&
+\textbf{Runtime (s)}
+&
+\textbf{Comm. (MB)}
+\\
+\midrule
+Circuit-PSI&10.474&151.498\\
+B2A-OT&0.358&22.769\\
+HE Computation&0.257&22.285\\
+\midrule
+\textbf{Total}&11.123&196.552\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:pjc-breakdown}에서 확인할 수 있듯이,
+전체 비용의 대부분은 Circuit-PSI 단계에서 발생한다.
+특히 Circuit-PSI는 실행 시간과 통신량 모두에서 가장 큰 비중을
+차지하며, 제안 프로토콜의 주요 성능 병목으로 나타난다.
+
+반면 arithmetic share를 생성하기 위해 추가되는 B2A-OT와
+동형암호 기반 PJC computation의 비용은 상대적으로 작다.
+B2A-OT는 0.358\,s의 runtime과 22.769\,MB의 communication cost를
+요구하며, HE computation은 0.257\,s와 22.285\,MB를 각각 요구한다.
+따라서 arithmetic share conversion과 이후의 동형암호 기반
+inner-product computation은 전체 프로토콜에 제한적인
+추가 오버헤드만을 발생시킨다.
+
+\section{Conclusion}
+
+
+본 논문에서는 기존 Circuit-PSI 기반 PJC 프로토콜을 분석하고, XOR 기반 출력 share가 \(\mathbb{Z}_p\)에서 동작하는 동형암호의 message space와 직접 호환되지 않는 문제와 
+동일한 global mask를 여러 payload share에 반복적으로 적용할 경우
+마스킹된 값들의 XOR을 통해 share 사이의 관계가 노출될 수 있음을
+확인하였다. 이를 해결하기 위해 AF-CPSI에서는 OPRF masking과 OKVS encoding 및 decoding은 기존의 효율적인 비트열 기반 XOR 방식으로 유지하되, 각 bin의 payload에 대해 독립적인 랜덤 마스크를 \(\mathbb{Z}_p\)에서 선택하여 additive share를 생성하였다. 이어 두 번의 B2A-OT를 이용하여 membership bit를 양측의 payload share에 각각 적용함으로써, 모든 bin \(i\)에서 \(a_i^S+a_i^R=b_iD_i^{Y'}\pmod p\)를 만족하는 최종 arithmetic share를 생성하였다. 이에 따라 교집합에 해당하는 bin에서는 payload가 유지되고, 교집합에 해당하지 않는 bin에 남아 있던 임의의 값은 \(0\)으로 제거되며, 생성된 share를 별도의 변환 과정 없이 동형암호 기반 PJC의 입력으로 사용할 수 있다. 
+
+실험 결과, 제안 프로토콜은 평가한 모든 입력 크기와 네트워크
+환경에서 \cite{KLS26}보다 낮은 실행 시간과 통신량을 보였다.
+Set size가 \(2^{16}\)인 경우 통신량은
+20.900\,MB에서 12.816\,MB로 약 38.7\% 감소하였으며, LAN
+환경의 실행 시간은 1.740\,s에서 0.717\,s로 약 58.8\%
+감소하였다. Set size가 \(2^{20}\)인 경우에도 통신량은
+322.622\,MB에서 196.552\,MB로 약 39.1\%, LAN 실행 시간은
+28.105\,s에서 11.123\,s로 약 60.4\% 감소하였다. 또한
+100\,Mbps와 10\,Mbps의 제한된 bandwidth 환경에서도 이러한
+성능 우위가 유지되었다. 단계별 분석에서는 Circuit-PSI가 전체
+비용의 가장 큰 비중을 차지하였으며, arithmetic share 생성을 위한
+B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
+추가 오버헤드만을 발생시키는 것으로 나타났다.
+
+64-bit arithmetic space에 대한 이론적 분석에서도 제안 프로토콜의
+통신 효율성은 유지되었다. Set size가 \(2^{16}\)인 경우
+\cite{KLS26} 대비 통신량이 98.253\,MB에서 12.083\,MB로 약
+87.7\% 감소하였으며, \(2^{20}\)인 경우에는
+1576.822\,MB에서 194.809\,MB로 약 87.6\% 감소하였다. 이는
+입력 payload의 크기뿐 아니라 실제 inner-product 계산에 필요한
+산술 공간을 고려하는 경우에도 제안 방식이 높은 통신 효율성을
+제공함을 보여준다.
+
+향후 연구에서는 64-bit arithmetic space를 적용한 실제 구현과
+실험을 통해 이론적 분석 결과를 검증하고, 전체 실행 시간과
+통신량에서 가장 큰 비중을 차지하는 Circuit-PSI 단계를 추가로
+최적화할 필요가 있다. 또한 실제 지연 시간이 존재하는 다양한
+네트워크 환경에서 제안 프로토콜의 확장성과 실용성을 평가하는
+연구가 요구된다.
+
+\bibliographystyle{alpha}
+\bibliography{references}
+
+\end{document}
+\endinput
+%%
+%% End of file `sigconf.tex'.
