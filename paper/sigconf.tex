@@ -43,7 +43,7 @@
 %% for your publication.
 %%
 %%
-\documentclass[sigconf]{acmart}
+\documentclass[sigconf,anonymous,review]{acmart}
 % \usepackage{enumitem}
 % \usepackage{float}
 
@@ -107,7 +107,6 @@
 \newcommand{\func}[1]{\mathcal{F}_{\textsf{#1}}}
 \newcommand{\prot}[1]{\Pi_\textsf{#1}}
 \newcommand{\red}[1]{{\color{red}{#1}}}
-\newcommand{\yongha}[1]{{\color{blue}{[yongha:#1}]}}
 \makeatletter
 \@ifundefined{theorem}{\newtheorem{theorem}{Theorem}[section]}{}
 \@ifundefined{remark}{\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}}{}
@@ -131,21 +130,13 @@
 %% values in them; it is your responsibility as an author to replace
 %% the commands and values with those provided to you when you
 %% complete the rights form.
-\setcopyright{acmlicensed}
-\copyrightyear{2018}
-\acmYear{2018}
-\acmDOI{XXXXXXX.XXXXXXX}
-%% These commands are for a PROCEEDINGS abstract or paper.
-\acmConference[Conference acronym 'XX]{Make sure to enter the correct
-  conference title from your rights confirmation email}{June 03--05,
-  2018}{Woodstock, NY}
-%%
-%%  Uncomment \acmBooktitle if the title of the proceedings is different
-%%  from ``Proceedings of ...''!
-%%
-%%\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
-%%  June 03--05, 2018, Woodstock, NY}
-\acmISBN{978-1-4503-XXXX-X/2018/06}
+%% Rights/venue metadata is filled at camera-ready; the review build carries
+%% the minimum the class requires.
+\setcopyright{none}
+\acmConference[ASIA CCS '27]{ACM Asia Conference on Computer and Communications Security}{2027}{}
+\acmYear{2027}
+\acmDOI{}
+\acmISBN{}
 
 
 %%
@@ -268,7 +259,7 @@
 %% other information printed in the page headers. This command allows
 %% the author to define a more concise list
 %% of authors' names for this purpose.
-\renewcommand{\shortauthors}{Trovato et al.}
+\renewcommand{\shortauthors}{Anonymous}
 
 %%
 %% The abstract is a short summary of the work to be presented in the
@@ -303,36 +294,24 @@ $4.65\times$.
 \begin{CCSXML}
 <ccs2012>
  <concept>
-  <concept_id>00000000.0000000.0000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_id>10002978.10002991.10002995</concept_id>
+  <concept_desc>Security and privacy~Privacy-preserving protocols</concept_desc>
   <concept_significance>500</concept_significance>
  </concept>
  <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
+  <concept_id>10002978.10002979.10002981</concept_id>
+  <concept_desc>Security and privacy~Public key (asymmetric) techniques</concept_desc>
   <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>00000000.00000000.00000000</concept_id>
-  <concept_desc>Do Not Use This Code, Generate the Correct Terms for Your Paper</concept_desc>
-  <concept_significance>100</concept_significance>
  </concept>
 </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[300]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc{Do Not Use This Code~Generate the Correct Terms for Your Paper}
-\ccsdesc[100]{Do Not Use This Code~Generate the Correct Terms for Your Paper}
+\ccsdesc[500]{Security and privacy~Privacy-preserving protocols}
+\ccsdesc[300]{Security and privacy~Public key (asymmetric) techniques}
 
-\received{20 February 2007}
-\received[revised]{12 March 2009}
-\received[accepted]{5 June 2009}
+\keywords{private join and compute, private set intersection, circuit-PSI,
+oblivious key-value store, homomorphic encryption}
+
 
 %%
 %% This command processes the author and affiliation and title
@@ -2444,8 +2423,32 @@ B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 네트워크 환경에서 제안 프로토콜의 확장성과 실용성을 평가하는
 연구가 요구된다.
 
+\label{sec:end-of-body}
 \bibliographystyle{alpha}
 \bibliography{references}
+
+\appendix
+
+\section{Open Science}
+The claims in this paper rest on an implementation: AF-CPSI and the PJC
+protocol of \Cref{sec:our-pjc} (including the integer-inner-product path of
+\Cref{sec:integer-ip}), the measurement harness behind
+\Cref{sec:performance-comparison,sec:performance-breakdown,sec:integer-ip-exp},
+the WAN shaping script, and the width-matched cost harness used to measure
+\cite{KLS26} at $L=84$ (\Cref{sec:integer-ip-exp}), provided as a patch against
+that implementation. All of it is available at an anonymized repository:
+\url{https://anonymous.4open.science/r/TODO}. The repository also contains the
+noise-budget probe used to select the coefficient modulus in
+\Cref{sec:integer-ip}. Every number in \Cref{sec:experimental-results} can be
+regenerated from it; the README lists the exact commands.
+
+\section{Ethical Considerations}
+\Cref{sec:cryptanalysis} describes a leakage in the public reference
+implementation accompanying \cite{LTS+26}. It concerns a research artifact,
+not a deployed system, and exposes no user data; the affected quantity is
+the XOR of two secret shares held by one party of the protocol. TODO: state
+whether and when the authors of \cite{LTS+26} were notified. No human
+subjects, personal data, or live systems were involved in this work.
 
 \end{document}
 \endinput
