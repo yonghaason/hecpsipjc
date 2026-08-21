@@ -1565,8 +1565,8 @@ hybrid는 기존 증명과 동일하다.
 본 절에서는 \Cref{sec:cpsi-zp}의 AF-CPSI가 출력하는 arithmetic share를
 동형암호 연산에 입력하여 PJC를 완성한다. 구성을 제시하고(\Cref{sec:pjc-construction}),
 보안성을 증명한 뒤(\Cref{sec:security-pjc}), communication cost를 분석하고
-(\Cref{sec:comm-analysis}), 정수 inner product를 위한 long-item 설정
-(\Cref{sec:long-items})과 채택하지 않은 대안(\Cref{sec:ctct})을 다룬다.
+(\Cref{sec:comm-analysis}), 정수 inner product 설정
+(\Cref{sec:integer-ip})과 채택하지 않은 대안(\Cref{sec:ctct})을 다룬다.
 
 \subsection{Construction}\label{sec:pjc-construction}
 
@@ -1826,7 +1826,7 @@ $\prot{PJC}$\emph{(\Cref{fig:our-pjc})}는 $\func{AF-CPSI}$-hybrid model에서
 semi-honest adversary에 대해 $\func{PJC}$를 securely realize한다.
 \end{theorem}
 
-\Cref{sec:long-items}의 RNS 변형은 같은 프로토콜을 잔여류별로 독립 실행한
+\Cref{sec:integer-ip}의 RNS 변형은 같은 프로토콜을 잔여류별로 독립 실행한
 것이므로, 아래 증명이 각 잔여류에 그대로 적용되고 hybrid 수만 $k$배가 된다.
 
 \begin{proof}
@@ -1911,7 +1911,7 @@ space $\Z_P$의 bit-length를 $L=\lceil\log_2 P\rceil$로 구분하여 표기한
 \emph{modular} inner product $\sum_{x_i=y_j} D_i^X D_j^Y \bmod P$이다.
 이는 그 자체로 잘 정의된 functionality이고, 비교 대상인 \cite{KLS26} 역시
 동일한 $L$의 ring 위에서 같은 값을 계산한다. 정수 inner product가 필요한
-경우에 $L$을 어떻게 잡아야 하는지는 \Cref{sec:long-items}에서 다룬다.
+경우에 $L$을 어떻게 잡아야 하는지는 \Cref{sec:integer-ip}에서 다룬다.
 
 Arithmetic space의 bit-length를 $L$, set size를 $n$이라 할 때,
 제안 프로토콜의 전체 communication cost는
@@ -2065,7 +2065,7 @@ L
 \]
 으로 정리할 수 있다.
 
-\subsection{Handling Long Items}\label{sec:long-items}
+\subsection{Integer Inner Product}\label{sec:integer-ip}
 앞 절까지의 설정은 $\Z_P$ 위의 modular inner product를 계산한다. 정수
 inner product를 얻으려면 곱의 누적이 $P$를 넘지 않아야 하므로,
 $\ell$-bit payload에 대해
@@ -2107,7 +2107,7 @@ $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서�
 
 \begin{table}[h]
 \centering
-\caption{Long-item setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
+\caption{Integer inner product setting: $\ell=32$-bit payloads, $L=84$-bit arithmetic space, LAN.}
 \label{tab:pjc-long}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.05}
@@ -2405,7 +2405,7 @@ Plaintext modulus $p$ & \(4{,}294{,}475{,}777\) \\
 Coefficient modulus bit-sizes & \(\{48,36,18\}\) bits \\
 Number of batching slots $d$ & 4096 \\
 \midrule
-\multicolumn{2}{l}{\textit{Long-item setting (\Cref{sec:long-items})}} \\
+\multicolumn{2}{l}{\textit{Integer inner product setting (\Cref{sec:integer-ip})}} \\
 Plaintext moduli (RNS) & two 42-bit primes, $L=84$ \\
 Coefficient modulus bit-sizes & \(\{60,45,20\}\) bits, security check off \\
 \bottomrule
@@ -2520,7 +2520,7 @@ Table~\ref{tab:pjc-comparison}의 communication cost는
 측정된 결과가 아니다. 따라서 해당 값은 기존 PJC 프로토콜의
 communication cost를 보여주는 참고값으로 사용한다.
 한편 정수 inner product에 필요한 $L=84$-bit arithmetic space를 사용하는
-long-item 설정의 실측 비교는 \Cref{sec:long-items}에 제시하였다.
+정수 inner product 설정의 실측 비교는 \Cref{sec:integer-ip}에 제시하였다.
 
 
 \subsection{Performance Breakdown}
@@ -2590,14 +2590,14 @@ Set size가 \(2^{16}\)인 경우 통신량은
 B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 추가 오버헤드만을 발생시키는 것으로 나타났다.
 
-정수 inner product를 위해 $L=84$-bit arithmetic space가 필요한 long-item
+정수 inner product를 위해 $L=84$-bit arithmetic space가 필요한
 설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 42-bit 잔여류 두 개의
 RNS로 payload 경로만 두 배가 되어 $n=2^{20}$에서 통신량은 218.010\,MB에서
 340.631\,MB로 약 $1.56$배 증가한 반면, \cite{KLS26}는 MultShare의 이차 증가로
 약 $4.65$배가 되어 격차가 더 벌어졌다. 이는 payload가 길어질수록 $O(\ell)$
 구성의 이점이 커짐을 실측으로 보인 것이다.
 
-향후 연구에서는 long-item 설정을 WAN 환경까지 확장하여 측정하고, 전체 실행 시간과
+향후 연구에서는 정수 inner product 설정을 WAN 환경까지 확장하여 측정하고, 전체 실행 시간과
 통신량에서 가장 큰 비중을 차지하는 Circuit-PSI 단계를 추가로
 최적화할 필요가 있다. 또한 실제 지연 시간이 존재하는 다양한
 네트워크 환경에서 제안 프로토콜의 확장성과 실용성을 평가하는

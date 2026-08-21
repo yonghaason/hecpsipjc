@@ -62,7 +62,7 @@ namespace
         }
     }
 
-    // Long-item setting: 32-bit payloads need an arithmetic space of
+    // Integer-inner-product setting: 32-bit payloads need an arithmetic space of
     // 2*32 + log2(rows) bits, which exceeds what one SEAL plaintext modulus
     // holds. Represent Z_P with two 42-bit residues and combine by CRT.
     void runRnsCase(u64 rows)

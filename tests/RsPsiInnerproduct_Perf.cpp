@@ -97,7 +97,7 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     auto intersectionSize = cmd.getOr("intersection", n / 2);
     auto tcp = cmd.isSet("tcp");
     auto port = cmd.getOr("port", u64(18181));
-    // -rns: long-item setting, 32-bit payloads over P = p0*p1 (84 bits)
+    // -rns: integer-inner-product setting, 32-bit payloads over P = p0*p1 (84 bits)
     auto rns = cmd.isSet("rns");
     gPsiIpRnsDebug = cmd.isSet("rnsdebug");
     if (n == 0 || intersectionSize > n || numThreads == 0)

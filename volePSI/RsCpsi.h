@@ -38,7 +38,7 @@ namespace volePSI
     // SEAL batching with the default polynomial modulus degree N = 8192.
     constexpr u64 RsCpsiDefaultPrime = 4294475777ULL;
 
-    // Residue primes for the long-item setting. A correct integer inner
+    // Residue primes for the integer-inner-product setting. A correct integer inner
     // product needs an arithmetic space of 2*l + ceil(log2 |X n Y|) bits,
     // which for l = 32 and |X n Y| <= 2^20 is 84 bits. No single RLWE
     // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. Two
@@ -73,7 +73,7 @@ namespace volePSI
 
     //0719
     // Default payload width. Half the residue width keeps a single product
-    // inside one residue; the long-item setting overrides it explicitly.
+    // inside one residue; the integer-inner-product setting overrides it explicitly.
     inline u64 RsCpsiDataBitLength(u64 primeModulus)
     {
         return RsCpsiPrimeBitLength(primeModulus) / 2;
