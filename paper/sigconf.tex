@@ -388,6 +388,9 @@ PSI-Cardinality, PSI-Threshold, PSI-InnerProduct 등의 확장을 구성하였�
 share의 곱을 얻기 위해 한쪽 값을 bit decomposition한 뒤 각 bit마다 $\ell$-bit
 메시지에 대한 OT를 수행하므로, 원소당 $O(\ell^2)$의 비용이 든다. 반면
 \cite{LTS+26}은 같은 계산을 원소당 $O(\ell)$에 수행할 수 있다고 보고하였다.
+엄밀히는 두 비용 모두 payload가 아니라 연산이 수행되는 arithmetic space의
+bit-length $L$에 대한 것이지만, 정수 inner product에서는 $L=\Theta(\ell)$이므로
+(\Cref{sec:integer-ip}) $\ell$에 대해서도 같은 차수이다.
 $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 
 \subsection{Our Contribution}\label{sec:contribution}
