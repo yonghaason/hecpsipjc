@@ -1557,7 +1557,7 @@ hybrid는 기존 증명과 동일하다.
 동형암호 연산에 입력하여 PJC를 완성한다. 구성을 제시하고(\Cref{sec:pjc-construction}),
 보안성을 증명한 뒤(\Cref{sec:security-pjc}), communication cost를 분석하고
 (\Cref{sec:comm-analysis}), 정수 inner product 설정
-(\Cref{sec:integer-ip})과 채택하지 않은 대안(\Cref{sec:ctct})을 다룬다.
+(\Cref{sec:integer-ip})을 다룬다.
 
 \subsection{Construction}\label{sec:pjc-construction}
 
@@ -1798,6 +1798,23 @@ $.
 
 
 
+
+\noindentparagraph{\textbf{Why not a ciphertext--ciphertext construction.}}
+B2A-OT 없이도 PJC를 구성할 수 있다. $\mathcal{R}$이 자신의 Boolean share
+$b_i^R$와 data component $w_i$를 암호화해 보내면, $\mathcal{S}$는
+$a\oplus b=a+b-2ab$를 이용해 $\mathsf{Enc}(b_i)$를, $w_i'$를 평문으로 더해
+$\mathsf{Enc}(w_i+w_i')=\mathsf{Enc}(D_i^{Y'})$를 만들고, 두 암호문을 곱한 뒤
+$D_i^{X'}$를 평문으로 곱하고 마스킹하여 $\mathcal{R}$에게 돌려준다. 모든 연산은
+slot-wise로 병렬 처리되며, 흐름은 B2A-OT 기반 구성보다 단순하다.
+
+채택하지 않은 이유는 비용이다. 이 구성은 ciphertext--ciphertext multiplication을
+한 번 포함하므로 multiplicative depth가 하나 늘고 relinearization이 필요하며,
+그만큼의 noise budget을 위해 ciphertext modulus $q$를 키워야 한다. BGV 암호문
+크기는 $O(N\log q)$이므로 $\log q$의 증가는 전송되는 모든 암호문에 그대로
+반영된다. B2A-OT 두 번으로 arithmetic share를 먼저 만들면 동형암호 쪽에는
+plaintext--ciphertext multiplication 한 번만 남고, 그 차이가 $q\approx2^{84}$의
+작은 ciphertext modulus를 가능하게 한다. 이에 B2A-OT 기반 구성을 최종 프로토콜로
+채택하였다.
 
 \subsection{Security}\label{sec:security-pjc}
 
@@ -2085,23 +2102,6 @@ Uniformly random한 share를
 $L=32$ 대비 $(84/32)^2\approx6.9$배가 된다(식별자 경로는 변하지 않으므로 전체
 증가율은 이보다 낮다). 두 프로토콜의 실측은 \Cref{sec:integer-ip-exp}에 제시한다.
 
-\subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
-B2A-OT 없이도 PJC를 구성할 수 있다. $\mathcal{R}$이 자신의 Boolean share
-$b_i^R$와 data component $w_i$를 암호화해 보내면, $\mathcal{S}$는
-$a\oplus b=a+b-2ab$를 이용해 $\mathsf{Enc}(b_i)$를, $w_i'$를 평문으로 더해
-$\mathsf{Enc}(w_i+w_i')=\mathsf{Enc}(D_i^{Y'})$를 만들고, 두 암호문을 곱한 뒤
-$D_i^{X'}$를 평문으로 곱하고 마스킹하여 $\mathcal{R}$에게 돌려준다. 모든 연산은
-slot-wise로 병렬 처리되며, 흐름은 B2A-OT 기반 구성보다 단순하다.
-
-채택하지 않은 이유는 비용이다. 이 구성은 ciphertext--ciphertext multiplication을
-한 번 포함하므로 multiplicative depth가 하나 늘고 relinearization이 필요하며,
-그만큼의 noise budget을 위해 ciphertext modulus $q$를 키워야 한다. BGV 암호문
-크기는 $O(N\log q)$이므로 $\log q$의 증가는 전송되는 모든 암호문에 그대로
-반영된다. B2A-OT 두 번으로 arithmetic share를 먼저 만들면 동형암호 쪽에는
-plaintext--ciphertext multiplication 한 번만 남고, 그 차이가 $\{48,36,18\}$의
-작은 파라미터를 가능하게 한다. 이에 B2A-OT 기반 구성을 최종 프로토콜로
-채택하였다.
-
 \section{Experimental Results}
 \label{sec:experimental-results}
 본 절에서는 제안한 AF-CPSI와 이를 동형암호 기반 계산에 결합한
@@ -2139,22 +2139,14 @@ BGV scheme을 이용하여 구현하였다.
 \noindentparagraph{\textbf{Parameters.}}
 모든 실험에서는 128-bit computational security와 40-bit statistical
 security를 만족하도록 cryptographic parameters를 설정하였다.
-BGV의 polynomial modulus degree는 \(N = 4096\), plaintext modulus는
-\(p = 4{,}294{,}475{,}777\)로 설정하였다.
-Ciphertext coefficient modulus의 bit-size는
-\(\{48, 36, 18\}\)로 설정하였으며, 전체 크기는 102 bits로
-\(N = 4096\)에서 SEAL이 제공하는 128-bit security bound인
-109 bits 이하이다.
-
-제안 프로토콜의 homomorphic evaluation에서는
-암호문과 평문 사이의 multiplication을 한 번 수행하므로,
-해당 곱셈으로 인한 noise 증가와 이후 modulus switching 과정에서
-발생하는 error를 고려하여 coefficient modulus를 설정하였다.
-Batching을 이용하여 하나의 ciphertext에 최대
-\(d = N = 4096\)개의 값을 packing하였다.
+BGV의 polynomial modulus degree는 \(N=4096\), plaintext modulus는
+\(p\approx 2^{32}\), ciphertext modulus는 \(q\approx 2^{84}\)로 설정하였다.
+Homomorphic evaluation은 암호문과 평문 사이의 multiplication 한 번과 modulus
+switching으로 구성되므로 이 정도의 \(q\)로 충분하다. Batching으로 하나의
+ciphertext에 최대 \(N=4096\)개의 값을 packing하였다.
 정수 inner product 설정(\Cref{sec:integer-ip})에서는 plaintext modulus로
-42-bit 소수 \(4{,}398{,}046{,}486{,}529\)와 \(4{,}398{,}046{,}240{,}769\)를,
-coefficient modulus bit-size로 \(\{60,45,20\}\)을 사용하였다.
+42-bit 소수 두 개(\(p_1,p_2\approx 2^{42}\))를, ciphertext modulus로
+\(q\approx 2^{105}\)를 사용하였다.
 실험에 사용한 파라미터는
 Table~\ref{tab:experimental-parameters}에 정리하였다.
 
@@ -2183,7 +2175,7 @@ Ciphertext modulus $q$ & \(\approx 2^{105}\) \\
 \end{table}
 
 
-\subsection{Comparison in the 32-bit Setting}
+\subsection{Comparison: Modular Inner Product}
 
 \label{sec:performance-comparison}
 본 절에서는 입력 집합의 크기와 네트워크 환경에 따른
@@ -2293,8 +2285,7 @@ communication cost를 보여주는 참고값으로 사용한다.
 정수 inner product 설정의 실측 비교는 \Cref{sec:integer-ip}에 제시하였다.
 
 
-\subsection{Performance Breakdown}
-\label{sec:performance-breakdown}
+\noindentparagraph{\textbf{Breakdown.}}
 
 제안 프로토콜의 각 구성요소가 전체 성능에 미치는 영향을 분석하기 위해,
 set size가 $2^{20}$인 경우에 대해 LAN 환경에서 단계별 실행 시간과
@@ -2338,7 +2329,7 @@ B2A-OT는 0.357\,s의 runtime과 22.769\,MB의 communication cost를
 inner-product computation은 전체 프로토콜에 제한적인
 추가 오버헤드만을 발생시킨다.
 
-\subsection{Comparison in the Integer Inner Product Setting}
+\subsection{Comparison: Integer Inner Product}
 \label{sec:integer-ip-exp}
 \Cref{sec:integer-ip}의 설정, 즉 32-bit payload에 대한 정수 inner product를
 계산하는 경우를 LAN과 두 WAN 환경에서 측정하였다.
@@ -2430,7 +2421,7 @@ B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 The claims in this paper rest on an implementation: AF-CPSI and the PJC
 protocol of \Cref{sec:our-pjc} (including the integer-inner-product path of
 \Cref{sec:integer-ip}), the measurement harness behind
-\Cref{sec:performance-comparison,sec:performance-breakdown,sec:integer-ip-exp},
+\Cref{sec:performance-comparison,sec:integer-ip-exp},
 the WAN shaping script, and the width-matched cost harness used to measure
 \cite{KLS26} at $L=84$ (\Cref{sec:integer-ip-exp}), provided as a patch against
 that implementation. All of it is available at an anonymized repository:
