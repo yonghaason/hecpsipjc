@@ -412,8 +412,8 @@ membership 정보를 새게 할 수 있음을 발견하고 statistical slack을 
 막는다. 동형암호 쪽에서는 복호화 키를 가진 쪽이 noise를 통해 상대의 share를
 복원할 수 있으므로 circuit privacy가 필요하다는 점을 짚고, 정수 inner product를
 원하는 경우에는 곱의 누적 때문에 arithmetic space가 $2\ell+\log_2|X\cap Y|$
-bits 이상이어야 하며 이것이 단일 RLWE plaintext modulus를 넘을 때 RNS로
-처리한다. 각 문제는 개별적으로는 알려진 기법으로 풀리지만, 한 프로토콜 안에서
+bits 이상이어야 하며, 이것이 단일 RLWE plaintext modulus를 넘을 때는 payload
+경로를 여러 modulus로 나누어 처리한다. 각 문제는 개별적으로는 알려진 기법으로 풀리지만, 한 프로토콜 안에서
 모두 다뤄야 비로소 성능 수치가 의미를 갖는다는 것이 이 부분의 요지이다. 제안
 프로토콜은 semi-honest 모델에서 안전함을 증명한다.
 
@@ -2431,8 +2431,8 @@ B2A-OT와 이후의 동형암호 기반 계산은 상대적으로 제한적인
 추가 오버헤드만을 발생시키는 것으로 나타났다.
 
 정수 inner product를 위해 $L=84$-bit arithmetic space가 필요한
-설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 42-bit 잔여류 두 개의
-RNS로 payload 경로만 두 배가 되어 $n=2^{20}$에서 통신량은 218.010\,MB에서
+설정에서도 제안 프로토콜의 통신 효율성은 유지되었다. 늘어나는 것은 payload
+경로뿐이어서 $n=2^{20}$에서 통신량은 218.010\,MB에서
 340.631\,MB로 약 $1.56$배 증가한 반면, \cite{KLS26}는 MultShare의 이차 증가로
 약 $4.65$배가 되어 격차가 더 벌어졌다. 이는 payload가 길어질수록 $O(\ell)$
 구성의 이점이 커짐을 실측으로 보인 것이다.
