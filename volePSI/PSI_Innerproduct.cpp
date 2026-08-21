@@ -106,7 +106,7 @@ namespace volePSI
         {
             for (u64 j = 0; j < valueByteLength; j += elemByteLength, ++k)
             {
-                auto r = samplePsiIpPrimeElement(prng, config.mPrime);
+                auto r = samplePsiIpPrimeElement(prng, config.residuePrime(j / elemByteLength));
                 writePsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength, r);
             }
         }
@@ -119,23 +119,24 @@ namespace volePSI
             auto b = bitShare[i];
             for (u64 j = 0; j < valueByteLength; j += elemByteLength, ++k)
             {
-                auto x = readPsiIpPrimeElement(&values(i, j), elemByteLength) % config.mPrime;
+                auto prime = config.residuePrime(j / elemByteLength);
+                auto x = readPsiIpPrimeElement(&values(i, j), elemByteLength) % prime;
                 auto r = readPsiIpPrimeElement(&arithmeticShare(i, j), elemByteLength);
-                auto zeroShare = modNegPsiIp(r, config.mPrime);
-                auto oneShare = modSubPsiIp(x, r, config.mPrime);
+                auto zeroShare = modNegPsiIp(r, prime);
+                auto oneShare = modSubPsiIp(x, r, prime);
                 auto m0 = b ? oneShare : zeroShare;
                 auto m1 = b ? zeroShare : oneShare;
-                auto mask0 = psiIpRotKeyPrimeBitsToField(rotKeys[k][0], config.mPrime, primeBitLength);
-                auto mask1 = psiIpRotKeyPrimeBitsToField(rotKeys[k][1], config.mPrime, primeBitLength);
+                auto mask0 = psiIpRotKeyPrimeBitsToField(rotKeys[k][0], prime, primeBitLength);
+                auto mask1 = psiIpRotKeyPrimeBitsToField(rotKeys[k][1], prime, primeBitLength);
 
                 writePsiIpPrimeElement(
                     corrections.data() + (2 * k) * elemByteLength,
                     elemByteLength,
-                    modSubPsiIp(m0, mask0, config.mPrime));
+                    modSubPsiIp(m0, mask0, prime));
                 writePsiIpPrimeElement(
                     corrections.data() + (2 * k + 1) * elemByteLength,
                     elemByteLength,
-                    modSubPsiIp(m1, mask1, config.mPrime));
+                    modSubPsiIp(m1, mask1, prime));
             }
         }
 
@@ -203,8 +204,9 @@ namespace volePSI
                 auto correction = readPsiIpPrimeElement(
                     corrections.data() + (2 * k + choice) * elemByteLength,
                     elemByteLength);
-                auto mask = psiIpRotKeyPrimeBitsToField(selectedKeys[k], config.mPrime, primeBitLength);
-                auto value = modAddPsiIp(correction, mask, config.mPrime);
+                auto prime = config.residuePrime(j / elemByteLength);
+                auto mask = psiIpRotKeyPrimeBitsToField(selectedKeys[k], prime, primeBitLength);
+                auto value = modAddPsiIp(correction, mask, prime);
 
                 writePsiIpPrimeElement(
                     &arithmeticShare(i, j),
@@ -243,7 +245,8 @@ namespace volePSI
             {
                 auto a = readPsiIpPrimeElement(&lhs(i, j), elemByteLength);
                 auto b = readPsiIpPrimeElement(&rhs(i, j), elemByteLength);
-                writePsiIpPrimeElement(&out(i, j), elemByteLength, modAddPsiIp(a, b, config.mPrime));
+                writePsiIpPrimeElement(&out(i, j), elemByteLength,
+                    modAddPsiIp(a, b, config.residuePrime(j / elemByteLength)));
             }
         }
     }
@@ -342,6 +345,49 @@ namespace volePSI
             seal::Plaintext plain;
             encoder->encode(slots, plain);
             return plain;
+        }
+    }
+
+    namespace
+    {
+        using u128 = unsigned __int128;
+
+        u64 modInvPsiIp(u64 a, u64 m)
+        {
+            auto r = u64{1}, b = a % m, e = m - 2;
+            while (e)
+            {
+                if (e & 1) r = u64((u128(r) * b) % m);
+                b = u64((u128(b) * b) % m);
+                e >>= 1;
+            }
+            return r;
+        }
+
+        // Garner reconstruction of x < prod(primes) from x mod primes[j].
+        u128 crtCombine(span<const u64> residues, span<const u64> primes)
+        {
+            auto x = u128(residues[0]);
+            auto modulus = u128(primes[0]);
+            for (u64 j = 1; j < primes.size(); ++j)
+            {
+                auto pj = primes[j];
+                auto cur = u64(x % pj);
+                auto diff = residues[j] >= cur ? residues[j] - cur : pj - (cur - residues[j]);
+                auto t = u64((u128(diff) * modInvPsiIp(u64(modulus % pj), pj)) % pj);
+                x += modulus * t;
+                modulus *= pj;
+            }
+            return x;
+        }
+
+        // Copy the residue-j column block out of an RNS share matrix.
+        oc::Matrix<u8> residueSlice(oc::MatrixView<u8> share, u64 slot, u64 width)
+        {
+            oc::Matrix<u8> out(share.rows(), width);
+            for (u64 i = 0; i < share.rows(); ++i)
+                std::memcpy(&out(i, 0), &share(i, slot * width), width);
+            return out;
         }
     }
 
@@ -482,6 +528,44 @@ namespace volePSI
         co_await chl.recv(maskedInnerProduct);
         result = addMod(maskedInnerProduct % config.mPrime, maskSum, config.mPrime);
     }
+
+    Proto psiIpHeSenderRns(oc::MatrixView<u8> arithmeticShare, unsigned __int128& result,
+        const PsiInnerproductConfig& config, PRNG& prng, Socket& chl)
+    {
+        auto k = config.residueCount();
+        auto width = config.shareByteLength();
+        auto residues = std::vector<u64>(k, 0);
+        auto primes = std::vector<u64>{};
+        for (u64 j = 0; j < k; ++j)
+            primes.push_back(config.residuePrime(j));
+
+        for (u64 j = 0; j < k; ++j)
+        {
+            auto cfg = config;
+            cfg.mPrime = primes[j];
+            cfg.mPrimes.clear();
+            auto slice = residueSlice(arithmeticShare, j, width);
+            co_await psiIpHeSender(slice, residues[j], cfg, prng, chl);
+        }
+        result = crtCombine(residues, primes);
+    }
+
+    Proto psiIpHeReceiverRns(span<const u64> receiverPayload,
+        const RsCpsiReceiver::Sharing& sharing, oc::MatrixView<u8> arithmeticShare,
+        const PsiInnerproductConfig& config, Socket& chl)
+    {
+        auto k = config.residueCount();
+        auto width = config.shareByteLength();
+        for (u64 j = 0; j < k; ++j)
+        {
+            auto cfg = config;
+            cfg.mPrime = config.residuePrime(j);
+            cfg.mPrimes.clear();
+            auto slice = residueSlice(arithmeticShare, j, width);
+            co_await psiIpHeReceiver(receiverPayload, sharing, slice, cfg, chl);
+        }
+    }
+
 }
 
 #endif

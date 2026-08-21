@@ -15,8 +15,26 @@ namespace volePSI
         u64 mNumThreads = 1;
         u64 mSealPolyModulusDegree = 4096;
 
-        u64 dataByteLength() const { return RsCpsiDataByteLength(mPrime); }
+        // Residue primes for the long-item setting. Empty means single residue.
+        std::vector<u64> mPrimes = {};
+        // Payload width; 0 keeps the default half-residue width.
+        u64 mDataBitLength = 0;
+
+        u64 residueCount() const { return mPrimes.empty() ? 1 : mPrimes.size(); }
+        u64 residuePrime(u64 slot) const
+        {
+            return mPrimes.empty() ? mPrime : mPrimes[slot % mPrimes.size()];
+        }
+        u64 dataByteLength() const
+        {
+            auto one = mDataBitLength ? oc::divCeil(mDataBitLength, 8)
+                                      : RsCpsiDataByteLength(mPrime);
+            return one * residueCount();
+        }
+        // width of a single residue share
         u64 shareByteLength() const { return RsCpsiPrimeByteLength(mPrime); }
+        // width of a full RNS share across all residues
+        u64 totalShareByteLength() const { return shareByteLength() * residueCount(); }
     };
 
     inline void writePsiIpPrimeElement(u8* dst, u64 byteLength, u64 v)
@@ -59,6 +77,13 @@ namespace volePSI
     Proto psiIpHeReceiver(span<const u64> receiverPayload,
         const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
         const PsiInnerproductConfig& config, Socket& chl);
+
+    // RNS variants: evaluate one residue at a time and combine by CRT.
+    Proto psiIpHeSenderRns(oc::MatrixView<u8> arithmeticShare, unsigned __int128& result,
+        const PsiInnerproductConfig& config, PRNG& prng, Socket& chl);
+    Proto psiIpHeReceiverRns(span<const u64> receiverPayload,
+        const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
+        const PsiInnerproductConfig& config, Socket& chl);
 #endif
 
     class PsiInnerproductSender : public oc::TimerAdapter
@@ -78,7 +103,10 @@ namespace volePSI
                 seed,
                 mConfig.mNumThreads,
                 ValueShareType::prime,
-                mConfig.mPrime);
+                mConfig.mPrime,
+                RsCpsiDefaultPrimeStatSecParam,
+                mConfig.mPrimes,
+                mConfig.mDataBitLength);
         }
 
         Proto send(span<block> identifiers, span<const u64> associatedData, CpsiSharing& share, Socket& chl)
@@ -141,7 +169,10 @@ namespace volePSI
                 seed,
                 mConfig.mNumThreads,
                 ValueShareType::prime,
-                mConfig.mPrime);
+                mConfig.mPrime,
+                RsCpsiDefaultPrimeStatSecParam,
+                mConfig.mPrimes,
+                mConfig.mDataBitLength);
         }
 
         Proto receive(span<block> identifiers, CpsiSharing& share, Socket& chl)

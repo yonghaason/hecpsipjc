@@ -38,6 +38,19 @@ namespace volePSI
     // SEAL batching with the default polynomial modulus degree N = 8192.
     constexpr u64 RsCpsiDefaultPrime = 4294475777ULL;
 
+    // Residue primes for the long-item setting. A correct inner product needs
+    // an arithmetic space of 2*l + ceil(log2 |X n Y|) bits, which for l = 32
+    // and |X n Y| <= 2^20 is 84 bits and exceeds what a single RLWE plaintext
+    // modulus can hold (SEAL caps it at 60 bits). We therefore represent Z_P
+    // in RNS. Three 32-bit residues give log2 P = 96 >= 84, and each residue
+    // reuses the coefficient modulus already validated for the 32-bit setting;
+    // two 42-bit residues would also reach 84 bits but leave too little noise
+    // budget for a plaintext multiplication at N = 4096. All three satisfy
+    // p = 1 mod 8192 so batching works at N = 4096.
+    constexpr u64 RsCpsiRnsPrime0 = 4294475777ULL;
+    constexpr u64 RsCpsiRnsPrime1 = 4294483969ULL;
+    constexpr u64 RsCpsiRnsPrime2 = 4294729729ULL;
+
     //0719
     inline u64 RsCpsiPrimeBitLength(u64 primeModulus)
     {
@@ -51,6 +64,8 @@ namespace volePSI
     }
 
     //0719
+    // Default payload width. Half the residue width keeps a single product
+    // inside one residue; the long-item setting overrides it explicitly.
     inline u64 RsCpsiDataBitLength(u64 primeModulus)
     {
         return RsCpsiPrimeBitLength(primeModulus) / 2;
@@ -99,6 +114,8 @@ namespace volePSI
             ValueShareType mType = ValueShareType::Xor;
             //0719
             u64 mPrime = RsCpsiDefaultPrime;
+            // One prime per residue. Single-residue mode holds just mPrime.
+            std::vector<u64> mPrimes = { RsCpsiDefaultPrime };
             u64 mPrimeBitLength = RsCpsiPrimeBitLength(RsCpsiDefaultPrime);
             u64 mPrimeByteLength = RsCpsiPrimeByteLength(RsCpsiDefaultPrime);
             //0719
@@ -120,8 +137,17 @@ namespace volePSI
                 ValueShareType type = ValueShareType::Xor,
                 //0719
                 u64 primeModulus = RsCpsiDefaultPrime,
-                u64 primeStatSecParam = RsCpsiDefaultPrimeStatSecParam)
+                u64 primeStatSecParam = RsCpsiDefaultPrimeStatSecParam,
+                std::vector<u64> residuePrimes = {},
+                u64 dataBitLengthOverride = 0)
             {
+                if (residuePrimes.empty())
+                    residuePrimes = { primeModulus };
+                // all residues share a width so the slot strides stay uniform
+                for (auto q : residuePrimes)
+                    if (RsCpsiPrimeBitLength(q) != RsCpsiPrimeBitLength(residuePrimes[0]))
+                        throw RTE_LOC;
+                primeModulus = residuePrimes[0];
                 //0719
                 auto primeBitLength = RsCpsiPrimeBitLength(primeModulus);
                 auto primeByteLength = RsCpsiPrimeByteLength(primeModulus);
@@ -147,6 +173,14 @@ namespace volePSI
                 mPrime = primeModulus;
                 mPrimeBitLength = primeBitLength;
                 mPrimeByteLength = primeByteLength;
+                mPrimes = std::move(residuePrimes);
+                if (dataBitLengthOverride)
+                {
+                    primeDataBitLength = dataBitLengthOverride;
+                    primeDataByteLength = oc::divCeil(dataBitLengthOverride, 8);
+                    if (dataBitLengthOverride >= primeBitLength)
+                        throw RTE_LOC;
+                }
                 mPrimeDataBitLength = primeDataBitLength;
                 mPrimeDataByteLength = primeDataByteLength;
                 mPrimeStatSecParam = primeStatSecParam;

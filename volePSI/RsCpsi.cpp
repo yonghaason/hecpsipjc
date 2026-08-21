@@ -48,12 +48,15 @@ namespace volePSI
         }
 
         //0719
-        void samplePrimeShares(MatrixView<u8> values, PRNG& prng, u64 prime, u64 bitLength, u64 byteLength)
+        void samplePrimeShares(MatrixView<u8> values, PRNG& prng, span<const u64> primes,
+            u64 bitLength, u64 byteLength)
         {
             for (u64 i = 0; i < values.rows(); ++i)
             {
-                for (u64 j = 0; j < values.cols(); j += byteLength)
+                auto slot = u64{};
+                for (u64 j = 0; j < values.cols(); j += byteLength, ++slot)
                 {
+                    auto prime = primes[slot % primes.size()];
                     writePrimeElement(&values(i, j), byteLength, samplePrime(prng, prime, bitLength, byteLength));
                 }
             }
@@ -161,7 +164,7 @@ namespace volePSI
             //0719
             auto shareByteLength = u64{};
             auto okvsValueByteLength = u64{};
-            auto cosetSize = u128{};
+            auto cosetSizes = std::vector<u128>{};
 
         setTimePoint("RsCpsiSender::send begin");
         if (mSenderSize != Y.size() || mValueByteLength != values.cols())
@@ -175,7 +178,8 @@ namespace volePSI
         {
             shareByteLength = primeShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeByteLength);
             okvsValueByteLength = primeEncShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeEncByteLength);
-            cosetSize = primeCosetSize(mPrime, mPrimeEncBitLength);
+            for (auto q : mPrimes)
+                cosetSizes.push_back(primeCosetSize(q, mPrimeEncBitLength));
         }
         else
         {
@@ -219,7 +223,7 @@ namespace volePSI
         //0714
         //0719
         if (mType == ValueShareType::prime)
-            samplePrimeShares(ret.mValues, mPrng, mPrime, mPrimeBitLength, mPrimeByteLength);
+            samplePrimeShares(ret.mValues, mPrng, mPrimes, mPrimeBitLength, mPrimeByteLength);
         else
             mPrng.get<u8>(ret.mValues);
 
@@ -267,18 +271,21 @@ namespace volePSI
                         auto srcOffset = u64{};
                         auto shareOffset = u64{};
                         auto encOffset = u64{};
+                        auto slot = u64{};
                         while (srcOffset < values.cols())
                         {
-                            auto tv = readPrimeElement(&values(b, srcOffset), mPrimeDataByteLength);
+                            auto prime = mPrimes[slot % mPrimes.size()];
+                            auto tv = readPrimeElement(&values(b, srcOffset), mPrimeDataByteLength) % prime;
                             auto rr = readPrimeElement(&ret.mValues(i, shareOffset), mPrimeByteLength);
-                            auto u = modSubPrime(tv, rr, mPrime);
+                            auto u = modSubPrime(tv, rr, prime);
 
                             writeEncodedElement(&*TvIter + encOffset, mPrimeEncByteLength,
-                                encodePrimeElement(mPrng, u, mPrime, cosetSize));
+                                encodePrimeElement(mPrng, u, prime, cosetSizes[slot % mPrimes.size()]));
 
                             srcOffset += mPrimeDataByteLength;
                             shareOffset += mPrimeByteLength;
                             encOffset += mPrimeEncByteLength;
+                            ++slot;
                         }
                     }
                     else
@@ -465,16 +472,18 @@ namespace volePSI
                     {
                         auto shareOffset = u64{};
                         auto encOffset = u64{};
+                        auto slot = u64{};
                         while (shareOffset < shareByteLength)
                         {
                             auto encoded = readEncodedElement(
                                 &r(i, keyByteLength + encOffset), mPrimeEncByteLength);
 
                             writePrimeElement(&ret.mValues(i, shareOffset), mPrimeByteLength,
-                                decodePrimeElement(encoded, mPrime));
+                                decodePrimeElement(encoded, mPrimes[slot % mPrimes.size()]));
 
                             shareOffset += mPrimeByteLength;
                             encOffset += mPrimeEncByteLength;
+                            ++slot;
                         }
                     }
                 }
