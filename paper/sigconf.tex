@@ -266,12 +266,10 @@
 %% article.
 \begin{abstract}
 Private join and compute (PJC) lets two parties learn the inner product of
-the payloads attached to the identifiers their sets share, and nothing else;
-it underlies ad-conversion measurement and similar joint analytics. Its cost
-is dominated by how the payload values are handled once the intersection is
-identified, and circuit-PSI-based constructions have paid a price quadratic
-in the payload width $\ell$. A recent protocol (NDSS~'26) reported
-bringing this to $O(\ell)$.
+the payloads attached to the identifiers their sets share, and nothing else.
+Circuit-PSI-based constructions have paid a price quadratic in the payload
+width $\ell$ for the payload computation; a recent protocol (NDSS~'26)
+reported bringing this to $O(\ell)$.
 
 We make two contributions. First, we show that the implementation behind
 those reported numbers is not secure: it masks all of the receiver's payload
@@ -415,9 +413,6 @@ bitwise XOR 연산을 의미한다.
 $D^X=\{D^X_1,\ldots,D^X_n\}$과
 $D^Y=\{D^Y_1,\ldots,D^Y_n\}$로 나타내며, 임의의 집합 $X$에 대해 simple hashing 또는 cuckoo hashing을
 적용하여 생성된 hash table은 $X'$로 나타낸다.
-Payload의 bit-length를 $\ell$로, payload에 대한 연산이 수행되는 arithmetic
-space $\mathbb{Z}_P$의 bit-length를 $L=\lceil\log_2 P\rceil$로 표기하며, 두
-값은 일반적으로 다르다.
 
 두 집합 $X$와 $Y$에 대해, 각 $x_i\in X$의 $Y$에 대한 포함 여부를 나타내는 bit를 membership bit $b_i$라 서술하며,
 \[
@@ -1898,8 +1893,10 @@ $\mathsf{H}_0\stackrel{c}{\equiv}\mathsf{H}_2$이고, $\mathsf{Sim}_\Snd$의
 $O(\ell^2)$와 $O(\ell)$의 차이가 실제 파라미터에서 어느 정도의 통신량 차이로
 나타나는지를 확인한다.
 
-Set size를 $n$이라 할 때 (32-bit 설정에서는 $L=32$이다),
-제안 프로토콜의 전체 communication cost는
+이하에서는 payload의 bit-length $\ell$과, payload에 대한 연산이 수행되는
+arithmetic space $\Z_P$의 bit-length $L=\lceil\log_2 P\rceil$를 구분한다.
+32-bit 설정에서는 $\ell=L=32$이며, 둘이 갈리는 경우는 \Cref{sec:integer-ip}에서
+다룬다. Set size를 $n$이라 할 때, 제안 프로토콜의 전체 communication cost는
 \[
 \begin{aligned}
 C_{\mathsf{Ours}}
