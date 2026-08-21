@@ -546,8 +546,12 @@ namespace volePSI
             cfg.mPrimes.clear();
             auto slice = residueSlice(arithmeticShare, j, width);
             co_await psiIpHeSender(slice, residues[j], cfg, prng, chl);
+            if (gPsiIpRnsDebug)
+                std::cerr << "[rns] residue " << j << " p=" << primes[j] << " r=" << residues[j] << std::endl;
         }
         result = crtCombine(residues, primes);
+        if (gPsiIpRnsDebug)
+            std::cerr << "[rns] combined hi=" << (u64)(result >> 64) << " lo=" << (u64)result << std::endl;
     }
 
     Proto psiIpHeReceiverRns(span<const u64> receiverPayload,
@@ -565,6 +569,8 @@ namespace volePSI
             co_await psiIpHeReceiver(receiverPayload, sharing, slice, cfg, chl);
         }
     }
+
+    bool gPsiIpRnsDebug = false;
 
     bool psiIpSealParamsValid(const PsiInnerproductConfig& config)
     {

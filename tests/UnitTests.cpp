@@ -92,6 +92,7 @@ namespace volePSI_Tests
         t.add("RsPsiInnerproduct_seal_test", RsPsiInnerproduct_seal_test);
         t.add("RsPsiInnerproduct_seal_rns_test", RsPsiInnerproduct_seal_rns_test);
         t.add("RsPsiInnerproduct_seal_rns_sweep_test", RsPsiInnerproduct_seal_rns_sweep_test);
+        t.add("RsPsiInnerproduct_seal_repeat_test", RsPsiInnerproduct_seal_repeat_test);
 #endif
 #endif
 

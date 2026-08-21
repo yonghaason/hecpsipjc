@@ -64,17 +64,17 @@ namespace
 
     // Long-item setting: 32-bit payloads need an arithmetic space of
     // 2*32 + log2(rows) bits, which exceeds what one SEAL plaintext modulus
-    // holds. Represent Z_P with two 42-bit residues and combine by CRT.
+    // holds. Represent Z_P with three 32-bit residues and combine by CRT.
     void runRnsCase(u64 rows)
     {
         using u128 = unsigned __int128;
         PsiInnerproductConfig config;
         // sweepable via -p0/-p1/-N/-cm for the residue-width experiment
-        config.mPrimes = { RsCpsiRnsPrime0, RsCpsiRnsPrime1 };
+        config.mPrimes = { RsCpsiRnsPrime0, RsCpsiRnsPrime1, RsCpsiRnsPrime2 };
         config.mPrime = config.mPrimes[0];
         config.mDataBitLength = 32;
         config.mSealPolyModulusDegree = 4096;
-        config.mSealCoeffModulusBits = { 60, 32, 17 };
+        config.mSealCoeffModulusBits = { 48, 36, 18 };
 
         auto k = config.residueCount();
         auto width = config.shareByteLength();
@@ -108,6 +108,11 @@ namespace
             }
         }
 
+        if (gPsiIpRnsDebug) std::cerr << "[exp] k=" << k << " width=" << width << " rows=" << rows << std::endl;
+        for (u64 j = 0; j < k && gPsiIpRnsDebug; ++j)
+            std::cerr << "[exp] residue " << j << " p=" << config.residuePrime(j)
+                      << " r=" << (u64)(expected % config.residuePrime(j)) << std::endl;
+        if (gPsiIpRnsDebug) std::cerr << "[exp] integer hi=" << (u64)(expected >> 64) << " lo=" << (u64)expected << std::endl;
         auto sockets = LocalAsyncSocket::makePair();
         PRNG prng(block(91, 92));
         u128 result = 0;
@@ -222,5 +227,23 @@ void RsPsiInnerproduct_seal_rns_sweep_test(const CLP& cmd)
                   << "  N=" << c.N << "  cm=" << tot << " (ctxt " << tot - c.cm.back() << ")"
                   << "  L=" << L
                   << "  -> " << (ok ? "PASS" : "fail") << std::endl;
+    }
+}
+
+
+// Repeat a single-residue HE round trip twice in one process, to see whether
+// a second SEAL context with the same parameters misbehaves.
+void RsPsiInnerproduct_seal_repeat_test(const CLP& cmd)
+{
+    auto prime = cmd.getOr("prime", RsCpsiRnsPrime0);
+    auto N = cmd.getOr("N", u64(4096));
+    auto cm = cmd.isSet("cm6032") ? std::vector<int>{60,32,17} : std::vector<int>{48,36,18};
+    auto reps = cmd.getOr("reps", u64(3));
+    for (u64 r = 0; r < reps; ++r)
+    {
+        auto ok = psiIpRnsProbe({ prime }, N, cm, 4099);
+        std::cout << "  rep " << r << " prime=" << prime << " N=" << N
+                  << " cm=" << cm[0] << "," << cm[1] << "," << cm[2]
+                  << " -> " << (ok ? "PASS" : "fail") << std::endl;
     }
 }

@@ -53,6 +53,17 @@ namespace volePSI
             writePsiIpPrimeElement(&values(i, 0), byteLength, associatedData[i]);
     }
 
+    // Long-item layout: the payload is written once per residue slot so that
+    // the CPSI data component carries (d, d, ..., d); each slot is then
+    // reduced modulo its own residue prime inside RsCpsi.
+    inline void setPsiIpPrimeValuesRns(oc::Matrix<u8>& values, span<const u64> associatedData,
+        u64 slotByteLength, u64 residueCount)
+    {
+        for (u64 i = 0; i < associatedData.size(); ++i)
+            for (u64 j = 0; j < residueCount; ++j)
+                writePsiIpPrimeElement(&values(i, j * slotByteLength), slotByteLength, associatedData[i]);
+    }
+
     Proto psiIpB2aValueOwner(
         const oc::BitVector& bitShare,
         oc::MatrixView<u8> values,
@@ -83,6 +94,7 @@ namespace volePSI
         const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
         const PsiInnerproductConfig& config, Socket& chl);
 
+    extern bool gPsiIpRnsDebug;
     bool psiIpSealParamsValid(const PsiInnerproductConfig& config);
 
     // RNS variants: evaluate one residue at a time and combine by CRT.
@@ -125,7 +137,8 @@ namespace volePSI
             }
 
             oc::Matrix<u8> values(associatedData.size(), mConfig.dataByteLength());
-            setPsiIpPrimeValues(values, associatedData, mConfig.dataByteLength());
+            setPsiIpPrimeValuesRns(values, associatedData,
+                mConfig.dataByteLength() / mConfig.residueCount(), mConfig.residueCount());
 
             if (mTimer)
                 mCpsi.setTimer(*mTimer);

@@ -41,22 +41,24 @@ namespace volePSI
     // Residue primes for the long-item setting. A correct integer inner
     // product needs an arithmetic space of 2*l + ceil(log2 |X n Y|) bits,
     // which for l = 32 and |X n Y| <= 2^20 is 84 bits. No single RLWE
-    // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. Two
-    // 42-bit residues reach 84, and both satisfy p = 1 mod 8192 so each
-    // residue still batches at N = 4096.
+    // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. We
+    // represent Z_P in RNS with three 32-bit residues, log2 P = 96 >= 84.
     //
-    // They only fit if the coefficient modulus is rebalanced. SEAL reserves
-    // the last coeff modulus prime for key switching, which this protocol
-    // never performs, so that prime is dead weight; it cannot be removed
-    // because every coeff modulus prime must also be 1 mod 2N, putting a
-    // floor of about 17 bits on it. Shrinking it from 18 to 17 and spending
-    // the rest on the ciphertext modulus takes {48,36,18} to {60,32,17},
-    // raising the top level from 84 to 92 bits, which is enough for a
-    // 42-bit plaintext multiplication. The split matters as well as the
-    // total: modulus switching drops the last non-special prime, so
-    // {60,32,17} leaves 60 bits where {55,37,17} leaves 55 and fails.
-    constexpr u64 RsCpsiRnsPrime0 = 4398046486529ULL;
-    constexpr u64 RsCpsiRnsPrime1 = 4398046240769ULL;
+    // Fewer, wider residues do not work at N = 4096. Two 42-bit residues
+    // reach 84 bits, but after a plaintext multiplication by a uniformly
+    // random share and a modulus switch the invariant noise budget is 0 for
+    // every coefficient-modulus split SEAL accepts; this was measured with
+    // random plaintexts, which is what the protocol actually multiplies (a
+    // constant plaintext understates the noise growth by ~10 bits and gives a
+    // misleadingly healthy budget). Going to N = 8192 does not rescue t = 42
+    // either, because that t is not 1 mod 2N and so cannot batch. Reusing the
+    // 32-bit residue lets every residue run with the coefficient modulus
+    // {48,36,18} already validated for the 32-bit experiments, where the
+    // budget after modulus switching is 5-6 bits with random plaintexts.
+    // All three satisfy p = 1 mod 8192 so batching works at N = 4096.
+    constexpr u64 RsCpsiRnsPrime0 = 4294475777ULL;
+    constexpr u64 RsCpsiRnsPrime1 = 4294483969ULL;
+    constexpr u64 RsCpsiRnsPrime2 = 4294729729ULL;
 
     //0719
     inline u64 RsCpsiPrimeBitLength(u64 primeModulus)
@@ -185,7 +187,9 @@ namespace volePSI
                 {
                     primeDataBitLength = dataBitLengthOverride;
                     primeDataByteLength = oc::divCeil(dataBitLengthOverride, 8);
-                    if (dataBitLengthOverride >= primeBitLength)
+                    // A payload may exceed one residue (each slot reduces it mod
+                    // its own prime); it must only fit the full RNS modulus P.
+                    if (dataBitLengthOverride >= primeBitLength * mPrimes.size())
                         throw RTE_LOC;
                 }
                 mPrimeDataBitLength = primeDataBitLength;
