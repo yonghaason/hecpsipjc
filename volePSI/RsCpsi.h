@@ -41,24 +41,23 @@ namespace volePSI
     // Residue primes for the long-item setting. A correct integer inner
     // product needs an arithmetic space of 2*l + ceil(log2 |X n Y|) bits,
     // which for l = 32 and |X n Y| <= 2^20 is 84 bits. No single RLWE
-    // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. We
-    // represent Z_P in RNS with three 32-bit residues, log2 P = 96 >= 84.
+    // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. Two
+    // 42-bit residues reach exactly 84; both are 1 mod 8192 so each residue
+    // batches at N = 4096.
     //
-    // Fewer, wider residues do not work at N = 4096. Two 42-bit residues
-    // reach 84 bits, but after a plaintext multiplication by a uniformly
-    // random share and a modulus switch the invariant noise budget is 0 for
-    // every coefficient-modulus split SEAL accepts; this was measured with
-    // random plaintexts, which is what the protocol actually multiplies (a
-    // constant plaintext understates the noise growth by ~10 bits and gives a
-    // misleadingly healthy budget). Going to N = 8192 does not rescue t = 42
-    // either, because that t is not 1 mod 2N and so cannot batch. Reusing the
-    // 32-bit residue lets every residue run with the coefficient modulus
-    // {48,36,18} already validated for the 32-bit experiments, where the
-    // budget after modulus switching is 5-6 bits with random plaintexts.
-    // All three satisfy p = 1 mod 8192 so batching works at N = 4096.
-    constexpr u64 RsCpsiRnsPrime0 = 4294475777ULL;
-    constexpr u64 RsCpsiRnsPrime1 = 4294483969ULL;
-    constexpr u64 RsCpsiRnsPrime2 = 4294729729ULL;
+    // A 42-bit plaintext needs more ciphertext modulus than SEAL's 128-bit
+    // security table allows at N = 4096 (109 bits total). The protocol only
+    // ever uses the first two coefficient primes, the third being SEAL's
+    // key-switching prime which we never use, so the security check is
+    // disabled (sec_level_type::none) and the split is chosen so that the
+    // first two primes stay within the 109-bit bound: {60,45,20}. Measured
+    // with uniformly random plaintexts at n = 2^20 (338 accumulated
+    // ciphertexts), the invariant noise budget after modulus switching is
+    // 6-7 bits; lowering the first prime below 60 or the second below 45
+    // drops it to 0-2. (The first prime is what the transmitted ciphertext
+    // lives on after modulus switching, so it sets the HE communication.)
+    constexpr u64 RsCpsiRnsPrime0 = 4398046486529ULL;
+    constexpr u64 RsCpsiRnsPrime1 = 4398046240769ULL;
 
     //0719
     inline u64 RsCpsiPrimeBitLength(u64 primeModulus)

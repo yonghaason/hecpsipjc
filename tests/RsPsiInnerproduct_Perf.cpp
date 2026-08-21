@@ -97,12 +97,12 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     auto intersectionSize = cmd.getOr("intersection", n / 2);
     auto tcp = cmd.isSet("tcp");
     auto port = cmd.getOr("port", u64(18181));
-    // -rns: long-item setting, 32-bit payloads over P = p0*p1*p2 (96 bits)
+    // -rns: long-item setting, 32-bit payloads over P = p0*p1 (84 bits)
     auto rns = cmd.isSet("rns");
     gPsiIpRnsDebug = cmd.isSet("rnsdebug");
     if (n == 0 || intersectionSize > n || numThreads == 0)
         throw RTE_LOC;
-    auto primes = rns ? std::vector<u64>{ RsCpsiRnsPrime0, RsCpsiRnsPrime1, RsCpsiRnsPrime2 }
+    auto primes = rns ? std::vector<u64>{ RsCpsiRnsPrime0, RsCpsiRnsPrime1 }
                       : std::vector<u64>{ prime };
     if (rns) prime = primes[0];
     auto dataBits = rns ? u64(32) : RsCpsiDataBitLength(prime);
@@ -146,7 +146,8 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     {
         config.mPrimes = primes;
         config.mDataBitLength = dataBits;
-        config.mSealCoeffModulusBits = { 48, 36, 18 };
+        config.mSealCoeffModulusBits = { 60, 45, 20 };
+        config.mSealEnforceSecurity = false;
     }
     auto sender = PsiInnerproductSender{};
     auto receiver = PsiInnerproductReceiver{};

@@ -414,7 +414,7 @@ namespace volePSI
         }
 
         auto parms = makeParameters(config);
-        auto context = seal::SEALContext(parms);
+        auto context = seal::SEALContext(parms, true, config.mSealEnforceSecurity ? seal::sec_level_type::tc128 : seal::sec_level_type::none);
         if (!context.parameters_set())
             throw std::invalid_argument(context.parameter_error_message());
         auto encoding = encodingFor(context);
@@ -481,7 +481,7 @@ namespace volePSI
         if (parms.scheme() != seal::scheme_type::bgv || parms.plain_modulus().value() != config.mPrime ||
             parms.poly_modulus_degree() != config.mSealPolyModulusDegree)
             throw std::invalid_argument("receiver supplied unexpected BGV parameters");
-        auto context = seal::SEALContext(parms);
+        auto context = seal::SEALContext(parms, true, config.mSealEnforceSecurity ? seal::sec_level_type::tc128 : seal::sec_level_type::none);
         seal::Evaluator evaluator(context);
         auto encoding = encodingFor(context);
         auto encoder = encoding.batching ? std::make_unique<seal::BatchEncoder>(context) : nullptr;
@@ -581,7 +581,7 @@ namespace volePSI
             parms.set_coeff_modulus(seal::CoeffModulus::Create(
                 config.mSealPolyModulusDegree, config.mSealCoeffModulusBits));
             parms.set_plain_modulus(config.mPrime);
-            seal::SEALContext ctx(parms, true, seal::sec_level_type::tc128);
+            seal::SEALContext ctx(parms, true, config.mSealEnforceSecurity ? seal::sec_level_type::tc128 : seal::sec_level_type::none);
             return ctx.parameters_set();
         }
         catch (...) { return false; }

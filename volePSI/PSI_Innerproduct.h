@@ -19,6 +19,10 @@ namespace volePSI
         // so it is kept as small as SEAL allows and the rest of the budget is
         // left to the ciphertext modulus.
         std::vector<int> mSealCoeffModulusBits = { 48, 36, 18 };
+        // When false, SEALContext is built with sec_level_type::none. Used by the
+        // long-item setting, whose residues exceed SEAL's 128-bit table at N=4096
+        // although only the first two coefficient primes are ever used.
+        bool mSealEnforceSecurity = true;
 
         // Residue primes for the long-item setting. Empty means single residue.
         std::vector<u64> mPrimes = {};

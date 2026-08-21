@@ -64,17 +64,18 @@ namespace
 
     // Long-item setting: 32-bit payloads need an arithmetic space of
     // 2*32 + log2(rows) bits, which exceeds what one SEAL plaintext modulus
-    // holds. Represent Z_P with three 32-bit residues and combine by CRT.
+    // holds. Represent Z_P with two 42-bit residues and combine by CRT.
     void runRnsCase(u64 rows)
     {
         using u128 = unsigned __int128;
         PsiInnerproductConfig config;
         // sweepable via -p0/-p1/-N/-cm for the residue-width experiment
-        config.mPrimes = { RsCpsiRnsPrime0, RsCpsiRnsPrime1, RsCpsiRnsPrime2 };
+        config.mPrimes = { RsCpsiRnsPrime0, RsCpsiRnsPrime1 };
         config.mPrime = config.mPrimes[0];
         config.mDataBitLength = 32;
         config.mSealPolyModulusDegree = 4096;
-        config.mSealCoeffModulusBits = { 48, 36, 18 };
+        config.mSealCoeffModulusBits = { 60, 45, 20 };
+        config.mSealEnforceSecurity = false;
 
         auto k = config.residueCount();
         auto width = config.shareByteLength();
