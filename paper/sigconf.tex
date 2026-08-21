@@ -1554,7 +1554,7 @@ OPRF masking과 OKVS의 encoding 및 decoding은 비트열 위의 연산으로 �
 변경되지 않는다.
 
 두 group의 치환이 형식적이지 않은 지점은 $\Z_p$ 원소를 OKVS value에 담기
-위한 encoding 하나이며, 이는 \Cref{sec:cpsi-zp}에서 다루었다.
+위한 encoding 하나이며, 이는 앞의 \emph{Encoding of the data component}에서 다루었다.
 \eqref{eq:redundant-encoding}에 의해 $\overline{u}_i$의 분포는 $\{0,1\}^{L}$
 위의 uniform distribution과 statistical distance $2^{-\lambda_s}$ 이내이므로,
 simulator는 해당 component를 uniform한 비트열로 대체할 수 있다. 나머지
@@ -1562,6 +1562,12 @@ hybrid는 기존 증명과 동일하다.
 \end{proof}
 
 \section{Our PJC Protocol}\label{sec:our-pjc}
+본 절에서는 \Cref{sec:cpsi-zp}의 AF-CPSI가 출력하는 arithmetic share를
+동형암호 연산에 입력하여 PJC를 완성한다. 구성을 제시하고(\Cref{sec:pjc-construction}),
+보안성을 증명한 뒤(\Cref{sec:security-pjc}), communication cost를 분석하고
+(\Cref{sec:comm-analysis}), 정수 inner product를 위한 long-item 설정
+(\Cref{sec:long-items})과 채택하지 않은 대안(\Cref{sec:ctct})을 다룬다.
+
 \subsection{Construction}\label{sec:pjc-construction}
 
 Figure~\ref{fig:cpsi-zp-construction}의 Circuit-PSI over
