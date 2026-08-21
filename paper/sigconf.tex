@@ -398,15 +398,30 @@ $\ell$이 커질수록 이 항이 전체 통신량을 지배한다.
 
 첫 번째로, \cite{LTS+26}의 PJC 구현에서 발생하는 leakage를 제시한다. 해당 구현은 Circuit-PSI의 출력인 $\mathcal{R}$의 payload share 전체를 하나의 global mask로 마스킹하여 $\mathcal{S}$에게 전달하므로, $\mathcal{S}$는 마스킹된 두 값을 XOR하여 mask를 소거하고 share 사이의 XOR 관계를 얻을 수 있다. 이 경우 $\mathcal{S}$는 payload의 실제 값을 알지 못하더라도 원소 간의 상대적인 관계나 데이터의 분포와 같은 부가적인 정보를 추론할 수 있으며, 이는 PJC의 의도된 출력으로부터는 얻을 수 없는 정보이다.
 
-두 번째로, $O(\ell)$을 만족하는 new PJC protocol을 제시한다.
-현재 Circuit-PSI는 XOR이 출력되도록 field를 설정하지만, 이는 PJC 단계에서 사용하는 동형암호(Homomorphic Encryption, HE)와 연산의 field가 호환되지 않아 PSI의 결과를 바탕으로 PJC의 해시함수를 시행하는 데에 어려움이 존재하였다.
+두 번째로, OKVS 기반 circuit-PSI와 동형암호를 결합한 새로운 PJC 프로토콜을
+제시한다. 아이디어 자체는 단순하다. Circuit-PSI가 교집합 위치에서만 payload의
+share를 내놓으므로, 그 share를 동형암호로 한 번 곱하고 더하면 inner product가
+된다. 이렇게 하면 payload 폭 $\ell$에 대한 비용이 선형이 되어, bit decomposition
+위에 OT를 쌓는 기존 방식의 $O(\ell^2)$을 $O(\ell)$로 낮출 수 있다.
 
-이에 본 논문은 마스킹 값을 사용하는 프로토콜을 새롭게 교정하고 $\mathbb{Z}_p$ 위에서 arithmetic share 형태로 출력되도록 변형하여 교집합 원소를 식별한 후, 동형암호를 이용하여 교집합 원소에 대응되는 값들의 내적을 계산하는 프로토콜을 설계하였고, 실험을 통해 성능이 개선되었음을 확인하였다.
-또한 정수 inner product에 필요한 arithmetic space가 단일 RLWE plaintext modulus를
-넘는 경우를 위해 payload 경로를 RNS로 확장하고, 그 비용을 실측으로 보인다.
-$n=2^{20}$, $L=32$에서 \cite{KLS26} 대비 통신량은 32.4\%, LAN 실행 시간은 59.5\% 감소하며, 정수 inner product를 위한 $L=84$ 설정에서는 제안 프로토콜의 비용이 $1.56$배 증가하는 동안 \cite{KLS26}의 비용은 MultShare의 이차 증가로 약 $4.65$배 증가한다.
+그러나 두 구성 요소를 실제로 이어 붙이면 그 사이에서 몇 가지 문제가 드러난다.
+Circuit-PSI의 share는 XOR 위에 있고 동형암호의 평문은 $\mathbb{Z}_p$ 위에
+있어 그대로는 연결되지 않는다. 우리는 circuit-PSI의 payload 경로만
+$\mathbb{Z}_p$로 옮기고 식별자 경로는 비트열 위에 그대로 두는 AF-CPSI를
+설계하는데, 이때 $\mathbb{Z}_p$ 원소를 OKVS의 비트열 value에 담는 encoding이
+membership 정보를 새게 할 수 있음을 발견하고 statistical slack을 둔 encoding으로
+막는다. 동형암호 쪽에서는 복호화 키를 가진 쪽이 noise를 통해 상대의 share를
+복원할 수 있으므로 circuit privacy가 필요하다는 점을 짚고, 정수 inner product를
+원하는 경우에는 곱의 누적 때문에 arithmetic space가 $2\ell+\log_2|X\cap Y|$
+bits 이상이어야 하며 이것이 단일 RLWE plaintext modulus를 넘을 때 RNS로
+처리한다. 각 문제는 개별적으로는 알려진 기법으로 풀리지만, 한 프로토콜 안에서
+모두 다뤄야 비로소 성능 수치가 의미를 갖는다는 것이 이 부분의 요지이다. 제안
+프로토콜은 semi-honest 모델에서 안전함을 증명한다.
 
-
+실험에서 $n=2^{20}$, $L=32$일 때 \cite{KLS26} 대비 통신량은 32.4\%, LAN
+실행 시간은 59.5\% 감소한다. 정수 inner product를 위한 $L=84$ 설정에서는
+제안 프로토콜의 통신량이 $1.56$배 증가하는 동안 \cite{KLS26}는 $4.65$배
+증가하여 격차가 더 벌어진다.
 
 \section{Preliminary}\label{sec:prelim}
 
