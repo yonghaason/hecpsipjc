@@ -611,7 +611,9 @@ Batching 환경에서 수행되는 동형연산은 입력의 형태에 따라 �
 
 
 \section{Recap of Circuit Private Set Intersection}\label{sec:cpsi-recap}
-This section에서는, Our contribution--cryptanalysis and construction--을 one stroke로 이해할 수 있는 주요 background인, circuit-based PSI~\cite{PSTY19, RS21}라는 개념을 정리한다. 
+\Cref{sec:cryptanalysis}의 cryptanalysis와 \Cref{sec:our-protocol}의 제안
+construction은 모두 \cite{PSTY19,RS21}의 circuit-based PSI를 기준으로
+기술된다. 본 절에서는 해당 기존 construction을 정리한다.
 
 Circuit-PSI는 일반적인 PSI와 달리 교집합을 어느 한 참여자에게
 직접 공개하지 않고, 교집합 여부를 나타내는 결과를 두 참여자에게
@@ -627,6 +629,12 @@ share를 얻고, non-membership 위치에서는 random한 값에 대한 share를
 non-membership 위치의 random value를 $0$으로 소거한다.
 따라서 최종적으로 membership 위치에서는 $D_i^{Y'}$에 대한 share가
 유지되고, non-membership 위치에서는 $0$에 대한 share를 얻는다.
+
+본 절의 두 단계 구분은 이후 논의에서 그대로 사용된다.
+\Cref{sec:cryptanalysis}에서 분석하는 \cite{LTS+26}의 문제는 Step~1의
+출력인 payload share를 다루는 방식에서 발생하며,
+\Cref{sec:cpsi-zp}에서 제안하는 AF-CPSI는 Step~1과 Step~2를 각각
+수정하여 얻어진다.
 
 이러한 두 단계의 입출력 관계를
 Figure~\ref{fig:cpsi-ideal-functionality}의 ideal functionality로 정리하고, 이어서 구체적으로 설명한다.
