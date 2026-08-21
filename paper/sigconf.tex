@@ -266,24 +266,27 @@
 %% article.
 \begin{abstract}
 Private join and compute (PJC) lets two parties learn the inner product of
-the payloads attached to the identifiers their sets share, and nothing else.
-The fastest recent constructions build it from circuit-PSI over OKVS. We
-make two contributions. First, we show that the PJC implementation behind
-the reported numbers of a recent OKVS-based protocol reuses a single global
-mask across all payload shares, which lets the sender recover the XOR of any
-two of the receiver's shares; the reported performance was therefore
-obtained at a weaker security level than the one claimed, and is not
-comparable like for like. Second, we give a PJC protocol whose cost is
-linear in the payload width $\ell$ rather than quadratic. We lift
-circuit-PSI from $\mathbb{F}_2$ to $\mathbb{Z}_p$ (AF-CPSI) so that its
-output shares feed a BGV inner product directly, prove the construction
-secure against semi-honest adversaries, and identify and close a leakage in
-the $\mathbb{Z}_p$-to-bitstring encoding that the lift introduces. Against
-the best prior circuit-PSI-based PJC at $n=2^{20}$ in the 32-bit setting, our
-protocol uses 32\% less communication and runs 60\% faster on a
-LAN. When the inner product over 32-bit payloads is required as an exact
-integer rather than modulo a fixed prime, our communication grows by $1.56\times$ while the quadratic baseline grows by
-$4.65\times$.
+the payloads attached to the identifiers their sets share, and nothing else;
+it underlies ad-conversion measurement and similar joint analytics. Its cost
+is dominated by how the payload values are handled once the intersection is
+identified, and circuit-PSI-based constructions have paid a price quadratic
+in the payload width $\ell$. A recent protocol (NDSS~'26) reported
+bringing this to $O(\ell)$.
+
+We make two contributions. First, we show that the implementation behind
+those reported numbers is not secure: it masks all of the receiver's payload
+shares with a single global mask, so the sender learns the XOR of any two
+shares, information the PJC functionality does not reveal. The reported
+performance was therefore obtained at a weaker security level than claimed.
+Second, we achieve $O(\ell)$ securely. We lift OKVS-based circuit-PSI from
+$\mathbb{F}_2$ to $\mathbb{Z}_p$ so that its output shares feed a single
+plaintext--ciphertext multiplication under BGV, address what breaks at the
+seam between the two primitives, and prove the protocol secure against
+semi-honest adversaries. Against the previous best secure construction, which
+is $O(\ell^2)$, on inner products over 32-bit payloads with $2^{20}$ items
+per party our protocol uses 32\% less communication and runs 60\% faster on
+a LAN; when the inner product is required as an exact integer rather than
+modulo a fixed prime, the gap widens to $4.4\times$ less communication.
 \end{abstract}
 
 %%
