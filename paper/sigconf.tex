@@ -2089,9 +2089,7 @@ coefficient modulus를 $\{60,45,20\}$으로 둔다. Uniformly random한 share를
 \cite{KLS26}에 대해서도 동일한 요구조건이 적용된다. 정수 inner product를
 위해서는 같은 $L=84$ ring이 필요하고, MultShare 항은 $L$에 대해 이차이므로
 $L=32$ 대비 $(84/32)^2\approx6.9$배가 된다(식별자 경로는 변하지 않으므로 전체
-증가율은 이보다 낮다).
-
-측정 결과는 \Cref{sec:integer-ip-exp}에 제시한다.
+증가율은 이보다 낮다). 두 프로토콜의 실측은 \Cref{sec:integer-ip-exp}에 제시한다.
 
 \subsection{Alternative: Ct--Ct Multiplication-based Construction}\label{sec:ctct}
 본 절에서는 대안 construction을 하나 기술하고, 이를 최종 프로토콜로 채택하지
@@ -2566,7 +2564,7 @@ $\ell=23$의 다른 파라미터에서 얻어진 것이므로 이 설정에서�
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 32-bit 설정과
+Table~\ref{tab:pjc-long}의 결과는 \Cref{tab:pjc-breakdown}의 $L=32$ 설정과
 다음과 같이 대응된다. 잔여류가 둘이므로 OKVS data component, B2A-OT, HE 단계가
 각각 두 배가 되고, 식별자 경로는 그대로이다. $n=2^{20}$에서 제안 프로토콜은
 218.010\,MB에서 340.631\,MB로 약 $1.56$배 증가하는 반면, \cite{KLS26}은
