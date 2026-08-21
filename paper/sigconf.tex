@@ -56,6 +56,9 @@
 
 \usepackage{kotex}
 % \usepackage[pdftex]{graphicx}
+% acmart loads newtxmath, which already defines \Bbbk; amssymb then tries to
+% define it again and errors out. Release the name before loading amssymb.
+\let\Bbbk\relax
 \usepackage{amsmath,amssymb}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
