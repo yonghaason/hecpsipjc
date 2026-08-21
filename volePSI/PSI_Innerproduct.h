@@ -13,10 +13,38 @@ namespace volePSI
         u64 mPrime = RsCpsiDefaultPrime;
         u64 mStatSecParam = 40;
         u64 mNumThreads = 1;
-        u64 mSealPolyModulusDegree = 8192;
+        u64 mSealPolyModulusDegree = 4096;
+        // Coefficient modulus bit sizes. The last entry is SEAL's special
+        // prime, reserved for key switching; this protocol never key switches,
+        // so it is kept as small as SEAL allows and the rest of the budget is
+        // left to the ciphertext modulus.
+        std::vector<int> mSealCoeffModulusBits = { 48, 36, 18 };
+        // When false, SEALContext is built with sec_level_type::none. Used by the
+        // integer-inner-product setting: SEAL's check sums all coefficient primes,
+        // but only the first two are used (105 bits, under the 109-bit 128-bit
+        // bound at N=4096), so the check is skipped without reducing security.
+        bool mSealEnforceSecurity = true;
 
-        u64 dataByteLength() const { return RsCpsiDataByteLength(mPrime); }
+        // Residue primes for the integer-inner-product setting. Empty means single residue.
+        std::vector<u64> mPrimes = {};
+        // Payload width; 0 keeps the default half-residue width.
+        u64 mDataBitLength = 0;
+
+        u64 residueCount() const { return mPrimes.empty() ? 1 : mPrimes.size(); }
+        u64 residuePrime(u64 slot) const
+        {
+            return mPrimes.empty() ? mPrime : mPrimes[slot % mPrimes.size()];
+        }
+        u64 dataByteLength() const
+        {
+            auto one = mDataBitLength ? oc::divCeil(mDataBitLength, 8)
+                                      : RsCpsiDataByteLength(mPrime);
+            return one * residueCount();
+        }
+        // width of a single residue share
         u64 shareByteLength() const { return RsCpsiPrimeByteLength(mPrime); }
+        // width of a full RNS share across all residues
+        u64 totalShareByteLength() const { return shareByteLength() * residueCount(); }
     };
 
     inline void writePsiIpPrimeElement(u8* dst, u64 byteLength, u64 v)
@@ -28,6 +56,17 @@ namespace volePSI
     {
         for (u64 i = 0; i < associatedData.size(); ++i)
             writePsiIpPrimeElement(&values(i, 0), byteLength, associatedData[i]);
+    }
+
+    // Integer-inner-product layout: the payload is written once per residue slot so that
+    // the CPSI data component carries (d, d, ..., d); each slot is then
+    // reduced modulo its own residue prime inside RsCpsi.
+    inline void setPsiIpPrimeValuesRns(oc::Matrix<u8>& values, span<const u64> associatedData,
+        u64 slotByteLength, u64 residueCount)
+    {
+        for (u64 i = 0; i < associatedData.size(); ++i)
+            for (u64 j = 0; j < residueCount; ++j)
+                writePsiIpPrimeElement(&values(i, j * slotByteLength), slotByteLength, associatedData[i]);
     }
 
     Proto psiIpB2aValueOwner(
@@ -59,6 +98,16 @@ namespace volePSI
     Proto psiIpHeReceiver(span<const u64> receiverPayload,
         const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
         const PsiInnerproductConfig& config, Socket& chl);
+
+    extern bool gPsiIpRnsDebug;
+    bool psiIpSealParamsValid(const PsiInnerproductConfig& config);
+
+    // RNS variants: evaluate one residue at a time and combine by CRT.
+    Proto psiIpHeSenderRns(oc::MatrixView<u8> arithmeticShare, unsigned __int128& result,
+        const PsiInnerproductConfig& config, PRNG& prng, Socket& chl);
+    Proto psiIpHeReceiverRns(span<const u64> receiverPayload,
+        const RsCpsiReceiver::Sharing& receiverSharing, oc::MatrixView<u8> arithmeticShare,
+        const PsiInnerproductConfig& config, Socket& chl);
 #endif
 
     class PsiInnerproductSender : public oc::TimerAdapter
@@ -78,7 +127,10 @@ namespace volePSI
                 seed,
                 mConfig.mNumThreads,
                 ValueShareType::prime,
-                mConfig.mPrime);
+                mConfig.mPrime,
+                RsCpsiDefaultPrimeStatSecParam,
+                mConfig.mPrimes,
+                mConfig.mDataBitLength);
         }
 
         Proto send(span<block> identifiers, span<const u64> associatedData, CpsiSharing& share, Socket& chl)
@@ -90,7 +142,8 @@ namespace volePSI
             }
 
             oc::Matrix<u8> values(associatedData.size(), mConfig.dataByteLength());
-            setPsiIpPrimeValues(values, associatedData, mConfig.dataByteLength());
+            setPsiIpPrimeValuesRns(values, associatedData,
+                mConfig.dataByteLength() / mConfig.residueCount(), mConfig.residueCount());
 
             if (mTimer)
                 mCpsi.setTimer(*mTimer);
@@ -141,7 +194,10 @@ namespace volePSI
                 seed,
                 mConfig.mNumThreads,
                 ValueShareType::prime,
-                mConfig.mPrime);
+                mConfig.mPrime,
+                RsCpsiDefaultPrimeStatSecParam,
+                mConfig.mPrimes,
+                mConfig.mDataBitLength);
         }
 
         Proto receive(span<block> identifiers, CpsiSharing& share, Socket& chl)

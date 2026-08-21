@@ -230,7 +230,13 @@ namespace volePSI
 		if (mTimer)
 			mOprfReceiver.setTimer(*mTimer);
 
-		if (outputs.cols() >= sizeof(block))
+		// Only alias oprfOutput onto the tail of outputs when m == sizeof(block),
+		// where the paxos.decode<block> path below consumes it in one shot.
+		// For m > sizeof(block) the loop below walks outputs forward while
+		// reading oprfOutput[i], and the alignment adjustment lets the write
+		// pointer catch up with the read pointer over the final entries, which
+		// silently corrupts the last few decoded values.
+		if (outputs.cols() == sizeof(block))
 		{
 			// reuse memory. extra logic to make sure oprfOutput is properly aligned.
 			auto ptr = outputs.data() + outputs.size();

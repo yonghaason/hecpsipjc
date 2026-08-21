@@ -7,3 +7,20 @@ CMakeSettings.json
 ~/
 docs/
 .DS_Store
+
+# LaTeX build output
+paper/.build/
+
+# latexmk output in paper/ (the tracked build lives in paper/.build/ only)
+paper/sigconf.aux
+paper/sigconf.bbl
+paper/sigconf.blg
+paper/sigconf.fdb_latexmk
+paper/sigconf.fls
+paper/sigconf.log
+paper/sigconf.out
+paper/sigconf.pdf
+paper/sigconf.synctex.gz
+
+# paper source (kept out of the artifact repo)
+paper/

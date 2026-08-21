@@ -48,12 +48,15 @@ namespace volePSI
         }
 
         //0719
-        void samplePrimeShares(MatrixView<u8> values, PRNG& prng, u64 prime, u64 bitLength, u64 byteLength)
+        void samplePrimeShares(MatrixView<u8> values, PRNG& prng, span<const u64> primes,
+            u64 bitLength, u64 byteLength)
         {
             for (u64 i = 0; i < values.rows(); ++i)
             {
-                for (u64 j = 0; j < values.cols(); j += byteLength)
+                auto slot = u64{};
+                for (u64 j = 0; j < values.cols(); j += byteLength, ++slot)
                 {
+                    auto prime = primes[slot % primes.size()];
                     writePrimeElement(&values(i, j), byteLength, samplePrime(prng, prime, bitLength, byteLength));
                 }
             }
@@ -71,6 +74,72 @@ namespace volePSI
         u64 primeShareByteLength(u64 valueByteLength, u64 dataByteLength, u64 primeByteLength)
         {
             return (valueByteLength / dataByteLength) * primeByteLength;
+        }
+
+        using u128 = unsigned __int128;
+
+        // The encoded data component can exceed 64 bits, so it is read and
+        // written through a u128 rather than a u64.
+        u128 readEncodedElement(const u8* src, u64 byteLength)
+        {
+            auto v = u128{};
+            std::memcpy(&v, src, byteLength);
+            return v;
+        }
+
+        void writeEncodedElement(u8* dst, u64 byteLength, u128 v)
+        {
+            std::memcpy(dst, &v, byteLength);
+        }
+
+        // floor(2^encBitLength / prime): the number of representatives of each
+        // residue class that fit in encBitLength bits.
+        u128 primeCosetSize(u64 prime, u64 encBitLength)
+        {
+            return (u128(1) << encBitLength) / prime;
+        }
+
+        u128 sampleBelow(PRNG& prng, u128 bound)
+        {
+            auto bits = u64{};
+            for (auto t = bound - 1; t; t >>= 1)
+                ++bits;
+
+            if (bits == 0)
+                return 0;
+
+            auto mask = bits >= 128 ?
+                ~u128(0) :
+                ((u128(1) << bits) - 1);
+            auto v = u128{};
+
+            do
+            {
+                v = 0;
+                prng.get<u8>(span<u8>((u8*)&v, sizeof(v)));
+                v &= mask;
+            } while (v >= bound);
+
+            return v;
+        }
+
+        // Map u in [0,p) to a uniformly chosen representative u + p*rho that
+        // fits in encBitLength bits. The result is uniform over [0, p*cosetSize)
+        // and therefore within p / 2^encBitLength <= 2^-statSecParam of uniform
+        // over all encBitLength-bit strings.
+        u128 encodePrimeElement(PRNG& prng, u64 u, u64 prime, u128 cosetSize)
+        {
+            return u128(u) + u128(prime) * sampleBelow(prng, cosetSize);
+        }
+
+        u64 decodePrimeElement(u128 encoded, u64 prime)
+        {
+            return u64(encoded % prime);
+        }
+
+        u64 primeEncShareByteLength(u64 valueByteLength, u64 dataByteLength, u64 encByteLength)
+        {
+            return (valueByteLength / dataByteLength) * encByteLength;
         }
     }
 
@@ -94,6 +163,8 @@ namespace volePSI
             auto cir = BetaCircuit{};
             //0719
             auto shareByteLength = u64{};
+            auto okvsValueByteLength = u64{};
+            auto cosetSizes = std::vector<u128>{};
 
         setTimePoint("RsCpsiSender::send begin");
         if (mSenderSize != Y.size() || mValueByteLength != values.cols())
@@ -106,10 +177,14 @@ namespace volePSI
         if (mType == ValueShareType::prime)
         {
             shareByteLength = primeShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeByteLength);
+            okvsValueByteLength = primeEncShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeEncByteLength);
+            for (auto q : mPrimes)
+                cosetSizes.push_back(primeCosetSize(q, mPrimeEncBitLength));
         }
         else
         {
             shareByteLength = values.cols();
+            okvsValueByteLength = shareByteLength;
         }
 
         co_await (chl.recv(cuckooSeed));
@@ -135,7 +210,7 @@ namespace volePSI
         Ty.resize(Y.size() * 3);
 
         // The value associated with the k'th OPPRF input
-        Tv.resize(Y.size() * 3, keyByteLength + shareByteLength, oc::AllocType::Uninitialized);
+        Tv.resize(Y.size() * 3, keyByteLength + okvsValueByteLength, oc::AllocType::Uninitialized);
 
         // The special value assigned to the i'th bin.
         r.resize(numBins, keyByteLength, oc::AllocType::Uninitialized);
@@ -148,7 +223,7 @@ namespace volePSI
         //0714
         //0719
         if (mType == ValueShareType::prime)
-            samplePrimeShares(ret.mValues, mPrng, mPrime, mPrimeBitLength, mPrimeByteLength);
+            samplePrimeShares(ret.mValues, mPrng, mPrimes, mPrimeBitLength, mPrimeByteLength);
         else
             mPrng.get<u8>(ret.mValues);
 
@@ -170,7 +245,8 @@ namespace volePSI
 
                 if (values.size())
                 {
-                    memcpy(&*TvIter, &values(b, 0), values.cols());
+                    if (mType != ValueShareType::prime)
+                        memcpy(&*TvIter, &values(b, 0), values.cols());
 
                     if (mType == ValueShareType::Xor)
                     {
@@ -193,15 +269,23 @@ namespace volePSI
                     else if (mType == ValueShareType::prime)
                     {
                         auto srcOffset = u64{};
-                        auto dstOffset = u64{};
+                        auto shareOffset = u64{};
+                        auto encOffset = u64{};
+                        auto slot = u64{};
                         while (srcOffset < values.cols())
                         {
-                            auto tv = readPrimeElement(&values(b, srcOffset), mPrimeDataByteLength);
-                            auto rr = readPrimeElement(&ret.mValues(i, dstOffset), mPrimeByteLength);
+                            auto prime = mPrimes[slot % mPrimes.size()];
+                            auto tv = readPrimeElement(&values(b, srcOffset), mPrimeDataByteLength) % prime;
+                            auto rr = readPrimeElement(&ret.mValues(i, shareOffset), mPrimeByteLength);
+                            auto u = modSubPrime(tv, rr, prime);
 
-                            writePrimeElement(&*TvIter + dstOffset, mPrimeByteLength, modSubPrime(tv, rr, mPrime));
+                            writeEncodedElement(&*TvIter + encOffset, mPrimeEncByteLength,
+                                encodePrimeElement(mPrng, u, prime, cosetSizes[slot % mPrimes.size()]));
+
                             srcOffset += mPrimeDataByteLength;
-                            dstOffset += mPrimeByteLength;
+                            shareOffset += mPrimeByteLength;
+                            encOffset += mPrimeEncByteLength;
+                            ++slot;
                         }
                     }
                     else
@@ -209,7 +293,7 @@ namespace volePSI
                         co_await chl.close();
                         throw RTE_LOC;
                     }
-                    TvIter += shareByteLength;
+                    TvIter += okvsValueByteLength;
                 }
 
                 ++TyIter;
@@ -235,6 +319,7 @@ namespace volePSI
 
         cir = isZeroCircuit(keyBitLength);
         cmp->init(r.rows(), cir, mNumThreads, 1, mPrng.get());
+        applyTriples(*cmp);
 
         cmp->setInput(0, r);
         {
@@ -274,15 +359,22 @@ namespace volePSI
             auto cir = BetaCircuit{};
             //0719
             auto shareByteLength = u64{};
+            auto okvsValueByteLength = u64{};
 
         if (mRecverSize != X.size())
             throw RTE_LOC;
         //0714
         //0719
         if (mType == ValueShareType::prime)
+        {
             shareByteLength = primeShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeByteLength);
+            okvsValueByteLength = primeEncShareByteLength(mValueByteLength, mPrimeDataByteLength, mPrimeEncByteLength);
+        }
         else
+        {
             shareByteLength = mValueByteLength;
+            okvsValueByteLength = shareByteLength;
+        }
 
         setTimePoint("RsCpsiReceiver::receive begin");
 
@@ -333,7 +425,7 @@ namespace volePSI
         keyBitLength = mSsp + oc::log2ceil(Tx.size());
         keyByteLength = oc::divCeil(keyBitLength, 8);
 
-        r.resize(Tx.size(), keyByteLength + shareByteLength, oc::AllocType::Uninitialized);
+        r.resize(Tx.size(), keyByteLength + okvsValueByteLength, oc::AllocType::Uninitialized);
 
         if (mTimer)
             opprf->setTimer(*mTimer);
@@ -345,6 +437,7 @@ namespace volePSI
 
         cir = isZeroCircuit(keyBitLength);
         cmp->init(r.rows(), cir, mNumThreads, 0, mPrng.get());
+        applyTriples(*cmp);
 
         cmp->implSetInput(0, r, r.cols());
 
@@ -372,9 +465,36 @@ namespace volePSI
             {
                 ret.mValues.resize(numBins, shareByteLength);
 
-                for (u64 i = 0; i < numBins; ++i)
+                //0719
+                if (mType == ValueShareType::prime)
                 {
-                    std::memcpy(&ret.mValues(i, 0), &r(i, keyByteLength), shareByteLength);
+                    // undo the redundant encoding: the share is the recovered
+                    // representative reduced modulo p.
+                    for (u64 i = 0; i < numBins; ++i)
+                    {
+                        auto shareOffset = u64{};
+                        auto encOffset = u64{};
+                        auto slot = u64{};
+                        while (shareOffset < shareByteLength)
+                        {
+                            auto encoded = readEncodedElement(
+                                &r(i, keyByteLength + encOffset), mPrimeEncByteLength);
+
+                            writePrimeElement(&ret.mValues(i, shareOffset), mPrimeByteLength,
+                                decodePrimeElement(encoded, mPrimes[slot % mPrimes.size()]));
+
+                            shareOffset += mPrimeByteLength;
+                            encOffset += mPrimeEncByteLength;
+                            ++slot;
+                        }
+                    }
+                }
+                else
+                {
+                    for (u64 i = 0; i < numBins; ++i)
+                    {
+                        std::memcpy(&ret.mValues(i, 0), &r(i, keyByteLength), shareByteLength);
+                    }
                 }
             }
         }

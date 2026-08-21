@@ -2,8 +2,10 @@
 
 #include "Common.h"
 #include "volePSI/PSI_Innerproduct.h"
+#include "coproto/Socket/AsioSocket.h"
 
 #include <chrono>
+#include <future>
 #include <iomanip>
 
 using coproto::LocalAsyncSocket;
@@ -69,6 +71,22 @@ namespace
         return { a.mReceiverSent + b.mReceiverSent, a.mSenderSent + b.mSenderSent,
             a.mSeconds + b.mSeconds };
     }
+
+    std::array<Socket, 2> makeSockets(bool tcp, u64 port)
+    {
+        if (!tcp)
+        {
+            auto local = LocalAsyncSocket::makePair();
+            return { std::move(local[0]), std::move(local[1]) };
+        }
+
+        auto address = std::string("127.0.0.1:") + std::to_string(port);
+        auto server = std::async(std::launch::async, [&] {
+            return coproto::asioConnect(address, true);
+        });
+        auto client = coproto::asioConnect(address, false);
+        return { server.get(), std::move(client) };
+    }
 }
 
 void RsPsiInnerproduct_perf_test(const CLP& cmd)
@@ -77,8 +95,17 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
     auto numThreads = cmd.getOr("nt", u64(1));
     auto intersectionSize = cmd.getOr("intersection", n / 2);
+    auto tcp = cmd.isSet("tcp");
+    auto port = cmd.getOr("port", u64(18181));
+    // -rns: integer-inner-product setting, 32-bit payloads over P = p0*p1 (84 bits)
+    auto rns = cmd.isSet("rns");
+    gPsiIpRnsDebug = cmd.isSet("rnsdebug");
     if (n == 0 || intersectionSize > n || numThreads == 0)
         throw RTE_LOC;
+    auto primes = rns ? std::vector<u64>{ RsCpsiRnsPrime0, RsCpsiRnsPrime1 }
+                      : std::vector<u64>{ prime };
+    if (rns) prime = primes[0];
+    auto dataBits = rns ? u64(32) : RsCpsiDataBitLength(prime);
 
     auto receiverSet = std::vector<block>(n);
     auto senderSet = std::vector<block>(n);
@@ -89,14 +116,17 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     inputPrng.get(receiverSet.data(), receiverSet.size());
     inputPrng.get(senderSet.data(), senderSet.size());
 
-    auto maxData = (u64(1) << RsCpsiDataBitLength(prime)) - 1;
+    auto maxData = (u64(1) << dataBits) - 1;
     for (u64 i = 0; i < n; ++i)
     {
-        associatedData[i] = (i * 17 + 5) & maxData;
-        receiverData[i] = (i * 31 + 9) & maxData;
+        // multiplicative hashes spread the payloads over the full width; the
+        // original affine forms stayed far below 2^32 for every n used here
+        associatedData[i] = (i * 2654435761ull + 0x9e3779b9ull) & maxData;
+        receiverData[i] = (i * 40503ull + 0x7f4a7c15ull) & maxData;
     }
 
     u64 expectedInnerproduct = 0;
+    unsigned __int128 expectedInteger = 0;
 
     for (u64 senderIdx = 0; senderIdx < intersectionSize; ++senderIdx)
     {
@@ -105,12 +135,20 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
         expected[receiverIdx] = associatedData[senderIdx];
         expectedInnerproduct = addMod(expectedInnerproduct,
             mulMod(associatedData[senderIdx], receiverData[receiverIdx], prime), prime);
+        expectedInteger += (unsigned __int128)associatedData[senderIdx] * receiverData[receiverIdx];
     }
 
-    auto sockets = LocalAsyncSocket::makePair();
+    auto sockets = makeSockets(tcp, port);
     auto config = PsiInnerproductConfig{};
     config.mPrime = prime;
     config.mNumThreads = numThreads;
+    if (rns)
+    {
+        config.mPrimes = primes;
+        config.mDataBitLength = dataBits;
+        config.mSealCoeffModulusBits = { 60, 45, 20 };
+        config.mSealEnforceSecurity = false;
+    }
     auto sender = PsiInnerproductSender{};
     auto receiver = PsiInnerproductReceiver{};
     sender.init(n, n, config, block(1, 2));
@@ -205,13 +243,40 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
 #ifdef VOLE_PSI_ENABLE_SEAL
     auto he = Measurement{};
     u64 senderResult = 0;
+    unsigned __int128 senderResultInteger = 0;
     he = measure(sockets[0], sockets[1], [&] {
-        auto p0 = psiIpHeReceiver(receiverData, receiverCpsi, receiverOutput, config, sockets[0]);
-        auto p1 = psiIpHeSender(senderOutput, senderResult, config, senderPrng0, sockets[1]);
-        eval(p0, p1);
+        if (rns)
+        {
+            auto p0 = psiIpHeReceiverRns(receiverData, receiverCpsi, receiverOutput, config, sockets[0]);
+            auto p1 = psiIpHeSenderRns(senderOutput, senderResultInteger, config, senderPrng0, sockets[1]);
+            eval(p0, p1);
+        }
+        else
+        {
+            auto p0 = psiIpHeReceiver(receiverData, receiverCpsi, receiverOutput, config, sockets[0]);
+            auto p1 = psiIpHeSender(senderOutput, senderResult, config, senderPrng0, sockets[1]);
+            eval(p0, p1);
+        }
     });
-    if (senderResult != expectedInnerproduct)
+    if (rns && gPsiIpRnsDebug)
+        for (u64 j = 0; j < config.residueCount(); ++j)
+        {
+            auto pj = config.residuePrime(j);
+            std::cerr << "[perf] residue " << j << " p=" << pj
+                      << " want=" << (u64)(expectedInteger % pj)
+                      << " got=" << (u64)(senderResultInteger % pj) << std::endl;
+        }
+    if (rns && gPsiIpRnsDebug)
+        std::cerr << "[perf] integer want hi=" << (u64)(expectedInteger >> 64) << " lo=" << (u64)expectedInteger
+                  << "  got hi=" << (u64)(senderResultInteger >> 64) << " lo=" << (u64)senderResultInteger << std::endl;
+    if (rns ? (senderResultInteger != expectedInteger) : (senderResult != expectedInnerproduct))
+    {
+        std::cerr << "[perf] rns=" << rns
+                  << " got hi=" << (u64)(senderResultInteger >> 64) << " lo=" << (u64)senderResultInteger
+                  << " want hi=" << (u64)(expectedInteger >> 64) << " lo=" << (u64)expectedInteger
+                  << " | mod want=" << expectedInnerproduct << " got=" << senderResult << std::endl;
         throw RTE_LOC;
+    }
 #endif
 
     auto totalEnd = std::chrono::steady_clock::now();
@@ -228,12 +293,16 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     for (u64 receiverIdx = 0; receiverIdx < n; ++receiverIdx)
     {
         auto shareIdx = receiverCpsi.mMapping[receiverIdx];
-        auto receiverValue =
-            readElement(&receiverOutput(shareIdx, 0), elementBytes);
-        auto senderValue =
-            readElement(&senderOutput(shareIdx, 0), elementBytes);
-        if (addMod(receiverValue, senderValue, prime) != expected[receiverIdx])
-            throw RTE_LOC;
+        for (u64 j = 0; j < config.residueCount(); ++j)
+        {
+            auto pj = config.residuePrime(j);
+            auto receiverValue =
+                readElement(&receiverOutput(shareIdx, j * elementBytes), elementBytes);
+            auto senderValue =
+                readElement(&senderOutput(shareIdx, j * elementBytes), elementBytes);
+            if (addMod(receiverValue, senderValue, pj) != expected[receiverIdx] % pj)
+                throw RTE_LOC;
+        }
     }
 
     std::cout << std::fixed << std::setprecision(6);
@@ -246,7 +315,10 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
         << " heChunks=" << oc::divCeil(receiverOutput.rows(), config.mSealPolyModulusDegree)
 #endif
         << " prime=" << prime
-        << " nt=" << numThreads << std::endl;
+        << " residues=" << config.residueCount()
+        << " dataBits=" << dataBits
+        << " nt=" << numThreads
+        << " transport=" << (tcp ? "tcp" : "local") << std::endl;
     std::cout
         << "phase,receiverSentBytes,senderSentBytes,totalBytes,totalMiB,seconds"
         << std::endl;

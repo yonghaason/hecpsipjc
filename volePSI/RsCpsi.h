@@ -38,6 +38,29 @@ namespace volePSI
     // SEAL batching with the default polynomial modulus degree N = 8192.
     constexpr u64 RsCpsiDefaultPrime = 4294475777ULL;
 
+    // Residue primes for the integer-inner-product setting. A correct integer inner
+    // product needs an arithmetic space of 2*l + ceil(log2 |X n Y|) bits,
+    // which for l = 32 and |X n Y| <= 2^20 is 84 bits. No single RLWE
+    // plaintext modulus holds that: SEAL caps plain_modulus at 60 bits. Two
+    // 42-bit residues reach exactly 84; both are 1 mod 8192 so each residue
+    // batches at N = 4096.
+    //
+    // A 42-bit plaintext needs more ciphertext modulus than SEAL's 128-bit
+    // security table allows at N = 4096 (109 bits total). The protocol only
+    // ever uses the first two coefficient primes, the third being SEAL's
+    // key-switching prime which we never use. The two primes actually used,
+    // 60+45 = 105 bits, are within the 109-bit bound for 128-bit security at
+    // N = 4096; SEAL's check counts the unused third prime too and rejects
+    // the split, so it is skipped (sec_level_type::none). Security is not
+    // reduced: {60,45,20}. Measured
+    // with uniformly random plaintexts at n = 2^20 (338 accumulated
+    // ciphertexts), the invariant noise budget after modulus switching is
+    // 6-7 bits; lowering the first prime below 60 or the second below 45
+    // drops it to 0-2. (The first prime is what the transmitted ciphertext
+    // lives on after modulus switching, so it sets the HE communication.)
+    constexpr u64 RsCpsiRnsPrime0 = 4398046486529ULL;
+    constexpr u64 RsCpsiRnsPrime1 = 4398046240769ULL;
+
     //0719
     inline u64 RsCpsiPrimeBitLength(u64 primeModulus)
     {
@@ -51,6 +74,8 @@ namespace volePSI
     }
 
     //0719
+    // Default payload width. Half the residue width keeps a single product
+    // inside one residue; the integer-inner-product setting overrides it explicitly.
     inline u64 RsCpsiDataBitLength(u64 primeModulus)
     {
         return RsCpsiPrimeBitLength(primeModulus) / 2;
@@ -60,6 +85,29 @@ namespace volePSI
     inline u64 RsCpsiDataByteLength(u64 primeModulus)
     {
         return oc::divCeil(RsCpsiDataBitLength(primeModulus), 8);
+    }
+
+    // Statistical security parameter for the redundant encoding of a Z_p
+    // element inside the OKVS value.
+    //
+    // Writing u in [0,p) as a plain ceil(log2 p)-bit string does not cover the
+    // bit strings uniformly when p is not a power of two. In a bin that is not
+    // in the intersection the OKVS decoder recovers a pseudorandom string, so
+    // it can test whether the recovered data component lies in [0,p) and learn
+    // non-membership for free -- with the default prime that test succeeds with
+    // probability (2^32 - p)/2^32 ~= 2^-13.1 per bin. Encoding u as u + p*rho
+    // over ceil(log2 p) + statSecParam bits removes the test, since every
+    // encoded string is then a valid representative of some residue class.
+    constexpr u64 RsCpsiDefaultPrimeStatSecParam = 40;
+
+    inline u64 RsCpsiPrimeEncBitLength(u64 primeModulus, u64 statSecParam)
+    {
+        return RsCpsiPrimeBitLength(primeModulus) + statSecParam;
+    }
+
+    inline u64 RsCpsiPrimeEncByteLength(u64 primeModulus, u64 statSecParam)
+    {
+        return oc::divCeil(RsCpsiPrimeEncBitLength(primeModulus, statSecParam), 8);
     }
 
     namespace details
@@ -76,11 +124,29 @@ namespace volePSI
             ValueShareType mType = ValueShareType::Xor;
             //0719
             u64 mPrime = RsCpsiDefaultPrime;
+            // One prime per residue. Single-residue mode holds just mPrime.
+            std::vector<u64> mPrimes = { RsCpsiDefaultPrime };
             u64 mPrimeBitLength = RsCpsiPrimeBitLength(RsCpsiDefaultPrime);
             u64 mPrimeByteLength = RsCpsiPrimeByteLength(RsCpsiDefaultPrime);
             //0719
             u64 mPrimeDataBitLength = RsCpsiDataBitLength(RsCpsiDefaultPrime);
             u64 mPrimeDataByteLength = RsCpsiDataByteLength(RsCpsiDefaultPrime);
+            u64 mPrimeStatSecParam = RsCpsiDefaultPrimeStatSecParam;
+            // Offline OT preprocessing, used by the KLS26 baseline in Cpso.
+            u64 mOteBatchSize = (1ull << 20);
+            bool mSetup = false;
+            // communication counters used by the KLS26 baseline
+            u64 comm = 0, commexp = 0;
+            // Preprocessed GMW triples, applied to the comparison circuit at
+            // the start of the protocol when the offline phase supplied them.
+            span<block> mTripA, mTripB, mTripC, mTripD;
+            void applyTriples(Gmw& g) const {
+                if (mTripA.size()) g.setTriples(mTripA, mTripB, mTripC, mTripD);
+            }
+            u64 mPrimeEncBitLength =
+                RsCpsiPrimeEncBitLength(RsCpsiDefaultPrime, RsCpsiDefaultPrimeStatSecParam);
+            u64 mPrimeEncByteLength =
+                RsCpsiPrimeEncByteLength(RsCpsiDefaultPrime, RsCpsiDefaultPrimeStatSecParam);
 
             void init(
                 u64 senderSize,
@@ -91,13 +157,31 @@ namespace volePSI
                 u64 numThreads,
                 ValueShareType type = ValueShareType::Xor,
                 //0719
-                u64 primeModulus = RsCpsiDefaultPrime)
+                u64 primeModulus = RsCpsiDefaultPrime,
+                u64 primeStatSecParam = RsCpsiDefaultPrimeStatSecParam,
+                std::vector<u64> residuePrimes = {},
+                u64 dataBitLengthOverride = 0)
             {
+                if (residuePrimes.empty())
+                    residuePrimes = { primeModulus };
+                // all residues share a width so the slot strides stay uniform
+                for (auto q : residuePrimes)
+                    if (RsCpsiPrimeBitLength(q) != RsCpsiPrimeBitLength(residuePrimes[0]))
+                        throw RTE_LOC;
+                primeModulus = residuePrimes[0];
                 //0719
                 auto primeBitLength = RsCpsiPrimeBitLength(primeModulus);
                 auto primeByteLength = RsCpsiPrimeByteLength(primeModulus);
                 auto primeDataBitLength = RsCpsiDataBitLength(primeModulus);
                 auto primeDataByteLength = RsCpsiDataByteLength(primeModulus);
+                auto primeEncBitLength =
+                    RsCpsiPrimeEncBitLength(primeModulus, primeStatSecParam);
+                auto primeEncByteLength =
+                    RsCpsiPrimeEncByteLength(primeModulus, primeStatSecParam);
+
+                // the encoded element is held in an unsigned __int128
+                if (primeEncBitLength >= 128)
+                    throw RTE_LOC;
 
                 mSenderSize = senderSize;
                 mRecverSize = recverSize;
@@ -110,8 +194,21 @@ namespace volePSI
                 mPrime = primeModulus;
                 mPrimeBitLength = primeBitLength;
                 mPrimeByteLength = primeByteLength;
+                mPrimes = std::move(residuePrimes);
+                if (dataBitLengthOverride)
+                {
+                    primeDataBitLength = dataBitLengthOverride;
+                    primeDataByteLength = oc::divCeil(dataBitLengthOverride, 8);
+                    // A payload may exceed one residue (each slot reduces it mod
+                    // its own prime); it must only fit the full RNS modulus P.
+                    if (dataBitLengthOverride >= primeBitLength * mPrimes.size())
+                        throw RTE_LOC;
+                }
                 mPrimeDataBitLength = primeDataBitLength;
                 mPrimeDataByteLength = primeDataByteLength;
+                mPrimeStatSecParam = primeStatSecParam;
+                mPrimeEncBitLength = primeEncBitLength;
+                mPrimeEncByteLength = primeEncByteLength;
             }
         };
     }
@@ -140,6 +237,13 @@ namespace volePSI
         // The output is written to s.
         Proto send(span<block> Y, oc::MatrixView<u8> values, Sharing& s, Socket& chl);
 
+        void setTriple(span<block> A, span<block> B, u64 numTriples) {
+            mTripA = A.subspan(0, numTriples / 256);
+            mTripB = B.subspan(0, numTriples / 256);
+            mTripC = A.subspan(numTriples / 256);
+            mTripD = B.subspan(numTriples / 256);
+        }
+
     };
 
 
@@ -165,6 +269,13 @@ namespace volePSI
         // perform the join with X being the join keys.
         // The output is written to s.
         Proto receive(span<block> X, Sharing& s, Socket& chl);
+
+        void setTriple(span<block> C, span<block> D, u64 numTriples) {
+            mTripA = C.subspan(numTriples / 256);
+            mTripB = D.subspan(numTriples / 256);
+            mTripC = C.subspan(0, numTriples / 256);
+            mTripD = D.subspan(0, numTriples / 256);
+        }
 
     };
 
