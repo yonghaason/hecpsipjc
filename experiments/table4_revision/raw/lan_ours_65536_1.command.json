@@ -1,0 +1,11 @@
+[
+  "/home/gaeun/hecpsipjc/out/build/linux/frontend/frontend",
+  "-u",
+  "RsPsiInnerproduct_perf_test",
+  "-n",
+  "65536",
+  "-nt",
+  "1",
+  "-rns",
+  "-tcp"
+]

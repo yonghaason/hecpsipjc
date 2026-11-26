@@ -1,0 +1,1 @@
+qdisc netem 806a: root refcnt 2 limit 100000 delay 99us rate 10Gbit

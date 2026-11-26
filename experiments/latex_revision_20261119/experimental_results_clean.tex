@@ -1,0 +1,317 @@
+% Revised from the 2026-11-19 single-execution raw measurements; totals include setup.
+\section{Experimental Results}
+\label{sec:experimental-results}
+This section evaluates the performance of our AF-CPSI and the resulting
+PJC protocol that combines it with homomorphic-encryption-based
+computation. We first describe the implementation environment and
+cryptographic parameters, then measure the running time and communication
+of our protocol across a range of input sizes and network settings and
+compare it against existing PJC protocols. Finally, we break down the
+protocol's per-stage cost to identify the main contributors to overall
+performance.
+
+
+
+\subsection{Implementation and Experimental Setup}
+\label{sec:experimental-setup}
+
+\paragraph{Experiment environments.}
+Our local measurements were run on Ubuntu 24.04.4 LTS with an AMD Ryzen
+Threadripper 9970X 32-Core CPU and 64\,GB of RAM. We set the protocol
+thread count to one for each party and used TCP over localhost. Linux
+\textsf{tc netem} limited aggregate loopback egress to 10\,Gbps for LAN,
+100\,Mbps for WAN100, and 10\,Mbps for WAN10. The target RTT was
+0.2\,ms for LAN and 80\,ms for both WAN settings; half of the target RTT
+was applied as delay on each loopback traversal. These are shared
+aggregate-rate settings. Across the reported runs, the observed mean RTT
+was 0.220--0.250\,ms for LAN, 80.064--80.094\,ms for WAN100, and
+80.216--80.246\,ms for WAN10. No qdisc packet drops were observed.
+Each table entry is from one execution of that configuration, with no
+additional repetitions or separate boundary-test sweeps. Reported total
+costs include setup; communication uses decimal MB, i.e., $10^6$ bytes.
+The externally sourced values from \cite{CHI+23} retain their original
+measurement conditions.
+
+\medskip
+\paragraph{Implementation details.}
+We implemented our protocol in C++. AF-CPSI builds on \textsf{VOLE-PSI}~\cite{volepsi},
+and we use \textsf{libOTe}~\cite{libOTe} for OT and B2A-OT, and we implement the homomorphic-encryption-based PJC
+computation using the BGV~\cite{BGV14} scheme provided by Microsoft SEAL~\cite{SEAL}.
+
+\medskip
+\paragraph{Parameters.}
+We use parameter settings targeting 128-bit computational security
+and 40-bit statistical security, with Microsoft SEAL's \texttt{tc128}
+parameter validation enabled. In the modular experiment, Ours uses
+16-bit unsigned payloads, polynomial modulus degree $N=4096$, and
+plaintext prime $p=4294475777\approx 2^{32}$. Its coefficient-modulus
+bit sizes are $(48,36,18)$: the initial data-level ciphertext modulus
+has approximately 84 bits, and the key modulus has 102 bits including
+the 18-bit special prime. Homomorphic evaluation has multiplicative depth one: each input
+ciphertext is multiplied by a plaintext, the results are accumulated,
+and the accumulated ciphertext is modulus-switched.
+Batching packs up to $N=4096$ values into a ciphertext.
+In the exact integer inner-product setting (\Cref{sec:integer-ip}),
+Ours uses unsigned 32-bit payloads, $N=8192$, and the two 43-bit plaintext
+primes $p_1=8796092858369$ and $p_2=8796092792833$. Coefficient-modulus
+bit sizes $(60,50,30)$ give an initial data-level modulus
+$q\approx 2^{110}$ and a 140-bit key modulus including the 30-bit special
+prime. The CRT product $P=p_1p_2$ has 86 bits and satisfies
+$P>2^{20}(2^{32}-1)^2$, covering the full result range for the measured
+set sizes. Table~\ref{tab:experimental-parameters} summarizes these
+parameters.
+
+
+\begin{table}[!htbp]
+\centering
+\caption{Cryptographic parameters used in our experiments.}
+\label{tab:experimental-parameters}
+\small
+\begin{tabular}{@{}p{0.53\linewidth}p{0.41\linewidth}@{}}
+\toprule
+\textbf{Parameter} & \textbf{Setting} \\
+\midrule
+HE scheme & BGV \\
+Modular payload width & 16 bits \\
+Polynomial modulus degree $N$ & \(4096\) \\
+Plaintext modulus $p$ & \(\approx 2^{32}\) \\
+Ciphertext modulus $q$ & \(\approx 2^{84}\) \\
+\midrule
+\multicolumn{2}{l}{\textit{Integer inner product setting (\Cref{sec:integer-ip})}} \\
+Polynomial modulus degree $N$ & $8192$ \\
+Integer payload width & 32 bits \\
+Plaintext moduli (RNS) & \(p_1,p_2\approx 2^{43}\) \\
+Ciphertext modulus $q$ (data level) & \(\approx 2^{110}\) \\
+Coefficient-modulus bits & $(60,50,30)$ \\
+Key-modulus bit count & 140 (including special prime) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Comparison: Modular Inner Product}
+
+\label{sec:performance-comparison}
+This section reports the running time and communication of
+\cite{CHI+23}, \cite{KLS26}, and Ours. The local experiments use the
+existing modular implementations and input harnesses without changes.
+Ours uses 16-bit unsigned payloads over $\mathbb{Z}_p$, with
+$p=4294475777\approx 2^{32}$; the plaintext-modulus size does not denote
+the payload width. The preserved \cite{KLS26} harness uses 32-bit integer
+storage over the ring $\mathbb{Z}/(2^{32})$, assigning sender value $i$
+and receiver value $-i$ and randomly retaining approximately half the
+matches. Ours uses its existing deterministic payload generator and
+exactly $n/2$ matches. Thus the table describes these respective
+implementations and input settings; the payload distributions and
+arithmetic domains differ. Since \cite{CHI+23} has no public
+implementation, we retain its published results as reference values;
+its reported payload width is $\ell=23$.
+
+
+
+\begin{table}[!htbp]
+\centering
+\caption{Modular PJC performance under the revised network settings and the respective input settings described in the text.}
+\label{tab:pjc-comparison}
+
+\setlength{\tabcolsep}{2.2pt}
+\renewcommand{\arraystretch}{1.05}
+\footnotesize
+
+\begin{tabular}{c l c c c c}
+\toprule
+
+\multirow{2}{*}{$n$}
+&
+\multirow{2}{*}{\textbf{Protocol}}
+&
+\multirow{2}{*}{\textbf{Comm. (MB)}}
+&
+\multicolumn{3}{c}{\textbf{Runtime (s)}}
+\\
+
+\cmidrule(lr){4-6}
+
+&
+&
+&
+\textbf{LAN}
+&
+\textbf{WAN}
+&
+\textbf{WAN}
+\\[-2pt]
+
+&
+&
+&
+&
+\textbf{100 Mbps}
+&
+\textbf{10 Mbps}
+\\
+
+\midrule
+
+\multirow[t]{3}{*}{$2^{16}$}
+& \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
+& \cite{KLS26} & 21.374 & 1.735 & 6.738 & 21.461 \\
+\cmidrule(lr){2-6}%
+& \textbf{Ours} & 14.150 & 0.750 & 4.567 & 14.118 \\
+
+\midrule
+
+\multirow[t]{3}{*}{$2^{20}$}
+& \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
+& \cite{KLS26} & 330.100 & 28.112 & 60.469 & 302.270 \\
+\cmidrule(lr){2-6}
+& \textbf{Ours} & 218.010 & 12.426 & 32.710 & 188.588 \\
+
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\begin{minipage}{0.95\linewidth}
+\footnotesize
+$^\dagger$ \cite{CHI+23} has no public implementation, so we report the LAN numbers from the original paper.
+\end{minipage}
+
+\end{table}
+
+Table~\ref{tab:pjc-comparison} reports lower observed total runtime
+and communication for Ours than for the preserved \cite{KLS26}
+implementation in all measured configurations. At $n=2^{16}$, Ours
+communicates 14.150\,MB versus 21.374\,MB for \cite{KLS26}, giving a
+communication ratio of $1.51$. The LAN times are 0.750\,s and
+1.735\,s, respectively, a measured runtime ratio of $2.31$.
+
+At $n=2^{20}$, Ours communicates 218.010\,MB versus
+330.100\,MB for \cite{KLS26}, again a ratio of approximately $1.51$.
+The LAN times are 12.426\,s and 28.112\,s, a runtime ratio of $2.26$.
+Under WAN100 and WAN10, Ours takes 32.710\,s and 188.588\,s, compared
+with 60.469\,s and 302.270\,s for \cite{KLS26}; the respective runtime
+ratios are $1.85$ and $1.60$. These ratios are computed from the
+unrounded, single-execution measurements under the stated input settings.
+
+The \cite{CHI+23} rows retain the original paper's communication
+and LAN runtime values. Its 23-bit payload setting and original
+experimental environment differ from the local configurations, so
+these entries serve as external reference points. The exact integer
+comparison over unsigned 32-bit payloads is reported in
+\Cref{sec:integer-ip-exp}.
+
+
+\paragraph{Breakdown.}
+
+We measured the per-stage running time and communication
+over LAN for set size $2^{20}$, with three stages
+-- AF-CPSI, B2A-OT, and homomorphic-encryption-based PJC computation --
+and report the results in Table~\ref{tab:pjc-breakdown}.
+
+This breakdown comes from an independent single execution at
+$n=2^{20}$ under LAN 10\,Gbps with target RTT 0.2\,ms. Its total
+runtime therefore differs from the separate execution used in
+Table~\ref{tab:pjc-comparison}.
+
+\begin{table}[!htbp]
+\centering
+\caption{Breakdown of our PJC protocol for $n=2^{20}$ over LAN 10\,Gbps with target RTT 0.2\,ms (independent single execution).}
+\label{tab:pjc-breakdown}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Stage}
+&
+\textbf{Runtime (s)}
+&
+\textbf{Comm. (MB)}
+\\
+\midrule
+AF-CPSI & 10.884 & 172.956 \\
+B2A-OT & 0.347 & 22.769 \\
+HE Computation & 0.261 & 22.285 \\
+\midrule
+\textbf{Total} & 11.518 & 218.010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In Table~\ref{tab:pjc-breakdown}, AF-CPSI accounts for approximately
+94.50\% of the measured total runtime and 79.33\% of communication.
+The total of 11.518\,s includes share addition and other overhead in
+addition to the three displayed main stages. Share addition takes
+0.019\,s; the total exceeds the sum of the three displayed stages by
+approximately 0.025\,s. The separately logged VOLE calibration is a
+diagnostic run and is excluded from protocol totals. 
+
+\subsection{Comparison: Integer Inner Product}
+\label{sec:integer-ip-exp}
+We measured the setting of \Cref{sec:integer-ip}, i.e., the exact integer
+inner product over 32-bit payloads, under LAN and two WAN settings.
+ 
+For this experiment, we adapt the original 32-bit-ring implementation
+of \cite{KLS26} to actual arithmetic in $\mathbb{Z}/(2^{84})$.
+The OKVS value shares and OT arithmetic messages use 11-byte storage
+with reduction to 84 bits. MultShare uses 32 OT choice bits per payload,
+matching the unsigned 32-bit input width. The implementation performs
+arithmetic addition, subtraction, multiplication, and shifts, computes
+the inner product, and checks it against a direct unsigned 128-bit
+calculation in every measured execution. These measurements describe
+our adaptation of \cite{KLS26}. Both implementations use full-width
+unsigned 32-bit payloads with the same payload formulas and $n/2$
+matches. The result is bounded by $n(2^{32}-1)^2<2^{84}$ for
+$n\leq 2^{20}$. Ours reconstructs the same exact integer using the two
+43-bit CRT primes described above; its CRT arithmetic space has 86 bits.
+
+\begin{table}[!htbp]
+\centering
+\caption{Exact integer inner product over unsigned 32-bit payloads under the revised network settings.}
+\label{tab:pjc-long}
+\setlength{\tabcolsep}{2.2pt}
+\renewcommand{\arraystretch}{1.05}
+\footnotesize
+\begin{tabular}{c l c c c c}
+\toprule
+\multirow{2}{*}{$n$} & \multirow{2}{*}{\textbf{Protocol}} & \multirow{2}{*}{\textbf{Comm. (MB)}} & \multicolumn{3}{c}{\textbf{Runtime (s)}} \\
+\cmidrule(lr){4-6}
+& & & \textbf{LAN} & \textbf{100 Mbps} & \textbf{10 Mbps} \\
+\midrule
+\multirow[t]{2}{*}{$2^{16}$}
+& \cite{KLS26} & 44.711 & 2.498 & 9.760 & 41.078 \\
+& \textbf{Ours} & 22.090 & 1.156 & 5.671 & 20.665 \\
+\midrule
+\multirow[t]{2}{*}{$2^{20}$}
+& \cite{KLS26} & 708.059 & 40.039 & 103.678 & 618.093 \\
+& \textbf{Ours} & 340.694 & 15.869 & 43.972 & 291.313 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.95\linewidth}
+\footnotesize
+\cite{KLS26} denotes our adaptation using actual 84-bit arithmetic
+and 32-bit OT choices; every measured execution computes and verifies
+the integer result. Ours uses two 43-bit CRT primes. Both spaces cover
+the exact result range for $n\leq 2^{20}$.
+\cite{CHI+23} has no public implementation and reports only $\ell=23$.
+\end{minipage}
+\end{table}
+
+The modular and integer experiments use different payload and HE
+settings. For Ours, the payload width changes from 16 to 32 bits,
+the residue count changes from one to two, each plaintext prime changes
+from approximately 32 to 43 bits, and $N$ changes from 4096 to 8192.
+At $n=2^{20}$, Ours communicates 218.010\,MB in the modular setting
+and 340.694\,MB in the integer setting, an increase by a factor of
+$1.56$. The corresponding \cite{KLS26} totals are 330.100\,MB and
+708.059\,MB, a factor of $2.14$. These measured configuration-to-configuration
+ratios combine the changes in input and arithmetic settings and do not
+isolate an asymptotic dependence on arithmetic-space width.
+
+For the exact integer task, the communication ratios
+\cite{KLS26}/Ours are $2.02$ at $n=2^{16}$ and $2.08$ at
+$n=2^{20}$. The respective LAN runtime ratios are $2.16$ and $2.52$.
+At $n=2^{20}$, the WAN100 times are 103.678\,s for \cite{KLS26}
+and 43.972\,s for Ours, a ratio of $2.36$; the WAN10 times are
+618.093\,s and 291.313\,s, a ratio of $2.12$. These values describe
+the observed single-execution performance in each network setting.

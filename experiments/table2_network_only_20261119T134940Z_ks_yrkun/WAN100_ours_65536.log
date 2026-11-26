@@ -1,0 +1,17 @@
+49 - [1m[34mRsPsiInnerproduct_perf_test[0mRS_PSI_INNERPRODUCT_PERF n=65536 intersection=32768 rows=85196 heChunks=21 prime=4294475777 residues=1 N=4096 tc128=1 maxPayload=0 dataBits=16 nt=1 transport=tcp
+phase,receiverSentBytes,senderSentBytes,totalBytes,totalMiB,seconds
+cpsi,4710741,6354469,11065210,10.552607,3.326911
+vole,108573,538189,646762,0.616800,0.029729
+oprf_without_vole,0,1854368,1854368,1.768463,1.217398
+opprf,0,4535384,4535384,4.325279,0.738686
+peqt,0,4028648,4028648,3.842018,1.541070
+b2a_ot,819255,819255,1638510,1.562605,0.951260
+add_shares,0,0,0,0.000000,0.001202
+he,1380667,65657,1446324,1.379322,0.287572
+total,6910663,7239381,14150044,13.494534,4.566979
+[1m[32m  Passed[0m   4719ms
+[1m[32m
+=============================================
+            All Passed (1)
+[1m[32m=============================================
+[0m

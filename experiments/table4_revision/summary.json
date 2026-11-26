@@ -1,0 +1,50 @@
+[
+  {
+    "n": 65536,
+    "protocol": "KLS26",
+    "totalBytes": 44710601,
+    "MB": 44.710601,
+    "medianSeconds": 2.29927,
+    "minSeconds": 2.28066,
+    "maxSeconds": 2.30027,
+    "onlineBytes": 44489568,
+    "onlineMedianSeconds": 1.08625,
+    "trials": 3
+  },
+  {
+    "n": 65536,
+    "protocol": "Ours",
+    "totalBytes": 22090202,
+    "MB": 22.090202,
+    "medianSeconds": 0.823567,
+    "minSeconds": 0.8017,
+    "maxSeconds": 0.827933,
+    "onlineBytes": 22090202,
+    "onlineMedianSeconds": 0.823567,
+    "trials": 3
+  },
+  {
+    "n": 1048576,
+    "protocol": "KLS26",
+    "totalBytes": 708058731,
+    "MB": 708.058731,
+    "medianSeconds": 36.9045,
+    "minSeconds": 36.899,
+    "maxSeconds": 36.9209,
+    "onlineBytes": 706874658,
+    "onlineMedianSeconds": 17.0141,
+    "trials": 3
+  },
+  {
+    "n": 1048576,
+    "protocol": "Ours",
+    "totalBytes": 340693854,
+    "MB": 340.693854,
+    "medianSeconds": 13.341848,
+    "minSeconds": 13.322982,
+    "maxSeconds": 13.412945,
+    "onlineBytes": 340693854,
+    "onlineMedianSeconds": 13.341848,
+    "trials": 3
+  }
+]

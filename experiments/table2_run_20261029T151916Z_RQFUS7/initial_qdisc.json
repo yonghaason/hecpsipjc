@@ -1,0 +1,1 @@
+[{"kind":"netem","handle":"806a:","root":true,"refcnt":2,"options":{"limit":100000,"delay":{"delay":9.9e-05,"jitter":0,"correlation":0},"rate":{"rate":1250000000,"packetoverhead":0,"cellsize":0,"celloverhead":0},"ecn":false,"gap":0}}]

@@ -1,0 +1,46 @@
+{
+  "date_kst": "2026-10-28",
+  "old_primes": [
+    4398046486529,
+    4398046240769
+  ],
+  "old_P": 19342811816806176849100801,
+  "maximum_integer_result": 19342813104826867541606400,
+  "old_deficit": 1288020690692505599,
+  "new_primes": [
+    8796092858369,
+    8796092792833
+  ],
+  "new_P": 77371248996589383127269377,
+  "new_P_bit_length": 86,
+  "new_prime_checks": [
+    {
+      "p": 8796092858369,
+      "prime": true,
+      "mod8192": 1,
+      "mod16384": 1
+    },
+    {
+      "p": 8796092792833,
+      "prime": true,
+      "mod8192": 1,
+      "mod16384": 1
+    }
+  ],
+  "N": 8192,
+  "coefficient_modulus_bits": [
+    60,
+    50,
+    30
+  ],
+  "key_modulus_total_bits": 140,
+  "data_modulus_bits": 110,
+  "seal_tc128_max_bits": 218,
+  "tc128_enforced": true,
+  "git_base": "90baf9c3a2afee453bcddaf6585e2eae7956263c",
+  "seal_commit": "119dc32e135cb89c1062076a69310d4413ebc824",
+  "binary_sha256": "aa2078a01f2ff7b2b7c6e4acad845be47b3c474204dd78fa848702e1950d44b6",
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "uname": "Linux clab 6.8.0-134-generic #134-Ubuntu SMP PREEMPT_DYNAMIC Fri Jun 26 18:43:11 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+  "wan_status": "NOT MEASURED: sudo -n requires a password; no tc modifications performed."
+}

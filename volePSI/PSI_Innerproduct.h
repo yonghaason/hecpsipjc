@@ -19,10 +19,8 @@ namespace volePSI
         // so it is kept as small as SEAL allows and the rest of the budget is
         // left to the ciphertext modulus.
         std::vector<int> mSealCoeffModulusBits = { 48, 36, 18 };
-        // When false, SEALContext is built with sec_level_type::none. Used by the
-        // integer-inner-product setting: SEAL's check sums all coefficient primes,
-        // but only the first two are used (105 bits, under the 109-bit 128-bit
-        // bound at N=4096), so the check is skipped without reducing security.
+        // Production and integer benchmarks enforce the SEAL tc128 parameter check.
+        // Disabling this flag is for diagnostics only, not a security claim.
         bool mSealEnforceSecurity = true;
 
         // Residue primes for the integer-inner-product setting. Empty means single residue.

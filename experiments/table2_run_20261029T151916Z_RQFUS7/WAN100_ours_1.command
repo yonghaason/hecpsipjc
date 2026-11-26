@@ -1,0 +1,1 @@
+out/build/linux/frontend/frontend -u RsPsiInnerproduct_perf_test -n 1048576 -nt 1 -tcp 

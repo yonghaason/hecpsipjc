@@ -1,0 +1,31 @@
+52 - [1m[34mKLS26_innerprod_32_test[0mSetup Comm:  = 1.12922 MB
+Online Comm:  = 313.679 MB
+VOLEPSI_INNERPRODUCT_PERF n=1048576 nt=1 setupBytes=1184073 onlineBytes=328916063 totalBytes=330100136 setupSeconds=20.7318 onlineSeconds=39.7367 totalSeconds=60.4685
+Label    Time (ms)  diff (ms)
+__________________________________
+end       60449.3  60449.264  **********
+
+Sender Timer
+Label                                     Time (ms)  diff (ms)
+__________________________________
+PsoSender::CPSI Setup                       20672.5  20672.513  **********
+PsoSender::InnerProd::Cpsi receive          34411.7  13739.173  **********
+PsoSender::InnerProd::Clear out             37394.3   2982.645  ********
+PsoSender::InnerProd::Multshare-setup       43151.8   5757.450  *********
+PsoSender::InnerProd::MultShare             60285.8  17134.044  **********
+
+Receiver Timer
+Label                                       Time (ms)  diff (ms)
+__________________________________
+PsoReceiver::CPSI Setup                       20712.6  20712.557  **********
+PsoReceiver::InnerProd::Cpsi send             34378.9  13666.374  **********
+PsoReceiver::InnerProd::Clear out             37082.1   2703.158  ********
+PsoReceiver::InnerProd::Multshare-setup       43852.8   6770.658  *********
+PsoReceiver::InnerProd::MultShare             60325.9  16473.181  **********
+
+[1m[32m  Passed[0m   60627ms
+[1m[32m
+=============================================
+            All Passed (1)
+[1m[32m=============================================
+[0m

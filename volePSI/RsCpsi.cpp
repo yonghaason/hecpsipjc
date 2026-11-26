@@ -1,4 +1,5 @@
 #include "RsCpsi.h"
+#include "UInt84.h"
 
 //0714
 #include <limits>
@@ -254,6 +255,16 @@ namespace volePSI
                         {
                             TvIter[k] ^= ret.mValues(i, k);
                         }
+                    }
+                    else if (mType == ValueShareType::add84)
+                    {
+                        if (values.cols() != 11) throw std::invalid_argument("add84 requires 11 bytes");
+                        auto rr = store84(load84(&ret.mValues(i, 0)));
+                        std::memcpy(&ret.mValues(i, 0), rr.data(), 11);
+                        auto v = store84(load84(&values(b, 0)) - load84(rr.data()));
+                        // Uniform padding keeps the OKVS encoding uniform over 88 bits.
+                        v[10] |= (mPrng.get<u8>() & 0xf0);
+                        std::memcpy(&*TvIter, v.data(), 11);
                     }
                     else if (mType == ValueShareType::add32)
                     {

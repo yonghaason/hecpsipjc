@@ -1,0 +1,270 @@
+% REVISION: all tables below retain the supplied old measurements. Replace from corrected raw logs, not ratios alone.
+\section{Experimental Results}
+\label{sec:experimental-results}
+This section evaluates the performance of our AF-CPSI and the resulting
+PJC protocol that combines it with homomorphic-encryption-based
+computation. We first describe the implementation environment and
+cryptographic parameters, then measure the running time and communication
+of our protocol across a range of input sizes and network settings and
+compare it against existing PJC protocols. Finally, we break down the
+protocol's per-stage cost to identify the main contributors to overall
+performance.
+
+
+
+\subsection{Implementation and Experimental Setup}
+\label{sec:experimental-setup}
+
+\paragraph{Experiment environments.}
+All experiments were run on Ubuntu 24.04.4 LTS with an AMD Ryzen
+Threadripper 9970X 32-Core CPU and 64\,GB of RAM. Each protocol was
+executed on a single thread. We evaluated two network settings: LAN and
+emulated WAN. The LAN setting used localhost with no bandwidth
+restriction, and the WAN setting used Linux \textsf{tc} to cap bandwidth
+at 100\,Mbps and 10\,Mbps, respectively. We added no additional network
+latency, and confirmed that no packet drops occurred in any of the WAN
+measurements.
+
+\medskip
+\paragraph{Implementation details.}
+We implemented our protocol in C++. AF-CPSI builds on \textsf{VOLE-PSI}~\cite{volepsi},
+and we use \textsf{libOTe}~\cite{libOTe} for OT and B2A-OT, and we implement the homomorphic-encryption-based PJC
+computation using the BGV~\cite{BGV14} scheme provided by Microsoft SEAL~\cite{SEAL}.
+
+\medskip
+\paragraph{Parameters.}
+We set all cryptographic parameters to satisfy 128-bit computational
+security and 40-bit statistical security. For BGV, we use polynomial
+modulus degree \(N=4096\), plaintext modulus \(p\approx 2^{32}\), and
+ciphertext modulus \(q\approx 2^{84}\); this \(q\) suffices since
+homomorphic evaluation consists of a single ciphertext--plaintext
+multiplication followed by modulus switching. Batching packs up to
+\(N=4096\) values into a single ciphertext. In the integer inner product
+setting (\Cref{sec:integer-ip}) we use two 42-bit primes as the plaintext
+moduli (\(p_1,p_2\approx 2^{42}\)) and a ciphertext modulus
+\(q\approx 2^{105}\). Table~\ref{tab:experimental-parameters} summarizes
+the parameters used in our experiments.
+
+
+\begin{table}[!htbp]
+\centering
+\caption{Cryptographic parameters used in our experiments.}
+\label{tab:experimental-parameters}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Setting} \\
+\midrule
+HE scheme & BGV \\
+Polynomial modulus degree $N$ & \(4096\) \\
+Plaintext modulus $p$ & \(\approx 2^{32}\) \\
+Ciphertext modulus $q$ & \(\approx 2^{84}\) \\
+\midrule
+\multicolumn{2}{l}{\textit{Integer inner product setting (\Cref{sec:integer-ip})}} \\
+Plaintext moduli (RNS) & \(p_1,p_2\approx 2^{42}\) \\
+Ciphertext modulus $q$ & \(\approx 2^{105}\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Comparison: Modular Inner Product}
+
+\label{sec:performance-comparison}
+This section compares the running time and communication of PJC
+protocols across different input sizes and network settings. We compare
+\cite{CHI+23}, \cite{KLS26}, and our protocol. \cite{KLS26} and our
+protocol are evaluated in the same experimental environment under
+$\ell=L=32$, i.e., 32-bit payloads and a 32-bit arithmetic space.
+\cite{CHI+23}, in contrast, has no public implementation, so we report
+the numbers as given in the original paper. Since \cite{CHI+23} uses
+$\ell=23$, the communication comparison is favorable to
+\cite{CHI+23}.
+
+
+
+\begin{table}[!htbp]
+\centering
+\caption{Performance comparison of PJC protocols under different network settings (32-bit setting).}
+\label{tab:pjc-comparison}
+
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+
+\begin{tabular}{c l c c c c}
+\toprule
+
+\multirow{2}{*}{$n$}
+&
+\multirow{2}{*}{\textbf{Protocol}}
+&
+\multirow{2}{*}{\textbf{Comm. (MB)}}
+&
+\multicolumn{3}{c}{\textbf{Runtime (s)}}
+\\
+
+\cmidrule(lr){4-6}
+
+&
+&
+&
+\textbf{LAN}
+&
+\textbf{WAN}
+&
+\textbf{WAN}
+\\[-2pt]
+
+&
+&
+&
+&
+\textbf{100 Mbps}
+&
+\textbf{10 Mbps}
+\\
+
+\midrule
+
+\multirow{3}{*}{$2^{16}$}
+& \cite{CHI+23}$^\dagger$& 17.2 & 25.92 & -- & -- \\
+& \cite{KLS26}&20.90&1.74&3.28&18.15\\
+\cmidrule(lr){2-6}%
+& \textbf{Ours}&14.15&0.74&1.56&11.38\\
+
+\midrule
+
+\multirow{3}{*}{$2^{20}$}
+& \cite{CHI+23}$^\dagger$& 275.2 & 424.4 & -- & -- \\
+& \cite{KLS26}&322.62&28.11&53.53&287.51\\
+\cmidrule(lr){2-6}
+& \textbf{Ours}&218.01&11.39&26.84&182.45\\
+
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\begin{minipage}{0.95\linewidth}
+\footnotesize
+$^\dagger$ \cite{CHI+23} has no public implementation, so we report the LAN numbers from the original paper.
+\end{minipage}
+
+\end{table}
+
+As shown in Table~\ref{tab:pjc-comparison}, our protocol achieves lower
+running time and communication than \cite{KLS26} across all input sizes
+and network settings. At set size $2^{16}$, our protocol's communication
+cost is 14.15\,MB, about $1.48\times$ lower than \cite{KLS26}'s
+20.90\,MB, and its LAN running time is likewise about $2.35\times$
+faster, at 0.74\,s versus 1.74\,s.
+ 
+This trend holds at set size $2^{20}$ as well. Our protocol's
+communication cost of 218.01\,MB is about $1.48\times$ lower than
+\cite{KLS26}'s 322.62\,MB, and its LAN running time of 11.39\,s is about
+$2.47\times$ faster than 28.11\,s. Under 100\,Mbps and 10\,Mbps WAN
+settings, our protocol runs in 26.84\,s and 182.45\,s, respectively, and
+continues to outperform \cite{KLS26}. This shows that our protocol's
+lower communication cost translates into a running-time advantage even
+under constrained bandwidth.
+ 
+Since \cite{CHI+23} was evaluated under a 23-bit setting, its
+communication cost in Table~\ref{tab:pjc-comparison} is not measured
+under the same conditions as the 32-bit setting used for \cite{KLS26}
+and our protocol; we include it only as a reference point for the
+communication cost of prior PJC protocols. We report a measured
+comparison for the integer-inner-product setting over 32-bit payloads in
+\Cref{sec:integer-ip}.
+
+
+\paragraph{Breakdown.}
+
+We measured the per-stage running time and communication
+over LAN for set size $2^{20}$, with three stages
+-- AF-CPSI, B2A-OT, and homomorphic-encryption-based PJC computation --
+and report the results in Table~\ref{tab:pjc-breakdown}.
+
+\begin{table}[!htbp]
+\centering
+\caption{Breakdown of our PJC protocol over LAN for $n=2^{20}$.}
+\label{tab:pjc-breakdown}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Stage}
+&
+\textbf{Runtime (s)}
+&
+\textbf{Comm. (MB)}
+\\
+\midrule
+AF-CPSI&10.74&172.96\\
+B2A-OT&0.36&22.77\\
+HE Computation&0.26&22.29\\
+\midrule
+\textbf{Total}&11.39&218.01\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As Table~\ref{tab:pjc-breakdown} shows, the bulk of the total cost is
+incurred during AF-CPSI, which dominates both running time and
+communication and stands out as the main performance bottleneck of our
+protocol. 
+
+\subsection{Comparison: Integer Inner Product}
+\label{sec:integer-ip-exp}
+We measured the setting of \Cref{sec:integer-ip}, i.e., the exact integer
+inner product over 32-bit payloads, under LAN and two WAN settings.
+ 
+The implementation of \cite{KLS26} is fixed to $\Z_{2^{32}}$ and cannot
+be measured under a different ring without modification, so we measured
+it using a cost harness with all OKVS value, OT message, and MultShare
+widths matched to 84 bits. This harness preserves every width that
+determines cost in the original protocol, but replaces the underlying
+operations with XOR and thus does not produce an inner-product value.
+
+\begin{table}[!htbp]
+\centering
+\caption{Integer inner product over 32-bit payloads ($L=84$) under different network settings.}
+\label{tab:pjc-long}
+\setlength{\tabcolsep}{3.4pt}
+\renewcommand{\arraystretch}{1.05}
+\small
+\begin{tabular}{c l c c c c}
+\toprule
+\multirow{2}{*}{$n$} & \multirow{2}{*}{\textbf{Protocol}} & \multirow{2}{*}{\textbf{Comm. (MB)}} & \multicolumn{3}{c}{\textbf{Runtime (s)}} \\
+\cmidrule(lr){4-6}
+& & & \textbf{LAN} & \textbf{100 Mbps} & \textbf{10 Mbps} \\
+\midrule
+\multirow{2}{*}{$2^{16}$}
+& \cite{KLS26} & 93.53 & 2.68 & 9.93 & 77.34 \\
+& \textbf{Ours} & 21.83 & 0.82 & 2.24 & 17.64 \\
+\midrule
+\multirow{2}{*}{$2^{20}$}
+& \cite{KLS26} & 1499.29 & 43.05 & 162.30 & 1255.18 \\
+& \textbf{Ours} & 340.63 & 13.39 & 38.32 & 282.59 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.95\linewidth}
+\footnotesize
+\cite{KLS26} is measured with a width-matched cost harness (see text).
+\cite{CHI+23} has no public implementation and reports only $\ell=23$.
+\end{minipage}
+\end{table}
+
+The results in Table~\ref{tab:pjc-long} relate to the 32-bit setting of
+Table~\ref{tab:pjc-breakdown} as follows. With two residues, the OKVS
+data component, B2A-OT, and HE stages each double, while the identifier
+path is unchanged. At $n=2^{20}$, our protocol's communication grows
+from 218.01\,MB to 340.63\,MB, about $1.56\times$, whereas
+\cite{KLS26}'s grows from 322.62\,MB to 1499.29\,MB, about $4.65\times$,
+owing to the quadratic growth.
+ 
+Head to head in this setting, our protocol uses $4.40\times$ less
+communication at $n=2^{20}$ and $4.28\times$ less at $n=2^{16}$. The LAN
+running times are shorter by $3.22\times$ and $3.27\times$; the LAN link is
+fast enough that computation, rather than transmission, sets the pace, so
+the running-time gap there falls short of the communication gap. The two
+converge as bandwidth drops. At $n=2^{20}$ our protocol is $4.24\times$
+faster over 100\,Mbps and $4.44\times$ faster over 10\,Mbps, at which point
+the running-time gap has caught up with the communication gap.

@@ -95,12 +95,14 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     auto prime = cmd.getOr("p", RsCpsiDefaultPrime);
     auto numThreads = cmd.getOr("nt", u64(1));
     auto intersectionSize = cmd.getOr("intersection", n / 2);
+    auto maxPayload = cmd.isSet("maxPayload");
+    if (cmd.isSet("identical")) intersectionSize = n;
     auto tcp = cmd.isSet("tcp");
     auto port = cmd.getOr("port", u64(18181));
-    // -rns: integer-inner-product setting, 32-bit payloads over P = p0*p1 (84 bits)
+    // -rns: integer-inner-product setting, 32-bit payloads over P = p0*p1 (86 bits)
     auto rns = cmd.isSet("rns");
     gPsiIpRnsDebug = cmd.isSet("rnsdebug");
-    if (n == 0 || intersectionSize > n || numThreads == 0)
+    if (n == 0 || intersectionSize > n || numThreads == 0 || (rns && n > (u64(1)<<20)))
         throw RTE_LOC;
     auto primes = rns ? std::vector<u64>{ RsCpsiRnsPrime0, RsCpsiRnsPrime1 }
                       : std::vector<u64>{ prime };
@@ -123,6 +125,8 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
         // original affine forms stayed far below 2^32 for every n used here
         associatedData[i] = (i * 2654435761ull + 0x9e3779b9ull) & maxData;
         receiverData[i] = (i * 40503ull + 0x7f4a7c15ull) & maxData;
+        if (maxPayload) associatedData[i] = receiverData[i] = maxData;
+        if (cmd.isSet("zeroPayload")) associatedData[i] = receiverData[i] = 0;
     }
 
     u64 expectedInnerproduct = 0;
@@ -138,6 +142,10 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
         expectedInteger += (unsigned __int128)associatedData[senderIdx] * receiverData[receiverIdx];
     }
 
+    if (rns && (static_cast<unsigned __int128>(primes[0]) * primes[1] <=
+                (static_cast<unsigned __int128>(n) * maxData * maxData)))
+        throw std::invalid_argument("CRT modulus does not cover worst-case integer result");
+
     auto sockets = makeSockets(tcp, port);
     auto config = PsiInnerproductConfig{};
     config.mPrime = prime;
@@ -146,8 +154,9 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
     {
         config.mPrimes = primes;
         config.mDataBitLength = dataBits;
-        config.mSealCoeffModulusBits = { 60, 45, 20 };
-        config.mSealEnforceSecurity = false;
+        config.mSealCoeffModulusBits = { 60, 50, 30 };
+        config.mSealEnforceSecurity = true;
+        config.mSealPolyModulusDegree = 8192;
     }
     auto sender = PsiInnerproductSender{};
     auto receiver = PsiInnerproductReceiver{};
@@ -316,6 +325,9 @@ void RsPsiInnerproduct_perf_test(const CLP& cmd)
 #endif
         << " prime=" << prime
         << " residues=" << config.residueCount()
+        << " N=" << config.mSealPolyModulusDegree
+        << " tc128=" << config.mSealEnforceSecurity
+        << " maxPayload=" << maxPayload
         << " dataBits=" << dataBits
         << " nt=" << numThreads
         << " transport=" << (tcp ? "tcp" : "local") << std::endl;

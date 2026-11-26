@@ -447,6 +447,9 @@ namespace volePSI
             seal::Ciphertext encrypted;
             encrypted.load(context, stream);
             seal::Plaintext plain;
+            if (gPsiIpRnsDebug)
+                std::cerr << "HE_NOISE prime=" << config.mPrime << " N=" << config.mSealPolyModulusDegree
+                          << " chunks=" << chunkCount << " budget=" << decryptor.invariant_noise_budget(encrypted) << std::endl;
             decryptor.decrypt(encrypted, plain);
             std::vector<u64> decoded;
             if (encoding.batching)

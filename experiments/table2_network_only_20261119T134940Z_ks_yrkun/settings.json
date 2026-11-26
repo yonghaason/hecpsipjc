@@ -1,0 +1,30 @@
+{
+  "binarySha256": "aa2078a01f2ff7b2b7c6e4acad845be47b3c474204dd78fa848702e1950d44b6",
+  "oursPayloadBits": 16,
+  "n": [
+    65536,
+    1048576
+  ],
+  "trials": 1,
+  "separateCorrectnessRuns": 0,
+  "networks": [
+    [
+      "LAN",
+      "10gbit",
+      0.2
+    ],
+    [
+      "WAN100",
+      "100mbit",
+      80
+    ],
+    [
+      "WAN10",
+      "10mbit",
+      80
+    ]
+  ],
+  "topology": "aggregate loopback egress; delay=RTT/2 per traversal",
+  "cost": "total includes setup; baseline online values retained separately",
+  "codeChanges": "none; restored original binary"
+}

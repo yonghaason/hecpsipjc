@@ -1,0 +1,7 @@
+Table 2 modular inner product. n=1048576; threads=1; trials=3.
+LAN: 10 Gbps, target RTT 0.2 ms.
+WAN100: 100 Mbps, target RTT 80 ms.
+WAN10: 10 Mbps, target RTT 80 ms.
+TCP loopback; netem delay is RTT/2 per traversal.
+Rate limits aggregate loopback egress, not independent full-duplex directions.
+[4] and paper files are unchanged. Ours runs without -rns.

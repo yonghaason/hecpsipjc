@@ -1,0 +1,45 @@
+RUN worst_ours_65536_0
+PASS worst_ours_65536_0 bytes 22090202 seconds 0.908458
+RUN worst_kls26_65536_0
+PASS worst_kls26_65536_0 bytes 44710601 seconds 2.33858
+RUN worst_ours_1048576_0
+PASS worst_ours_1048576_0 bytes 340693854 seconds 14.163578
+RUN worst_kls26_1048576_0
+PASS worst_kls26_1048576_0 bytes 708058731 seconds 37.2287
+RUN empty_ours_1024_0
+PASS empty_ours_1024_0 bytes 1670137 seconds 0.111841
+RUN empty_kls26_1024_0
+PASS empty_kls26_1024_0 bytes 1655395 seconds 0.125918
+RUN zero_ours_1024_0
+PASS zero_ours_1024_0 bytes 1670137 seconds 0.110291
+RUN zero_kls26_1024_0
+PASS zero_kls26_1024_0 bytes 1655395 seconds 0.126805
+RUN identical_ours_1024_0
+PASS identical_ours_1024_0 bytes 1670137 seconds 0.113073
+RUN identical_kls26_1024_0
+PASS identical_kls26_1024_0 bytes 1655395 seconds 0.124839
+RUN lan_ours_65536_1
+PASS lan_ours_65536_1 bytes 22090202 seconds 0.823567
+RUN lan_kls26_65536_1
+PASS lan_kls26_65536_1 bytes 44710601 seconds 2.29927
+RUN lan_ours_1048576_1
+PASS lan_ours_1048576_1 bytes 340693854 seconds 13.322982
+RUN lan_kls26_1048576_1
+PASS lan_kls26_1048576_1 bytes 708058731 seconds 36.9209
+RUN lan_ours_65536_2
+PASS lan_ours_65536_2 bytes 22090202 seconds 0.8017
+RUN lan_kls26_65536_2
+PASS lan_kls26_65536_2 bytes 44710601 seconds 2.28066
+RUN lan_ours_1048576_2
+PASS lan_ours_1048576_2 bytes 340693854 seconds 13.412945
+RUN lan_kls26_1048576_2
+PASS lan_kls26_1048576_2 bytes 708058731 seconds 36.9045
+RUN lan_ours_65536_3
+PASS lan_ours_65536_3 bytes 22090202 seconds 0.827933
+RUN lan_kls26_65536_3
+PASS lan_kls26_65536_3 bytes 44710601 seconds 2.30027
+RUN lan_ours_1048576_3
+PASS lan_ours_1048576_3 bytes 340693854 seconds 13.341848
+RUN lan_kls26_1048576_3
+PASS lan_kls26_1048576_3 bytes 708058731 seconds 36.899
+DONE

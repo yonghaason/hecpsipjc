@@ -1,0 +1,3 @@
+qdisc netem 806c: root refcnt 2 limit 100000 delay 40ms rate 10Mbit
+ Sent 1195522500 bytes 64120 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 2550b 24p requeues 0

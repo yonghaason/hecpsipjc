@@ -1,0 +1,11 @@
+[
+  "/home/gaeun/hecpsipjc/out/build/linux/frontend/frontend",
+  "-u",
+  "KLS26_innerprod_84_test",
+  "-n",
+  "1024",
+  "-nt",
+  "1",
+  "-identical",
+  "-zeroPayload"
+]

@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{PJC performance. LAN: 10 Gbps, target RTT 0.2 ms; WAN: 100/10 Mbps, target RTT 80 ms. Measured rows are single-run totals including setup.}
+\begin{tabular}{llrrrr}
+\hline
+$n$ & Protocol & Comm. (MB) & LAN (s) & WAN100 (s) & WAN10 (s) \\
+\hline
+$2^{16}$ & [CHT+23]$^\dagger$ & 17.2 & 25.92 & -- & -- \\
+$2^{16}$ & [KLS26] & 21.374 & 1.735 & 6.738 & 21.461 \\
+$2^{16}$ & [Ours] & 14.150 & 0.750 & 4.567 & 14.118 \\
+\hline
+$2^{20}$ & [CHT+23]$^\dagger$ & 275.2 & 424.4 & -- & -- \\
+$2^{20}$ & [KLS26] & 330.100 & 28.112 & 60.468 & 302.270 \\
+$2^{20}$ & [Ours] & 218.010 & 12.426 & 32.710 & 188.588 \\
+\hline
+\end{tabular}
+\par\smallskip
+{\footnotesize $\dagger$ External-paper values retained from the original table, under its original conditions.}
+\end{table}

@@ -1,0 +1,21 @@
+% Corrected replacement table; requires booktabs. WAN has not been remeasured.
+\begin{table}[t]
+\centering
+\caption{Exact integer inner product over unsigned 32-bit payloads. Total cost includes setup. LAN times are medians of three runs.}
+\label{tab:integer-corrected}
+\begin{tabular}{llrrrr}
+\toprule
+$n$ & Protocol & Comm. (MB) & LAN (s) & 100 Mbps & 10 Mbps \\
+\midrule
+$2^{16}$ & KLS26 & 44.71 & 2.30 & -- & -- \\
+$2^{16}$ & Ours & 22.09 & 0.82 & -- & -- \\
+$2^{20}$ & KLS26 & 708.06 & 36.90 & -- & -- \\
+$2^{20}$ & Ours & 340.69 & 13.34 & -- & -- \\
+\bottomrule
+\end{tabular}
+\par\smallskip\footnotesize
+The corrected baseline uses $\mathbb{Z}/2^{84}\mathbb{Z}$ arithmetic and 32 choice OTs per item with 84-bit messages.
+Ours uses two 43-bit CRT primes, $N=8192$, and SEAL's tc128 parameter check.
+Both support $n\le 2^{20}$ and the identical-set, all-maximum-payload case.
+Dashes denote unmeasured WAN settings, not zero cost.
+\end{table}

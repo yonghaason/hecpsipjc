@@ -1,0 +1,14 @@
+qdisc
+replace
+dev
+lo
+root
+handle
+806a:
+netem
+limit
+100000
+delay
+99.000000us
+rate
+10000000000bit

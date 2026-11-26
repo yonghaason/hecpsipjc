@@ -1,4 +1,5 @@
 #include "Cpso.h"
+#include "UInt84.h"
 #include "volePSI/GMW/Gmw.h"
 
 #include <bitset>
@@ -235,21 +236,13 @@ namespace volePSI
     }
 
 
-    // ---- 11-byte XOR helpers for the 84-bit width cost harness ----
     namespace {
-        using Wide = std::array<u8, 11>;
-        using u128w = unsigned __int128;
-        inline Wide operator^(const Wide& a, const Wide& b){ Wide r; for(int i=0;i<11;i++) r[i]=a[i]^b[i]; return r; }
-        inline Wide wTrunc(const block& k){ Wide r; std::memcpy(r.data(), &k, 11); return r; }
-        inline Wide wShl(const Wide& a, u64 j){
-            u128w v=0; std::memcpy(&v,a.data(),11); v<<=j; v&=(((u128w)1<<84)-1);
-            Wide r; std::memcpy(r.data(),&v,11); return r; }
-        // 84 choice bits per item packed contiguously: an 11-byte item holds 88 bits, use its low 84
-        inline oc::BitVector wBits(const std::vector<Wide>& v){ oc::BitVector bv(v.size()*84); for(u64 i=0;i<v.size();i++) for(u64 j=0;j<84;j++) bv[i*84+j] = (v[i][j/8]>>(j%8))&1; return bv; }
-        inline Wide wMul(const Wide& a, const Wide& b){
-            u128w x=0,y=0,acc=0; std::memcpy(&x,a.data(),11); std::memcpy(&y,b.data(),11);
-            for(int i=0;i<84;i++) if((y>>i)&1) acc^=(x<<i);
-            acc&=(((u128w)1<<84)-1); Wide r; std::memcpy(r.data(),&acc,11); return r; }
+        inline oc::BitVector wBits(const std::vector<UInt84Bytes>& v) {
+            oc::BitVector bv(v.size()*32);
+            for(u64 i=0;i<v.size();++i) for(u64 j=0;j<32;++j)
+                bv[i*32+j]=(v[i][j/8]>>(j%8))&1;
+            return bv;
+        }
     }
 
     Proto PsoSender::sendInnerProdWide(span<block> Y, span<Wide> data, Socket& chl)
@@ -284,7 +277,7 @@ namespace volePSI
         assert(mSenderSize == Y.size());
         
         comm = chl.bytesSent();
-        cpsiReceiver->init(mSenderSize, mRecverSize, sizeof(Wide), mSsp, mPrng.get(), mNumThreads, ValueShareType::Xor);
+        cpsiReceiver->init(mSenderSize, mRecverSize, sizeof(Wide), mSsp, mPrng.get(), mNumThreads, ValueShareType::add84);
         if (mSetup) {
             cpsiReceiver->setTriple(mOtFactory.mMult, mOtFactory.mAdd, mOtFactory.mN);
         }
@@ -302,9 +295,9 @@ namespace volePSI
         {
             r = mPrng.get<Wide>();
             memcpy(&tmp, s.mValues[i].data(), sizeof(Wide));
-            ot1Msgs[i][s.mFlagBits[i]] = wTrunc(rot1Msgs[i][s.mFlagBits[i]]) ^ r;
-            ot1Msgs[i][!s.mFlagBits[i]] = wTrunc(rot1Msgs[i][!s.mFlagBits[i]]) ^ r ^ tmp;
-            clearShares[i] = r;
+            ot1Msgs[i][s.mFlagBits[i]] = wTrunc(rot1Msgs[i][s.mFlagBits[i]]) + r;
+            ot1Msgs[i][!s.mFlagBits[i]] = wTrunc(rot1Msgs[i][!s.mFlagBits[i]]) + r + tmp;
+            clearShares[i] = -r;
         }
         MC_AWAIT(chl.send(ot1Msgs));
         
@@ -317,7 +310,7 @@ namespace volePSI
         MC_AWAIT(chl.recv(ot2Msgs));
 
         for (i = 0; i < ot2Msgs.size(); i++) {
-            clearShares[i] = clearShares[i] ^ ot2Msgs[i][s.mFlagBits[i]] ^ wTrunc(rot2Msgs[i]);
+            clearShares[i] = clearShares[i] + ot2Msgs[i][s.mFlagBits[i]] - wTrunc(rot2Msgs[i]);
         }
         setTimePoint("PsoSender::InnerProd::Clear out");
 
@@ -353,14 +346,14 @@ namespace volePSI
         for (i = 0; i < s.mFlagBits.size(); i++)
         {   
             if (invMapping[i] != ~u64(0))
-                innerProdShare = innerProdShare ^ wMul(clearShares[i], data[invMapping[i]]);
+                innerProdShare = innerProdShare + wMul(clearShares[i], data[invMapping[i]]);
             
-            for (j = 0; j < 84; j++)
+            for (j = 0; j < 32; j++)
             {
-                if (msChoices[84*i + j])
-                    innerProdShare = innerProdShare ^ msOtMsgs[84*i + j] ^ wTrunc(msRotMsgs[84*i + j]);
+                if (msChoices[32*i + j])
+                    innerProdShare = innerProdShare + msOtMsgs[32*i + j] - wTrunc(msRotMsgs[32*i + j]);
                 else 
-                    innerProdShare = innerProdShare ^ wTrunc(msRotMsgs[84*i + j]);
+                    innerProdShare = innerProdShare + wTrunc(msRotMsgs[32*i + j]);
             }
         }
         MC_AWAIT(chl.send(innerProdShare));
@@ -409,7 +402,7 @@ namespace volePSI
         dataInMatrix.resize(X.size(), sizeof(Wide));
         std::memcpy(dataInMatrix.data(), (u8*) data.data(), X.size() * sizeof(Wide));
 
-        cpsiSender->init(mSenderSize, mRecverSize, sizeof(Wide), mSsp, mPrng.get(), mNumThreads, ValueShareType::Xor);
+        cpsiSender->init(mSenderSize, mRecverSize, sizeof(Wide), mSsp, mPrng.get(), mNumThreads, ValueShareType::add84);
         if (mSetup) {
             cpsiSender->setTriple(mOtFactory.mMult, mOtFactory.mAdd, mOtFactory.mN);
         }
@@ -426,7 +419,7 @@ namespace volePSI
         MC_AWAIT(chl.recv(ot1Msgs));
 
         for (i = 0; i < ot1Msgs.size(); i++) {
-            clearShares[i] = ot1Msgs[i][s.mFlagBits[i]] ^ wTrunc(rot1Msgs[i]);
+            clearShares[i] = ot1Msgs[i][s.mFlagBits[i]] - wTrunc(rot1Msgs[i]);
         }
 
         // Clear out 2nd OT 
@@ -440,9 +433,9 @@ namespace volePSI
         {
             r = mPrng.get<Wide>();
             memcpy(&tmp, s.mValues[i].data(), sizeof(Wide));
-            ot2Msgs[i][s.mFlagBits[i]] = wTrunc(rot2Msgs[i][s.mFlagBits[i]]) ^ r;
-            ot2Msgs[i][!s.mFlagBits[i]] = wTrunc(rot2Msgs[i][!s.mFlagBits[i]]) ^ r ^ tmp;
-            clearShares[i] = clearShares[i] ^ r;
+            ot2Msgs[i][s.mFlagBits[i]] = wTrunc(rot2Msgs[i][s.mFlagBits[i]]) + r;
+            ot2Msgs[i][!s.mFlagBits[i]] = wTrunc(rot2Msgs[i][!s.mFlagBits[i]]) + r + tmp;
+            clearShares[i] = clearShares[i] - r;
         }
 
         MC_AWAIT(chl.send(ot2Msgs));
@@ -450,26 +443,26 @@ namespace volePSI
         setTimePoint("PsoReceiver::InnerProd::Clear out");
 
         // MultShare
-        msRotMsgs.resize(s.mFlagBits.size() * 84);
-        msRotSender->configure(s.mFlagBits.size() * 84, 2, mNumThreads);
+        msRotMsgs.resize(s.mFlagBits.size() * 32);
+        msRotSender->configure(s.mFlagBits.size() * 32, 2, mNumThreads);
         MC_AWAIT(msRotSender->send(msRotMsgs, mPrng, chl));
 
         setTimePoint("PsoReceiver::InnerProd::Multshare-setup");
         
         innerProdShare = Wide{};
-        msOtMsgs.resize(s.mFlagBits.size() * 84);
+        msOtMsgs.resize(s.mFlagBits.size() * 32);
         for (i = 0; i < s.mFlagBits.size(); i++)
         {
-            for (j = 0; j < 84; j++)
+            for (j = 0; j < 32; j++)
             {
-                msOtMsgs[84*i + j] = wTrunc(msRotMsgs[84*i + j][0]) ^ wTrunc(msRotMsgs[84*i + j][1]) ^ wShl(clearShares[i], j);
-                innerProdShare = innerProdShare ^ wTrunc(msRotMsgs[84*i + j][0]);
+                msOtMsgs[32*i + j] = wTrunc(msRotMsgs[32*i + j][0]) + wTrunc(msRotMsgs[32*i + j][1]) + wShl(clearShares[i], j);
+                innerProdShare = innerProdShare - wTrunc(msRotMsgs[32*i + j][0]);
             }
         }
         MC_AWAIT(chl.send(msOtMsgs));
 
         MC_AWAIT(chl.recv(innerProdShareTheir));
-        innerProd = innerProdShare ^ innerProdShareTheir;
+        innerProd = innerProdShare + innerProdShareTheir;
         setTimePoint("PsoReceiver::InnerProd::MultShare");
 
         // comm = chl.bytesSent() - comm;

@@ -1,0 +1,16 @@
+49 - RsPsiInnerproduct_perf_testRS_PSI_INNERPRODUCT_PERF n=1048576 intersection=524288 rows=1380625 heChunks=169 prime=8796092858369 residues=2 N=8192 tc128=1 maxPayload=0 dataBits=32 nt=1 transport=tcp
+phase,receiverSentBytes,senderSentBytes,totalBytes,totalMiB,seconds
+cpsi,70313261,158433029,228746290,218.149462,11.807067
+vole,140317,546381,686698,0.654886,0.163195
+oprf_without_vole,0,30077792,30077792,28.684418,0.248687
+opprf,0,128747576,128747576,122.783257,2.450644
+peqt,0,69234176,69234176,66.026855,9.458314
+b2a_ot,33657114,33657114,67314228,64.195850,0.918371
+add_shares,0,0,0,0.000000,0.048130
+he,44370950,262386,44633336,42.565666,0.543715
+total,148341325,192352529,340693854,324.910978,13.322982
+  Passed   13554ms
+
+=============================================
+            All Passed (1)
+=============================================

@@ -1,0 +1,262 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{kotex}
+\usepackage{amsmath,amssymb,booktabs,longtable,array}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\title{Table 4 정수 내적 실험 수정 및 재측정 보고서}
+\author{코드 및 실측 로그에 기반한 기술 기록}
+\date{2026년 10월 28일}
+\begin{document}
+\maketitle
+
+\section{범위와 핵심 결과}
+대상은 첨부 논문 \textit{Security Analysis and Better Construction for Private Join and Compute}
+(\texttt{asiaccs27cycle1-paper528.pdf})의 Section 6.2 및 Table 4이다.
+기존 결과는 원문에 기재된 값이며, 아래 새 결과는 수정한 바이너리를 실제 실행한 측정값이다.
+입력은 양쪽 각각 $n\le 2^{20}$개 고유 식별자와 unsigned 32-bit payload,
+출력은 교집합 payload 곱의 \emph{정확한 비음수 정수 합}으로 통일하였다.
+
+수정 사항은 (1) CRT 범위 부족 해결, (2) SEAL의 128-bit classical security 파라미터 검사 활성화,
+(3) baseline의 XOR 대체 연산을 정수 환 연산으로 복구,
+(4) 32-bit 입력에 불필요한 상위 52개 비트 OT 제거,
+(5) 전체 프로토콜의 정답 검증이다.
+Baseline은 [7]의 OT 기반 구성을 이 입력 범위로 확장한 구현이며,
+[7] 원본 배포 바이너리의 측정값이라고 주장하지 않는다.
+
+\textbf{측정 범위:} LAN은 각 구성별 3회 실측하였다.
+100/10 Mbps WAN은 이번 환경에서 \texttt{sudo}가 비밀번호를 요구하여
+\texttt{tc}를 설정할 수 없었으므로 \textbf{미측정}이다.
+기존 WAN 값이나 전송량/대역폭으로 계산한 추정치를 새 실측값으로 대체하지 않았다.
+
+\section{기존 실험에서 잘못된 부분}
+\subsection{CRT의 비트 길이를 정수 결과 수용 조건으로 오인}
+정답이 $S$일 때 CRT는 $S\bmod P$를 복원한다.
+정확한 정수 복원에는 비트 길이만이 아니라
+\[
+P=p_1p_2 > B,\qquad B=2^{20}(2^{32}-1)^2
+\]
+가 필요하다. 기존 소수와 곱은 다음과 같다.
+\begin{align*}
+p_1^{\rm old}&=4398046486529,\\
+p_2^{\rm old}&=4398046240769,\\
+P_{\rm old}&=19342811816806176849100801,\\
+B&=19342813104826867541606400.
+\end{align*}
+따라서 $P_{\rm old}<B$이다. 양쪽 집합이 같고 모든 payload가 $2^{32}-1$인 경우,
+각 residue에서 HE 복호화가 성공해도 CRT 정답은 $B$가 아니라
+\[
+ B\bmod P_{\rm old}=1288020690692505599
+\]
+가 된다. 이는 HE noise로 인한 복호화 오류와 별개의 산술 범위 오류이다.
+기존 성능 harness의 기본 교집합은 $n/2$였고,
+HE 단위 테스트는 기본 4099행에 0과 최댓값을 일부 섞었기 때문에 이 경계를 검증하지 못했다.
+
+\subsection{정수 연산을 XOR 연산으로 대체한 baseline}
+기존 84-bit baseline은 \texttt{ValueShareType::Xor}를 사용하고,
+OT 마스킹, 공유 복원, MultShare 메시지 계산, 내적 누적과 최종 공유 결합을 XOR로 수행했다.
+\texttt{wMul}은 부분곱을 더하지 않고 XOR로 합치는 carry-less 연산이었다.
+예를 들어 정수 $3\cdot3=9$와 달리 기존 함수는 $3\mathbin{\mathtt{xor}}6=5$를 계산한다.
+최종 정수 내적 정답 비교도 생략되어 있었다.
+따라서 이는 메시지 폭을 맞춘 비용 측정이며, 같은 정수 내적 기능의 직접 측정은 아니었다.
+XOR 구현이 반드시 더 빠르다는 결론은 내리지 않는다. 기존 \texttt{wMul}의 84회 반복은
+오히려 native 정수 곱셈보다 느릴 수도 있으므로 실행 시간 차이의 방향은 실측 대상이다.
+
+\subsection{payload 폭과 공유값 폭을 동일하게 확대한 MultShare}
+기존 harness는 $L=84$이므로 원소마다 84개의 OT를 실행했다.
+그러나 해당 루틴에서 choice bit는 산술 공유값이 아니라 당사자의 \emph{자기 payload}를 분해한 비트이다.
+공개된 입력 범위가 $\ell=32$이면
+\[
+ d=\sum_{j=0}^{31} d_j2^j,\qquad
+ ad=\sum_{j=0}^{31}d_j(a2^j)\pmod{2^{84}}.
+\]
+따라서 84-bit 공유값/메시지를 유지해도 choice OT는 32개면 충분하다.
+기존 84개 OT는 허용 입력 범위를 넘어선 상위 52개 비트까지 처리한 것이다.
+수정 baseline의 MultShare 비용은 $O(\ell L)$이며,
+$\ell=L$일 때의 $O(L^2)$ 표현을 $\ell=32,L=84$ 설정에 그대로 적용하지 않는다.
+단, OT 수 감소만으로 전체 비용 감소 배수를 산정하지 않고 실제 전체 프로토콜을 재측정했다.
+
+\section{새 파라미터와 보안 검증 범위}
+선택한 서로 다른 43-bit 소수는 다음과 같다.
+\begin{align*}
+p_1&=8796092858369,\\
+p_2&=8796092792833,\\
+P&=77371248996589383127269377>B.
+\end{align*}
+64-bit 범위의 결정적 Miller--Rabin witness 집합으로 두 소수의 소수성을 확인했다.
+둘 다 $p_i\equiv1\pmod{8192}$이며 $p_i\equiv1\pmod{16384}$이므로
+$N=4096$ 및 선택한 $N=8192$ 모두의 batching 조건을 만족한다.
+실제 CRT 모듈러스의 bit length는 86이다.
+Baseline의 $2^{84}$ 환도 $B<2^{84}$이므로 같은 정수 기능에 충분하다.
+같은 기능을 비교하기 위해 baseline을 불필요하게 86-bit로 늘리지 않았다.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+항목 & 기존 RNS 설정 & 수정 설정\\
+\midrule
+CRT plaintext primes & 두 42-bit primes & 두 43-bit primes\\
+Polynomial degree $N$ & 4096 & 8192\\
+Coefficient modulus bit split & $\{60,45,20\}$ & $\{60,50,30\}$\\
+Key-level 총 bit 수 & 125 & 140\\
+First data-level bit 수 & 105 & 110\\
+SEAL 보안 검사 & \texttt{none} & \texttt{tc128}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$N=8192$에서 SEAL의 tc128 coefficient modulus 한도는 218 bits이다.
+수정 설정은 마지막 special prime까지 포함해 140 bits이며,
+실제 실행에서 \texttt{sec\_level\_type::tc128} 검사를 활성화한 상태로 context 생성과 복호화가 성공했다.
+$N=4096$이 본질적으로 불가능하다고 증명한 것은 아니다.
+기존의 보안 검사 우회를 없애고 검증 가능한 보수적 파라미터를 선택한 것이다.
+실험의 시간과 통신량에는 바뀐 $N$과 modulus가 모두 반영되어 있다.
+
+\textbf{보안 주장의 한계:}
+위 검사는 SEAL/RLWE 파라미터의 128-bit \emph{classical} security 기준에 대한 것이다.
+전체 PJC의 circuit privacy 증명이나 구현 검증과 동일하지 않다.
+현재 HE 경로는 plaintext mask와 modulus switching을 수행하지만 별도의 noise flooding은 구현하지 않는다.
+원문의 circuit-privacy 가정을 이 수정만으로 해소했다고 주장해서는 안 된다.
+유한한 입력 테스트와 양의 noise budget도 모든 randomness에 대한 복호화 실패 확률의 증명은 아니다.
+
+\section{코드 수정 내역}
+\begin{longtable}{p{0.34\linewidth}p{0.60\linewidth}}
+\toprule
+파일 & 변경 내용\\
+\midrule
+\endhead
+\path{volePSI/RsCpsi.h} & CRT 소수 교체, \texttt{add84} 공유 모드 추가.\\
+\path{volePSI/UInt84.h} & unsigned 128-bit 중간값으로 $\mathbb Z/2^{84}\mathbb Z$의 덧셈, 뺄셈, 곱셈, shift 구현. 직렬화는 11 bytes이며 하위 84 bits를 사용.\\
+\path{volePSI/RsCpsi.cpp} & $v-r\bmod2^{84}$ 공유 인코딩 추가. 11-byte OKVS 값의 상위 4 bits는 독립 uniform padding으로 채워 canonical 84-bit 값에서 생길 수 있는 구분을 방지.\\
+\path{volePSI/Cpso.cpp}, \texttt{Cpso.h} & XOR를 정수 환 연산으로 교체. MultShare의 choice bits와 OT 수를 84에서 32로 변경하고 메시지는 11 bytes 유지.\\
+\path{tests/Pso_Tests.cpp} & baseline 입력을 unsigned 32 bits로 제한한 생성기 사용. 128-bit 정수 reference와 결과 비교, 최대 payload/동일 집합/빈 교집합/영값 입력 지원.\\
+\path{tests/RsPsiInnerproduct_Perf.cpp} & 새 HE 설정, CRT 범위 및 $n\le2^{20}$ 검사, 동일 집합 및 최대/영값 payload 옵션과 파라미터 출력 추가.\\
+\path{tests/RsPsiInnerproduct_SEAL_Tests.cpp} & HE 단위 테스트의 소수 및 HE 설정 동기화.\\
+\path{volePSI/PSI_Innerproduct.cpp}, \texttt{.h} & 진단 모드의 residue별 복호화 noise budget 출력, 보안 검사 우회에 관한 기존 주석 수정.\\
+\bottomrule
+\end{longtable}
+
+\section{실험 방법}
+하드웨어는 AMD Ryzen Threadripper 9970X 32-Core, RAM 64 GB,
+Ubuntu 계열 Linux, GCC 13.3.0이다. Release/O3 빌드에서 프로토콜 thread 수는 1로 설정했다.
+TCP I/O helper threads까지 OS thread 수가 하나라는 의미는 아니다.
+LAN은 대역폭 제한 없는 localhost TCP이며, 프로토콜을 병렬 실행하지 않고 순서대로 측정했다.
+
+두 구현은 같은 $n$, 같은 교집합 수, 같은 unsigned 32-bit payload 수열과 매칭 순서를 사용한다.
+일반 성능 측정에서는 $|X\cap Y|=n/2$,
+payload 수열은 $a_i=(2654435761i+\mathtt{0x9e3779b9})\bmod2^{32}$,
+$b_i=(40503i+\mathtt{0x7f4a7c15})\bmod2^{32}$이며
+교집합의 $a_i$는 $b_{n-1-i}$와 매칭된다.
+식별자는 각 harness에서 seed로 생성하며, 식별자 비트열 자체까지 동일한 fixture로 맞춘 것은 아니다.
+모든 실행에서 최종 정수 결과를 로컬 unsigned 128-bit reference와 비교한다.
+
+각 구성의 성능을 3회 측정한 중앙값과 최소--최대를 보고한다.
+통신량은 양쪽 socket의 송신 bytes 합이며 decimal MB($10^6$ bytes)로 환산했다.
+표의 주 비교는 \emph{setup을 포함한 전체 프로토콜}이다.
+Baseline은 setup/online을 별도로 제공하므로 이를 함께 기록한다.
+Ours는 기존 harness가 OPRF 분해용으로 별도 수행하는 VOLE calibration 시간을 total에서 제외한다.
+이 calibration은 주 protocol socket의 통신에 포함되지 않는다.
+Python process 시작/입력 생성/최종 검증 전체의 wall time을 total로 사용한 것은 아니다.
+Baseline online-only 시간을 Ours total 시간과 혼합하여 speedup을 주장하지 않는다.
+
+\section{정확성 검증 결과}
+\begin{center}\begin{tabular}{llll}\toprule 입력 & $n$ & Ours & Baseline \\ \midrule
+동일 집합, 모두 최대값 & 65536 & PASS & PASS \\
+동일 집합, 모두 최대값 & 1048576 & PASS & PASS \\
+빈 교집합 & 1024 & PASS & PASS \\
+동일 집합, 모두 0 & 1024 & PASS & PASS \\
+동일 집합, 일반 payload & 1024 & PASS & PASS \\
+\bottomrule\end{tabular}\end{center}
+
+$n=2^{20}$ 최대 입력에서 reference 정답은 위의 $B$와 같았고,
+Ours는 두 residue에서 각각 기대 잔여값과 일치한 후 CRT 결과까지 일치했다.
+해당 실행의 최종 modulus switching 후 invariant noise budget은 두 residue 모두 8 bits였다.
+$n=2^{16}$ 최대 입력의 noise budget은 8, 9 bits이다.
+이 결과는 해당 seed와 실행 경로에서 얻은 관측값이며, 보편적인 최소 noise budget으로 해석하지 않는다.
+
+공유 코드 변경 후 기존 전체 회귀 테스트 58개도 모두 통과하였다.
+
+\section{새 LAN 측정 결과}
+\begin{center}\begin{tabular}{llrrr}\toprule $n$ & Protocol & Total MB & Median s & Min--Max s \\ \midrule
+$2^{16}$ & KLS26 & 44.711 & 2.299 & 2.281--2.300 \\
+$2^{16}$ & Ours & 22.090 & 0.824 & 0.802--0.828 \\
+$2^{20}$ & KLS26 & 708.059 & 36.904 & 36.899--36.921 \\
+$2^{20}$ & Ours & 340.694 & 13.342 & 13.323--13.413 \\
+\bottomrule\end{tabular}\end{center}
+Baseline의 setup/online 구분은 다음과 같다. Ours의 대응되는 offline/online 분리를 새로 정의하지 않았으므로 이 표로 online speedup을 계산하지 않는다.
+\begin{center}\begin{tabular}{lrrr}\toprule $n$ & Setup MB & Online MB & Online median s \\ \midrule
+$2^{16}$ & 0.221 & 44.490 & 1.086 \\
+$2^{20}$ & 1.184 & 706.875 & 17.014 \\
+\bottomrule\end{tabular}\end{center}
+
+$n=2^{16}$에서 baseline/Ours 통신량 비는 $2.024$, 전체 LAN 시간 중앙값 비는 $2.792$이다.
+
+$n=2^{20}$에서 baseline/Ours 통신량 비는 $2.078$, 전체 LAN 시간 중앙값 비는 $2.766$이다.
+
+이 결과의 baseline은 XOR harness가 아니라 정수 내적을 검증하는 32-choice-bit/84-bit-message 구현이다.
+따라서 원문의 baseline 비용 변화는 단순히 XOR를 덧셈으로 바꾼 영향만이 아니라,
+불필요한 OT 제거와 입력 범위 일치까지 합친 결과이다.
+기존 Table 4의 $n=2^{20}$ 값인 baseline 1499.29 MB / 43.05 s,
+Ours 340.63 MB / 13.39 s와 새 값의 차이를 단일 원인으로 귀속하지 않는다.
+기존 4.40배 통신량, 3.22배 LAN, 4.24배/4.44배 WAN 주장은 새 결과에 그대로 이월하지 않는다.
+
+\section{재현 방법과 원시 자료}
+작업 기준 commit은 \texttt{90baf9c3a2af},
+SEAL commit은 \texttt{119dc32e135c}이다.
+\texttt{source.patch}에는 수정된 tracked 파일과 새 산술 header가 포함된다.
+설치된 공통 libOTe 의존성은 로컬 \texttt{/home/gaeun/volepsi/out/install/linux}에서 재사용했다.
+의존성 fetch 중 system libsodium과 Montgomery API 불일치로 최초 빌드가 실패했으나,
+기존의 호환되는 설치를 사용해 최종 빌드가 성공했다.
+다른 환경에서는 프로젝트의 의존성을 같은 옵션으로 설치하거나 호환 prefix를 지정해야 한다.
+\begin{lstlisting}
+git submodule update --init thirdparty/SEAL
+cmake -S . -B out/build/linux \
+  -DVOLE_PSI_ENABLE_BOOST=ON -DVOLE_PSI_ENABLE_SEAL=ON \
+  -DFETCH_AUTO=ON -DCMAKE_BUILD_TYPE=Release \
+  -DVOLE_PSI_ENABLE_ASAN=OFF \
+  -DVOLEPSI_THIRDPARTY_DIR=/home/gaeun/volepsi/out/install/linux
+cmake --build out/build/linux -j8
+python3 experiments/table4_revision/run.py
+python3 experiments/table4_revision/build_report.py
+\end{lstlisting}
+테스트 번호는 빌드에 따라 바뀔 수 있으므로 이름으로 지정한다.
+최악 입력 단독 재현 명령은 다음과 같다.
+\begin{lstlisting}
+out/build/linux/frontend/frontend \
+  -u RsPsiInnerproduct_perf_test -n 1048576 \
+  -rns -tcp -nt 1 -identical -maxPayload -rnsdebug
+out/build/linux/frontend/frontend \
+  -u KLS26_innerprod_84_test -n 1048576 \
+  -nt 1 -identical -maxPayload
+\end{lstlisting}
+
+\texttt{measurements.csv}는 모든 개별 측정값,
+\texttt{summary.csv}는 성능 중앙값 및 범위,
+\texttt{parameters.json}은 소수/범위/빌드 해시,
+\texttt{environment.txt}는 환경,
+\texttt{raw/}는 실행별 출력과 정확한 argv를 담는다.
+\texttt{run\_wan.sh}는 root 권한을 확보한 뒤 100/10 Mbps를 실제 재측정하기 위한 스크립트이다.
+이번 보고서에는 WAN 측정 결과가 없으며 기존 WAN 배수를 대체할 새 배수도 없다.
+
+\section{논문 수정 시 반영할 사항}
+Section 6.2의 조건을 $\lceil\log_2 P\rceil$만으로 서술하지 말고
+$P>n(2^{32}-1)^2$로 명시하고 실제 소수를 함께 기재한다.
+Table 1에는 새 $N$, plaintext primes, coefficient modulus와 tc128 검사 활성화를 반영한다.
+Section 7.3과 Table 4의 baseline 설명을 정수 환 구현과 32-bit choice 분해로 바꾸고,
+통신 분석에서 $\ell$과 $L$을 구분한다.
+Table 4, abstract, introduction, conclusion의 기존 배수는 새 정의와 실측값에 맞춰 갱신한다.
+WAN 칸은 실제 재측정 전까지 비워 두며, 보안 파라미터 검사 통과와 circuit privacy를 구분한다.
+
+\begin{thebibliography}{9}
+\bibitem{paper} 제공된 논문 PDF, Sections 6.2, 7.3 및 Table 4.
+\bibitem{kls} J. Kim, H. T. Lee, and Y. Son.
+\textit{Private Set Operations from Circuit-Based PSI}. SAC 2026.
+\url{https://doi.org/10.1145/3748522.3779856}.
+\bibitem{seal} Microsoft SEAL, bundled source.
+\texttt{native/src/seal/util/hestdparms.h} 및 \texttt{context.h}.
+\url{https://github.com/microsoft/SEAL}.
+\end{thebibliography}
+\end{document}

@@ -45,8 +45,7 @@ namespace volePSI
         }
 
         Proto receiveInnerProd(span<block> X, span<int32_t> data, int32_t& innerprod, Socket& chl);
-        // 84-bit width harness: XOR arithmetic over 11-byte values. Cost-identical to the
-        // additive protocol (same OKVS, OT and MultShare widths); result is not an inner product.
+        // Exact integer PJC for unsigned 32-bit payloads and n <= 2^20, over Z/(2^84).
         using Wide = std::array<u8, 11>;
         Proto receiveInnerProdWide(span<block> X, span<Wide> data, Wide& innerprod, Socket& chl);
 

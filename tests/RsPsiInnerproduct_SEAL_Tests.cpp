@@ -64,7 +64,7 @@ namespace
 
     // Integer-inner-product setting: 32-bit payloads need an arithmetic space of
     // 2*32 + log2(rows) bits, which exceeds what one SEAL plaintext modulus
-    // holds. Represent Z_P with two 42-bit residues and combine by CRT.
+    // holds. Represent Z_P with two 43-bit residues and combine by CRT.
     void runRnsCase(u64 rows)
     {
         using u128 = unsigned __int128;
@@ -74,8 +74,9 @@ namespace
         config.mPrime = config.mPrimes[0];
         config.mDataBitLength = 32;
         config.mSealPolyModulusDegree = 4096;
-        config.mSealCoeffModulusBits = { 60, 45, 20 };
-        config.mSealEnforceSecurity = false;
+        config.mSealCoeffModulusBits = { 60, 50, 30 };
+        config.mSealEnforceSecurity = true;
+        config.mSealPolyModulusDegree = 8192;
 
         auto k = config.residueCount();
         auto width = config.shareByteLength();

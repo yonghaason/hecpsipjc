@@ -1,0 +1,10 @@
+{
+  "n": 1048576,
+  "threads": 1,
+  "trials": 1,
+  "payloadBits": 16,
+  "LAN_Gbps": 10,
+  "targetRTT_ms": 0.2,
+  "binarySha256": "aa2078a01f2ff7b2b7c6e4acad845be47b3c474204dd78fa848702e1950d44b6",
+  "codeChanges": "none"
+}

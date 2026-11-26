@@ -1,6 +1,7 @@
 #include "Pso_Tests.h"
 #include "volePSI/Defines.h"
 #include "volePSI/Cpso.h"
+#include "volePSI/UInt84.h"
 
 #include "cryptoTools/Network/IOService.h"
 #include "cryptoTools/Network/Session.h"
@@ -129,6 +130,9 @@ void Pso_innerprod_84_test(const oc::CLP &cmd)
 	
 	u64 n = cmd.getOr("n", 1ull << cmd.getOr("nn", 10));
 	u64 nt = cmd.getOr("nt", 1);
+    if (n == 0 || n > (1ull << 20)) throw std::invalid_argument("integer bound: 0 < n <= 2^20");
+    auto intersectionSize = cmd.isSet("identical") ? n : cmd.getOr("intersection", n/2);
+    if (intersectionSize > n) throw std::invalid_argument("intersection > n");
 
 	recver.init(n, n, 0, 40, block(0, 0), nt);
 	sender.init(n, n, 0, 40, block(0, 1), nt);
@@ -140,7 +144,7 @@ void Pso_innerprod_84_test(const oc::CLP &cmd)
 	recver.setTimer(r);
 	sender.setTimer(s);
 	
-	PRNG prng(block(dis(gen), dis(gen)));
+	PRNG prng(block(0x12345678, 0x9abcdef0));
 
 	std::vector<block> senderSet(n);
 	std::vector<PsoSender::Wide> senderValue(n);
@@ -151,25 +155,19 @@ void Pso_innerprod_84_test(const oc::CLP &cmd)
 
 	for (u64 i = 0; i < n; ++i) 
 	{
-		prng.get<u8>(senderValue[i].data(), 11);
-		prng.get<u8>(receiverValue[i].data(), 11);
+		auto dy = cmd.isSet("maxPayload") ? 0xffffffffull : (i * 2654435761ull + 0x9e3779b9ull) & 0xffffffffull;
+        auto dx = cmd.isSet("maxPayload") ? 0xffffffffull : (i * 40503ull + 0x7f4a7c15ull) & 0xffffffffull;
+        if (cmd.isSet("zeroPayload")) dy = dx = 0;
+        senderValue[i] = store84(dy);
+        receiverValue[i] = store84(dx);
 	}
 
-	receiverSet = senderSet;
-
-	PsoSender::Wide expip{};
-	int32_t intersection = 0;
-	for (u64 i = 0; i < n; ++i)
-	{
-			if (prng.getBit())
-			{
-					senderSet[i] = prng.get();
-			}
-			else {
-				intersection += 1;
-				{}
-			}
-	}
+    prng.get(receiverSet.data(), n);
+    UInt128 expectedInteger = 0;
+    for (u64 i=0; i<intersectionSize; ++i) {
+        receiverSet[n-1-i] = senderSet[i];
+        expectedInteger += load84(senderValue[i].data()) * load84(receiverValue[n-1-i].data());
+    }
 
 	PsoSender::Wide innerprod{};
 
@@ -219,5 +217,8 @@ void Pso_innerprod_84_test(const oc::CLP &cmd)
 
 	// std::cout << sum << " / " << toBlock(intersection*2) << std::endl;
 
-	(void)expip; // 84-bit XOR cost harness: same widths as the additive protocol, no algebraic result
+    if (load84(innerprod.data()) != expectedInteger)
+        throw std::runtime_error("84-bit integer inner product mismatch");
+    std::cout << "INTEGER_CORRECT n=" << n << " intersection=" << intersectionSize
+              << " maxPayload=" << cmd.isSet("maxPayload") << std::endl;
 }

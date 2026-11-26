@@ -1,0 +1,9 @@
+[
+  "/home/gaeun/hecpsipjc/out/build/linux/frontend/frontend",
+  "-u",
+  "KLS26_innerprod_32_test",
+  "-n",
+  "65536",
+  "-nt",
+  "1"
+]

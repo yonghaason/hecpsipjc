@@ -1,0 +1,141 @@
+ 0 - [1m[34mPaxos_buildRow_Test         [0m[1m[32m  Passed[0m   0ms
+ 1 - [1m[34mPaxos_solve_Test            [0m[1m[32m  Passed[0m   7ms
+ 2 - [1m[34mPaxos_solve_u8_Test         [0m[1m[32m  Passed[0m   3ms
+ 3 - [1m[34mPaxos_solve_mtx_Test        [0m[1m[32m  Passed[0m   4ms
+ 4 - [1m[34mPaxos_invE_Test             [0m[1m[32m  Passed[0m   0ms
+ 5 - [1m[34mPaxos_invE_g3_Test          [0m[1m[32m  Passed[0m   0ms
+ 6 - [1m[34mPaxos_solve_gap_Test        [0m[1m[32m  Passed[0m   1ms
+ 7 - [1m[34mPaxos_solve_rand_Test       [0m[1m[32m  Passed[0m   0ms
+ 8 - [1m[34mPaxos_solve_rand_gap_Test   [0m[1m[32m  Passed[0m   1ms
+ 9 - [1m[34mBaxos_solve_Test            [0m[1m[32m  Passed[0m   0ms
+10 - [1m[34mBaxos_solve_mtx_Test        [0m[1m[32m  Passed[0m   0ms
+11 - [1m[34mBaxos_solve_par_Test        [0m[1m[32m  Passed[0m   5ms
+12 - [1m[34mBaxos_solve_rand_Test       [0m[1m[32m  Passed[0m   13ms
+13 - [1m[34mSilentTripleGen_test        [0m[1m[32m  Passed[0m   1ms
+14 - [1m[34mgenerateBase_test           [0m[1m[32m  Passed[0m   22ms
+15 - [1m[34misZeroCircuit_Test          [0m[1m[32m  Passed[0m   0ms
+16 - [1m[34mGmw_half_test               [0m[1m[32m  Passed[0m   0ms
+17 - [1m[34mGmw_basic_test              [0m[1m[32m  Passed[0m   0ms
+18 - [1m[34mGmw_inOut_test              [0m[1m[32m  Passed[0m   0ms
+19 - [1m[34mGmw_xor_test                [0m[1m[32m  Passed[0m   0ms
+20 - [1m[34mGmw_and_test                [0m[1m[32m  Passed[0m   23ms
+21 - [1m[34mGmw_or_test                 [0m[1m[32m  Passed[0m   23ms
+22 - [1m[34mGmw_na_and_test             [0m[1m[32m  Passed[0m   22ms
+23 - [1m[34mGmw_xor_and_test            [0m[1m[32m  Passed[0m   22ms
+24 - [1m[34mGmw_aa_na_and_test          [0m[1m[32m  Passed[0m   23ms
+25 - [1m[34mGmw_noLevelize_test         [0m[1m[32m  Passed[0m   23ms
+26 - [1m[34mGmw_add_test                [0m[1m[32m  Passed[0m   23ms
+27 - [1m[34mRsOprf_eval_test            [0m[1m[32m  Passed[0m   24ms
+28 - [1m[34mRsOprf_mal_test             [0m[1m[32m  Passed[0m   24ms
+29 - [1m[34mRsOprf_reduced_test         [0m[1m[32m  Passed[0m   286ms
+30 - [1m[34mRsOpprf_eval_blk_test       [0m[1m[32m  Passed[0m   25ms
+31 - [1m[34mRsOpprf_eval_u8_test        [0m[1m[32m  Passed[0m   26ms
+32 - [1m[34mRsOpprf_eval_blk_mtx_test   [0m[1m[32m  Passed[0m   25ms
+33 - [1m[34mRsOpprf_eval_u8_mtx_test    [0m[1m[32m  Passed[0m   25ms
+34 - [1m[34mPsi_Rs_empty_test           [0m[1m[32m  Passed[0m   25ms
+35 - [1m[34mPsi_Rs_partial_test         [0m[1m[32m  Passed[0m   26ms
+36 - [1m[34mPsi_Rs_full_test            [0m[1m[32m  Passed[0m   27ms
+37 - [1m[34mPsi_Rs_reduced_test         [0m[1m[32m  Passed[0m   376ms
+38 - [1m[34mPsi_Rs_multiThrd_test       [0m[1m[32m  Passed[0m   27ms
+39 - [1m[34mPsi_Rs_mal_test             [0m[1m[32m  Passed[0m   27ms
+40 - [1m[34mCpsi_Rs_empty_test          [0m[1m[32m  Passed[0m   48ms
+41 - [1m[34mCpsi_Rs_partial_test        [0m[1m[32m  Passed[0m   47ms
+42 - [1m[34mCpsi_Rs_full_test           [0m[1m[32m  Passed[0m   48ms
+43 - [1m[34mCpsi_Rs_full_asym_test      [0m[1m[32m  Passed[0m   50ms
+44 - [1m[34mCpsi_Rs_full_add32_test     [0m[1m[32m  Passed[0m   0ms
+45 - [1m[34mCpsi_Rs_full_prime_test     [0m[1m[32m  Passed[0m   48ms
+46 - [1m[34mCpsi_Rs_full_prime_param_test[0m[1m[32m  Passed[0m   48ms
+47 - [1m[34mCpsi_Rs_comm_time_compare_test[0mCPSI_COMPARE n=243 prime=4294475777 dataBytes=2 dataElements=1 nt=1 rounds=2 warmup=1
+mode,totalBytes,totalBits,timeMeanSeconds
+xor,735095,5880760,0.049414
+prime,742274,5938192,0.047995
+[1m[32m  Passed[0m   291ms
+48 - [1m[34mCpsi_Rs_toy_comm_breakdown_test[0mCPSI_TOY_PART_COMPARE n=1048576 numBins=1380625 keyBits=61 xorPayloadBytes=2 primePayloadBytes=4 nt=64
+part,theoryXorBits,theoryPrimeBits,xorActualBits,primeActualBits
+VOLE,-,-,5493584,5493584
+OPRF,226827960.320000,226827960.320000,240622336,240622336
+OPPRF,327155712.000000,392586854.400000,343327168,583655872
+PEQT,348966092.800000,348966092.800000,553873408,553873408
+Others,128.000000,128.000000,384,384
+Total,902949893.120000,968381035.520000,1143316880,1383645584
+mode,totalActualBits,totalTimeSeconds
+xor,1143316880,9.104528
+prime,1383645584,8.960329
+vole,5493584,0.169811
+[1m[32m  Passed[0m   18316ms
+49 - [1m[34mRsPsiInnerproduct_perf_test[0mRS_PSI_INNERPRODUCT_PERF n=1048576 intersection=524288 rows=1380625 heChunks=338 prime=4294475777 residues=1 N=4096 tc128=1 maxPayload=0 dataBits=16 nt=1 transport=local
+phase,receiverSentBytes,senderSentBytes,totalBytes,totalMiB,seconds
+cpsi,70313261,102642437,172955698,164.943407,10.859466
+vole,140317,546381,686698,0.654886,0.147322
+oprf_without_vole,0,30077792,30077792,28.684418,0.177732
+opprf,0,72956984,72956984,69.577202,1.873157
+peqt,0,69234176,69234176,66.026855,8.542621
+b2a_ot,11384552,11384552,22769104,21.714310,0.297445
+add_shares,0,0,0,0.000000,0.019608
+he,22219613,65657,22285270,21.252890,0.264607
+total,103917426,114092646,218010072,207.910606,11.441167
+[1m[32m  Passed[0m   11622ms
+50 - [1m[34mRsPsiInnerproduct_seal_test[0m[1m[32m  Passed[0m   4ms
+51 - [1m[34mRsPsiInnerproduct_seal_rns_test[0m[1m[32m  Passed[0m   14ms
+52 - [1m[34mKLS26_innerprod_32_test[0mSetup Comm:  = 0.143899 MB
+Online Comm:  = 1.093493 MB
+VOLEPSI_INNERPRODUCT_PERF n=1024 nt=1 setupBytes=150889 onlineBytes=1146610 totalBytes=1297499 setupSeconds=0.029202 onlineSeconds=0.088260 totalSeconds=0.117463
+Label    Time (ms)  diff (ms)
+__________________________________
+end         117.4    117.445  **********
+
+Sender Timer
+Label                                     Time (ms)  diff (ms)
+__________________________________
+PsoSender::CPSI Setup                          29.1     29.149  *********
+PsoSender::InnerProd::Cpsi receive             55.0     25.896  *********
+PsoSender::InnerProd::Clear out                95.0     39.946  **********
+PsoSender::InnerProd::Multshare-setup         117.2     22.173  ********
+PsoSender::InnerProd::MultShare               117.4      0.248  
+
+Receiver Timer
+Label                                       Time (ms)  diff (ms)
+__________________________________
+PsoReceiver::CPSI Setup                          29.2     29.171  *********
+PsoReceiver::InnerProd::Cpsi send                55.0     25.861  *********
+PsoReceiver::InnerProd::Clear out                95.0     39.948  **********
+PsoReceiver::InnerProd::Multshare-setup         117.3     22.274  ********
+PsoReceiver::InnerProd::MultShare               117.4      0.168  
+
+[1m[32m  Passed[0m   118ms
+53 - [1m[34mKLS26_innerprod_84_test[0mSetup Comm:  = 0.144 MB
+Online Comm:  = 1.435 MB
+VOLEPSI_INNERPRODUCT84_PERF n=1024 nt=1 setupBytes=150889 onlineBytes=1504506 totalBytes=1655395 setupSeconds=0.028 onlineSeconds=0.100 totalSeconds=0.127
+Label    Time (ms)  diff (ms)
+__________________________________
+end         127.5    127.456  **********
+
+Sender Timer
+Label                                     Time (ms)  diff (ms)
+__________________________________
+PsoSender::CPSI Setup                          27.5     27.495  *********
+PsoSender::InnerProd::Cpsi receive             55.0     27.465  *********
+PsoSender::InnerProd::Clear out                96.0     41.057  **********
+PsoSender::InnerProd::Multshare-setup         118.7     22.719  ********
+PsoSender::InnerProd::MultShare               127.4      8.667  ******
+
+Receiver Timer
+Label                                       Time (ms)  diff (ms)
+__________________________________
+PsoReceiver::CPSI Setup                          27.5     27.516  *********
+PsoReceiver::InnerProd::Cpsi send                55.0     27.441  *********
+PsoReceiver::InnerProd::Clear out                95.9     40.990  **********
+PsoReceiver::InnerProd::Multshare-setup         119.0     23.095  ********
+PsoReceiver::InnerProd::MultShare               127.4      8.369  ******
+
+INTEGER_CORRECT n=1024 intersection=512 maxPayload=0
+[1m[32m  Passed[0m   128ms
+54 - [1m[34mfilebase_readSet_Test       [0m[1m[32m  Passed[0m   3ms
+55 - [1m[34mfilebase_psi_bin_Test       [0m[1m[32m  Passed[0m   25ms
+56 - [1m[34mfilebase_psi_csv_Test       [0m[1m[32m  Passed[0m   39ms
+57 - [1m[34mfilebase_psi_csvh_Test      [0m[1m[32m  Passed[0m   50ms
+[1m[32m
+=============================================
+            All Passed (58)
+[1m[32m=============================================
+[0m
